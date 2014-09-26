@@ -1,0 +1,118 @@
+//
+
+Fri Sept 26, 2014
+-----------------
+objectives:
+[1] write the needed c function
+[2] create git repo, and use it for development
+[3] create the needed makefile architcture
+[4] push git repo into github
+[5] try to move some of my development away from busybox to github
+
+steps:
+
+
+[1] create a new Repository in github
+	I assume you can figure this out, so link is https://github.com/Mohammad-Alshamlan/userspace_linux_programming.git
+	
+[2] create local git repo and push it 
+	// create the git repo
+	$ git init
+	// include everything to this point
+	$ git add .
+	// commit
+	$ git commit -m 'init'
+	// add github repo
+	$ git remote add origin https://github.com/Mohammad-Alshamlan/userspace_linux_programming.git
+	// check the link if it setup accordingly
+	$ git remote -v
+	// push the whole local repo into github
+	$ git push -u origin master
+	
+	// for cloning it
+	$ git clone https://github.com/Mohammad-Alshamlan/userspace_linux_programming.git
+
+[3] 
+
+touch README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin https://github.com/Mohammad-Alshamlan/userspace_linux_programming.git
+git push -u origin master
+
+create git repo
+[2] 
+
+Fri Sept 5, 2014
+-----------------
+objectives
+[1] write the needed c function
+[2] create git repo, and use it for development
+[3] create the needed makefile architcture
+[4] push git repo into github
+[5] try to move some of my development away from busybox to github
+
+resuorces:
+[1] reading "1_C_language/1_C_system programming/linux system programming"
+[2] 
+
+study:
+	from "linux syscall" -- topic basic syscall
+	// manpage section 2 
+	open()	// open the file
+	leek()	// chenging the offset of the opened file
+	read()	// read and increament the offset
+	pread()	// read without incremnting the offset
+	
+	from "C std libraries"
+	// manpage section 3
+	fopen()	// open a stream, which means copy the memory from kernelspace to the userspace 
+	fseek()	// chenging the offset of the opened file
+	fsetpos()	// == fseek() with whence=SEEK_SET
+	fgetpos()	// == fseek() with whence=SEEK_CUR
+	// note: fsetpos() and fgetpos() are used for portablity with non-Unix Oses
+	rewind()	// fseek(stream, 0, SEEK_SET);
+	
+	form "advance syscalls" -- topic "scatterGather I/O"
+	// manpage section 2
+	readv()	// read in peralle
+	write()	// write in perelle
+	
+	form "advance syscalls" -- topic "mapping file into memory"
+	// manpage section 2 
+	mmap()	// one-to-one corresponding between memory address and a word in the file -- mapping a file into a process's address space
+	munmap()	// removing the mapped-memory
+	fstat() 	// is identical to stat(), except that the file to be stat-ed is specified by the file descriptor fd.
+	// mmap() needs size, and fstat() gives a struct back. For example, 
+		struct stat sb;
+		char *p;
+		int fd;
+		if ( fstat(fd, &sb) == -1) {
+			perror("ftat");
+			return 1;
+		}
+		p = mmap(0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+		if(p==MAP_FAILED){
+			perror("mmap");
+			return 1;
+		}
+		// there is no need to continue opening the file because we already have a copy in the mapped-memory, so close it!!
+		if(close(fd)==-1){
+			perror("mmap");
+			return 1;
+		}
+		
+		// if we want to output the information from the mapped-memory
+		off_t len;
+		for(len = 0; len < sn.st_size; len++)
+			putchar(p[len]);
+			
+		// then to un-map the memory, do the following
+		if(mumap(p, sb.st_size)==-1){
+			perror("mumap");
+			return 1;
+		}
+		
+
+steps:
