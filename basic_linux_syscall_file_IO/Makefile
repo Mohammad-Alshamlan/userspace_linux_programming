@@ -1,11 +1,22 @@
+################################
+# makefile settings	       #
+################################
 CC=gcc
 CFLAGS= -g -Wall
 rm=$(which rm)
+# the building objects
+OBJ  = ex1_basic_read_syscall
+OBJ += ex2_basic_lseek_syscall
 
-all: ex1_basic_read_syscall
+################################
+# generic makefile for c code  #
+################################
+all: $(OBJ)
 
-ex1_basic_read_syscall: 
+$(OBJ): 
 	$(CC) $(CFLAGS) $@.c -o $@
 
 clean:
-	$(RM) reading_a_file
+	$(RM) $(OBJ) 
+	# deleting the temp hiden saving files
+	$(RM) *~
