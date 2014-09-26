@@ -10,12 +10,12 @@
 
 // assuming each word length at most 32, and there isn't a word larger than that
 #define NUMBER_OF_WORDS 3
-#define MAX_WORD_LENGTH ((NUMBER_OF_WORDS * 32)) // unlikely you would have 32 word length back-to-back
+#define MAX_WORD_LENGTH ((NUMBER_OF_WORDS * 32) + 0) // 0 because you unlikely would have 32-word-length back-to-back
 
 void lseek_file (const char* filename)
 {
 	int fd;
-  	// assuming that there isn't a word that larger than MAX_SIZE value
+  	// assuming that there isn't a word that larger than MAX_WORD_LENGTH value
   	char buffer[MAX_WORD_LENGTH];
   	memset(buffer, 0, MAX_WORD_LENGTH);
 	/* Open the file.  */
