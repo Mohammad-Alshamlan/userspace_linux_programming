@@ -9,13 +9,28 @@ objectives:
 [4] push git repo into github
 [5] try to move some of my development away from busybox to github
 
+sources:
+[1] https://help.github.com/articles/setting-your-email-in-git
+
 steps:
-
-
 [1] create a new Repository in github
 	I assume you can figure this out, so link is https://github.com/Mohammad-Alshamlan/userspace_linux_programming.git
+
+[2] setting git the first time
+	// to do "git commit" you need to register your email address
+	// to register your email address is the following
+	$ git config --global user.email "malsh002@fiu.edu"
+	// setting your name
+	$ git config --global user.name "alshamlan"
 	
-[2] create local git repo and push it 
+	// for checking do the following
+	alshamlan@alshamlan-Precision-M6700 $ git config --global user.email 
+	malsh002@fiu.edu
+	alshamlan@alshamlan-Precision-M6700 $ git config --global user.name 
+	alshamlan
+	alshamlan@alshamlan-Precision-M6700 $
+	 	
+[3] create local git repo and push it 
 	// create the git repo
 	$ git init
 	// include everything to this point
@@ -34,12 +49,6 @@ steps:
 
 [3] 
 
-touch README.md
-git init
-git add README.md
-git commit -m "first commit"
-git remote add origin https://github.com/Mohammad-Alshamlan/userspace_linux_programming.git
-git push -u origin master
 
 create git repo
 [2] 
