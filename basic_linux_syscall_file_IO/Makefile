@@ -7,6 +7,9 @@ rm=$(which rm)
 # the building objects
 OBJ  = ex1_basic_read_syscall
 OBJ += ex2_basic_lseek_syscall
+OBJ += ex3a_binary_search
+OBJ += ex3b_basic_lseek_syscall_binary_search
+
 
 ################################
 # generic makefile for c code  #
