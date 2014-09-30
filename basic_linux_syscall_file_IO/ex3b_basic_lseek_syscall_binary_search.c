@@ -1,5 +1,5 @@
 /*
- * we want to print three words in a middle of a file!!
+ * we want to do a binary search in a file with using lseek() 
  */
 #include <fcntl.h>
 #include <stdio.h>
@@ -72,7 +72,6 @@ char *short_binary_search_comparator(char *keyword, char *word, char *pword_midd
 // [3] we don't have the word
 char *short_binary_search(int fd, char *keyword, char *word, char *pword_middle, off_t len)
 {
-	printf("%s\n", word);
 	// if the keyword that we are looking for is well-formed in word buffer, that is great. However, sometime just part of the word is there!!! 
 	char *cmp=short_binary_search_comparator(keyword, word, pword_middle);
 	if(cmp != NULL)
@@ -80,8 +79,11 @@ char *short_binary_search(int fd, char *keyword, char *word, char *pword_middle,
 	else {
 		// maybe the word is not well-formed or doesn't exist. So, let get a new word buffer
 		off_t current_off = lseek( fd, 0L, SEEK_CUR );
+		// make sure we don't get negative offset -- negative offset means the keyword doesn't exist
+		if((current_off - MAX_WORD_LENGTH) < 0)
+			return NULL;
 		// set lseek() more to the left
-		if( lseek(fd, current_off - MAX_WORD_LENGTH  , SEEK_SET) == -1 ) {
+		else if( lseek(fd, current_off - MAX_WORD_LENGTH  , SEEK_SET) == -1 ) {
 			perror("short_binary_search(): I can't do SEEK_SET!!\n");
 			exit(EXIT_FAILURE);		
 		}
