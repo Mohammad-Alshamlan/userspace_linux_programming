@@ -1,5 +1,27 @@
 //
 
+Mon Sep 29, 2014
+-----------------
+objectives:
+[1] add me to-do-list tasks
+
+to-do-list:
+[1] write more linux c code
+[2] try also to use C++ 
+[3] build with makefile
+[4] use "doxygen" to document the code
+[5] try to use more advance debugging
+[6] make a full embedded system that runs you program
+	>> buildroot
+	>> linux kernel
+	>> busybox
+	>> gnu toolchain
+	>> u-boot
+	>> qemu
+	>> ssh server -- dropbear (or NFS and telnet) 
+[7] use ctags + gvim for development
+[8] github is good choice, but also try "bitbucket" + "git"
+
 Fri Sept 26, 2014
 -----------------
 objectives:
