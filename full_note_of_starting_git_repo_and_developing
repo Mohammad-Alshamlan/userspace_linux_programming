@@ -21,6 +21,10 @@ to-do-list:
 	>> ssh server -- dropbear (or NFS and telnet) 
 [7] use ctags + gvim for development
 [8] github is good choice, but also try "bitbucket" + "git"
+[9] use these sysclass
+	>> pread()
+	>> readv()
+[10] use "GNU Gprof"
 
 Fri Sept 26, 2014
 -----------------
@@ -108,7 +112,7 @@ study:
 	form "advance syscalls" -- topic "scatterGather I/O"
 	// manpage section 2
 	readv()	// read in peralle
-	write()	// write in perelle
+	writev()	// write in perelle
 	
 	form "advance syscalls" -- topic "mapping file into memory"
 	// manpage section 2 
