@@ -30,15 +30,6 @@ char *get_word(int fd, char *word, off_t len, off_t *read_offset)
 			count--; 
 	// shift the offset to the selected word address
 	*read_offset= *read_offset -  i + needed_offset_shift;
-	
-	/*
-	off_t current_pos= lseek( fd, 0L, SEEK_CUR ); 
-	if( lseek(fd, (off_t) current_pos -  i + needed_offset_shift, SEEK_SET) == -1 ) {
-		perror("I can't do SEEK_SET!!\n");
-		exit(EXIT_FAILURE);		
-	}
-	*/
-	
 	// now, &word[i + needed_offset_shift ] starts at the bigging of the last word, but it also has garbage in the end such as: '\n', '\r', or part of the next not well-formed word
 	// we know that, before the new word starts, there are '\n' and '\r' before it, so we can nulify them!!
 	int j;
@@ -87,15 +78,8 @@ char *short_binary_search(int fd, char *keyword, char *word, char *pword_middle,
 		// make sure we don't get negative offset -- negative offset means the keyword doesn't exist
 		if((current_off - MAX_WORD_LENGTH) < 0)
 			return NULL;
-		// okay, now push the offset more into the left
+		// okay, now push the offset more into the left, and get a new word buffer
 		current_off=current_off - MAX_WORD_LENGTH;
-		/*
-		// set lseek() more to the left
-		else if( lseek(fd, current_off - MAX_WORD_LENGTH  , SEEK_SET) == -1 ) {
-			perror("short_binary_search(): I can't do SEEK_SET!!\n");
-			exit(EXIT_FAILURE);		
-		}
-		*/
 		get_word(fd, word, len, &current_off);
 		return short_binary_search_comparator(keyword, word, pword_middle);
 	}
@@ -110,7 +94,7 @@ char *binary_search(int fd, char *keyword, off_t len, char *word)
 	// get a word, and set the offset of read_offset accordingly
 	char *pword= get_word(fd, word, len, &read_offset);
 	// set binary search variables
-	off_t L=0, R=read_offset, M=read_offset;
+	off_t L=0, R=read_offset, M=0;
 	char *pword_middle=NULL, previous_pword_middle[MAX_WORD_LENGTH];
 	memset(previous_pword_middle, 0, MAX_WORD_LENGTH);	
 	// search for the selected word
@@ -120,7 +104,6 @@ char *binary_search(int fd, char *keyword, off_t len, char *word)
 			// set the offset into the middle
 			read_offset=M;	
 			pword_middle=get_word(fd, word, len, &read_offset);
-			printf("M=%d\tpword_middle=%s\n", (int) M, pword_middle);
 			// doing the binary search comparison 
 			if((strcmp(keyword, pword_middle)== 0) && (strlen(keyword) == strlen(pword_middle)))
 				return pword_middle;
