@@ -110,7 +110,7 @@ char *binary_search(int fd, char *keyword, off_t len, char *word)
 	// get a word, and set the offset of read_offset accordingly
 	char *pword= get_word(fd, word, len, &read_offset);
 	// set binary search variables
-	off_t L=0, R=read_offset, M=0;
+	off_t L=0, R=read_offset, M=read_offset;
 	char *pword_middle=NULL, previous_pword_middle[MAX_WORD_LENGTH];
 	memset(previous_pword_middle, 0, MAX_WORD_LENGTH);	
 	// search for the selected word
@@ -120,6 +120,7 @@ char *binary_search(int fd, char *keyword, off_t len, char *word)
 			// set the offset into the middle
 			read_offset=M;	
 			pword_middle=get_word(fd, word, len, &read_offset);
+			printf("M=%d\tpword_middle=%s\n", (int) M, pword_middle);
 			// doing the binary search comparison 
 			if((strcmp(keyword, pword_middle)== 0) && (strlen(keyword) == strlen(pword_middle)))
 				return pword_middle;
