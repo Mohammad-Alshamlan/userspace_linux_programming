@@ -11,6 +11,8 @@ OBJ += ex3a_binary_search
 OBJ += ex3b_basic_lseek_syscall_binary_search
 OBJ += ex3c_basic_pread_syscall_binary_searc
 OBJ += ex4a_basic_scatter_input_readv_syscall
+OBJ += ex5a_create_concatenated_positional_words
+OBJ += ex5b_search_for_the_biggest_word
 
 ################################
 # generic makefile for c code  #

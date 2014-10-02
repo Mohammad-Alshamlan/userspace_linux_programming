@@ -1,0 +1,35 @@
+//
+
+// conver manpage to pdf
+	$ man -t dd | ps2pdf - > /tmp/dd.pdf
+
+// open the pdf with xounal
+	$ xournal /tmp/dd.bob 
+
+// using apropos and ps2pdf
+	for example, let we say we want all the manpage for schroot
+	// showing the results from approps
+	alshamlan@alshamlan-OptiPlex-980 $ apropos schrootischroot (1)         - detect if running in a chroot
+	schroot (1)          - securely enter a chroot environment
+	schroot-faq (7)      - frequently asked questions
+	schroot-script-config (5) - schroot chroot setup script configuration
+	schroot-setup (5)    - schroot chroot setup scripts
+	schroot.conf (5)     - chroot definition file for schroot
+	alshamlan@alshamlan-OptiPlex-980 $
+	
+	// we can do it through a loop as follows
+	for x in $(apropos schroot | awk '{ print $1 }')
+	do 
+		man -t $x | ps2pdf - > ${x}.pdf
+	done	
+	
+	// or with line contuniation
+	for x in $(apropos schroot | awk '{ print $1 }' )	\
+	do    							\
+		man -t $x | ps2pdf - > ${x}.pdf			\
+	done		
+	
+	// or ssimply
+	$ 
+	
+	for x in $(apropos schroot | awk '{ print $1 }') ; do man -t $x | ps2pdf - > ${x}.pdf ; done

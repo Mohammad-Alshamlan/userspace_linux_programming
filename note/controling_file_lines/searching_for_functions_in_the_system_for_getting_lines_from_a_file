@@ -1,0 +1,94 @@
+//
+
+Thu Oct 2, 2014
+-----------------
+objective:
+[1] run the following command:
+	$ apropos -s 2,3 line
+	
+results
+alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ apropos -s 2,3 line
+caca_conio_delline (3caca) - The libcaca public header.
+caca_conio_insline (3caca) - The libcaca public header.
+caca_draw_line (3caca) - (unknown subject)
+caca_draw_polyline (3caca) - (unknown subject)
+caca_draw_thin_line (3caca) - (unknown subject)
+caca_draw_thin_polyline (3caca) - (unknown subject)
+CACA_UNDERLINE (3caca) - (unknown subject)
+cfgetispeed (3)      - get and set terminal attributes, line control, get and set baud rate
+cfgetospeed (3)      - get and set terminal attributes, line control, get and set baud rate
+cfmakeraw (3)        - get and set terminal attributes, line control, get and set baud rate
+cfsetispeed (3)      - get and set terminal attributes, line control, get and set baud rate
+cfsetospeed (3)      - get and set terminal attributes, line control, get and set baud rate
+cfsetspeed (3)       - get and set terminal attributes, line control, get and set baud rate
+error_at_line (3)    - glibc error reporting functions
+error_one_per_line (3) - glibc error reporting functions
+ether_line (3)       - Ethernet address manipulation routines
+fgetln (3)           - get a line from a stream
+fgetwln (3)          - get a line of wide characters from a stream
+fparseln (3)         - return the next logical line from a stream
+getline (3)          - delimited string input
+getopt (3)           - Parse command-line options
+getopt_long (3)      - Parse command-line options
+getopt_long_only (3) - Parse command-line options
+getpw (3)            - reconstruct password line entry
+getutline (3)        - access utmp file entries
+getutline_r (3)      - access utmp file entries
+getutxline (3)       - access utmp file entries
+getutxline (3posix)  - user accounting database functions
+Glib::OptionContext (3pm) - defines options accepted by the commandline option parser
+Glib::OptionGroup (3pm) - group of options for command line option parsing
+Gnome2::Canvas::Line (3pm) - Lines as CanvasItems
+IO::Lines (3pm)      - IO:: interface for reading/writing an array of lines
+lfind (3)            - linear search of an array
+lfind (3posix)       - linear search and update
+lsearch (3)          - linear search of an array
+lsearch (3posix)     - linear search and update
+optarg (3)           - Parse command-line options
+opterr (3)           - Parse command-line options
+optind (3)           - Parse command-line options
+optopt (3)           - Parse command-line options
+Pango::AttrRise (3pm) - Pango baseline displacement attribute
+Pango::AttrUnderline (3pm) - Pango underline style attribute
+Pango::AttrUnderlineColor (3pm) - Pango underline color attribute
+Pango::LayoutLine (3pm) - a line in a Pango::Layout
+pututline (3)        - access utmp file entries
+pututxline (3)       - access utmp file entries
+pututxline (3posix)  - user accounting database functions
+readline (3readline) - get a line from a user with editing
+remap_file_pages (2) - create a nonlinear file mapping
+setlinebuf (3)       - stream buffering operations
+tcdrain (3)          - get and set terminal attributes, line control, get and set baud rate
+tcflow (3)           - get and set terminal attributes, line control, get and set baud rate
+tcflush (3)          - get and set terminal attributes, line control, get and set baud rate
+tcgetattr (3)        - get and set terminal attributes, line control, get and set baud rate
+tcsendbreak (3)      - get and set terminal attributes, line control, get and set baud rate
+tcsetattr (3)        - get and set terminal attributes, line control, get and set baud rate
+Term::UI (3pm)       - Term::ReadLine UI made easy
+termios (3)          - get and set terminal attributes, line control, get and set baud rate
+Text::WrapI18N (3pm) - Line wrapping module with support for multibyte, fullwidth, and combining characters and languages without whitespaces between words
+xdr_inline (3)       - library routines for external data representation
+XDrawLine (3)        - draw lines, polygons, and line structure
+XDrawLines (3)       - draw lines, polygons, and line structure
+XDrawSegments (3)    - draw lines, polygons, and line structure
+XF86VidModeDeleteModeLine (3) - Extension library for the XFree86-VidMode X extension
+XF86VidModeGetAllModeLines (3) - Extension library for the XFree86-VidMode X extension
+XF86VidModeGetModeLine (3) - Extension library for the XFree86-VidMode X extension
+XF86VidModeModModeLine (3) - Extension library for the XFree86-VidMode X extension
+XF86VidModeValidateModeLine (3) - Extension library for the XFree86-VidMode X extension
+XkbAddGeomOutline (3) - Add one outline to an existing shape
+XkbAllocGeomOutlines (3) - Allocate space for an arbitrary number of outlines to a shape
+XkbAllocGeomPoints (3) - Allocate points in an outline
+XkbChangeNames (3)   - _summary-line_
+XkbFreeGeomOutlines (3) - Free geometry outlines
+XkbFreeGeomPoints (3) - Free points in a outline
+XrmInitialize (3)    - initialize the Resource Manager, Resource Manager structures, and parse the command line
+XrmOptionDescRec (3) - initialize the Resource Manager, Resource Manager structures, and parse the command line
+XrmOptionKind (3)    - initialize the Resource Manager, Resource Manager structures, and parse the command line
+XrmParseCommand (3)  - initialize the Resource Manager, Resource Manager structures, and parse the command line
+XrmPutLineResource (3) - store database resources
+XrmValue (3)         - initialize the Resource Manager, Resource Manager structures, and parse the command line
+XSegment (3)         - draw lines, polygons, and line structure
+XSetLineAttributes (3) - GC convenience routines
+alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$
+

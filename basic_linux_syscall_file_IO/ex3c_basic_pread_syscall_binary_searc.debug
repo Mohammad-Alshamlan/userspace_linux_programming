@@ -1,0 +1,85 @@
+//
+
+Wed Oct 1, 2014
+-----------------
+objectives:
+[1] test with these commands:
+	$ time
+	$ valgrind
+	$ strace
+	$ ltrace
+	
+analysis:
+[1] time result
+
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ time ./ex3c_basic_pread_syscall_binary_searc 0_large_example_list.txt look
+	found: look
+
+	real	0m0.002s
+	user	0m0.000s
+	sys	0m0.001s
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ 
+
+[2] valgrind result
+
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ valgrind ./ex3c_basic_pread_syscall_binary_searc 0_large_example_list.txt look
+	==4395== Memcheck, a memory error detector
+	==4395== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
+	==4395== Using Valgrind-3.10.0.SVN and LibVEX; rerun with -h for copyright info
+	==4395== Command: ./ex3c_basic_pread_syscall_binary_searc 0_large_example_list.txt look
+	==4395== 
+	found: look
+	==4395== 
+	==4395== HEAP SUMMARY:
+	==4395==     in use at exit: 0 bytes in 0 blocks
+	==4395==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated
+	==4395== 
+	==4395== All heap blocks were freed -- no leaks are possible
+	==4395== 
+	==4395== For counts of detected and suppressed errors, rerun with: -v
+	==4395== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ 
+
+
+[3] strace result
+
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ strace -c ./ex3c_basic_pread_syscall_binary_searc 0_large_example_list.txt look
+	found: look
+	% time     seconds  usecs/call     calls    errors syscall
+	------ ----------- ----------- --------- --------- ----------------
+	 18.38    0.000043           3        17           pread
+	 17.09    0.000040           5         8           mmap
+	 11.54    0.000027           9         3         3 access
+	 10.68    0.000025           8         3           open
+	 10.68    0.000025           6         4           mprotect
+	  8.55    0.000020          20         1           munmap
+	  5.98    0.000014          14         1           write
+	  5.98    0.000014           5         3           close
+	  3.85    0.000009           9         1           execve
+	  3.42    0.000008           3         3           fstat
+	  1.28    0.000003           3         1           read
+	  1.28    0.000003           3         1           brk
+	  0.85    0.000002           2         1           lseek
+	  0.43    0.000001           1         1           arch_prctl
+	------ ----------- ----------- --------- --------- ----------------
+	100.00    0.000234                    48         3 total
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ 
+
+[4] ltrace result
+
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$ ltrace -c ./ex3c_basic_pread_syscall_binary_searc 0_large_example_list.txt look
+	found: look
+	% time     seconds  usecs/call     calls      function
+	------ ----------- ----------- --------- --------------------
+	 34.30    0.004411          93        47 strcmp
+	 20.15    0.002591          92        28 strlen
+	 15.32    0.001970         115        17 pread
+	 12.44    0.001600          88        18 memset
+	 10.32    0.001327          88        15 strcpy
+	  3.43    0.000441         441         1 printf
+	  1.61    0.000207         207         1 lseek
+	  1.42    0.000183         183         1 close
+	  1.00    0.000129         129         1 open
+	------ ----------- ----------- --------- --------------------
+	100.00    0.012859                   129 total
+	alshamlan@alshamlan-Precision-M6700:~/Desktop/linux_userspace_programming/basic_linux_syscall_file_IO$
