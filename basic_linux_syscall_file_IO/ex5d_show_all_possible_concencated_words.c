@@ -44,17 +44,12 @@ void pop(stack_t *s)
 	free(remove);
 }
 
-
-int main()
+void create_the_stack(FILE *fp, stack_t *s, size_t *max_len, size_t *min_len)
 {
-	FILE *fp =fopen("0_large_example_list.txt","r"); 
 	char str[MAX_WORD_LENGTH];
-	size_t min_len=0, max_len=0, len;
+	size_t len;
 	long offset_previous=0;
 	int i;
-	// creating a stack to hold the metadata
-	stack_t *s = (stack_t *) malloc (sizeof(stack_t));
-	s->top=NULL;
 	// 
 	while((fgets(str,MAX_WORD_LENGTH,fp)) != NULL){
 		// cleanup the word form '\n' and '\r'
@@ -64,18 +59,64 @@ int main()
 		// get the length
 		len = strlen(str);
 		// keep a record for the largest
-		max_len = (max_len > len)? max_len : len;
-		min_len = (min_len < len)? min_len : len;
-		// get the offset
-		//offset_previous);
-		// debug
-		//printf("word=%s\tlen=%zu\toffset=%ld\n", str, max_len, offset);
-		// push it into the stack
+		*max_len = (*max_len > len)? *max_len : len;
+		*min_len = (*min_len < len)? *min_len : len;
+		// store 
 		push(s, len, offset_previous);
 		offset_previous=ftell(fp);
 	}
+	
+}
+
+void show_all_possible_combinations(node_t *i, node_t *j, size_t max_len, size_t current_len)
+{
+	if((j!=NULL) && (j->len + current_len) <= max_len){
+		current_len= j->len + current_len;
+		printf("current_len=%d\tword_offset=%d\n", (int) current_len, (int) j->offset);
+		show_all_possible_combinations(i, j->next, max_len, current_len);
+	} //else if (j!=NULL)
+		//show_all_possible_combinations(i, j->next, max_len, current_len);
+	//else  
+	//	j=i->next;
+	return ;
+		
+	
+	
+
+}
+
+void offset_list( stack_t *s, size_t max_len)
+{
+	#if 0
+	// create a strcut
+	struct offset {
+		off_t offset;
+		struct offset *next; 
+	} *wordlist = NULL;
+	#endif
+	// we are using passing by value for
+	node_t *i, *j;
+	for(i=s->top; i!=NULL ; i=i->next){
+		for(j=i; j!=NULL; j->next){
+		show_all_possible_combinations(i, j, max_len, 0);
+		}
+	} 
+
+}
+
+int main()
+{
+	// open a file to read
+	FILE *fp =fopen("0_large_example_list.txt","r"); 
+	// creating a stack to hold the metadata
+	stack_t *s = (stack_t *) malloc (sizeof(stack_t));
+	s->top=NULL;
+	size_t min_len=0, max_len=0;
+	// create the stack from a file
+	create_the_stack(fp, s, &max_len, &min_len);
 	printf("largest word is %d\nsmallest word is %d\n", (int) max_len, (int) min_len);
 	// let print the biggest words that we found
+	char str[MAX_WORD_LENGTH];
 	node_t *j=NULL;
 	for(j=s->top; j!=NULL; j=j->next)
 		if(j->len == max_len){
@@ -86,12 +127,15 @@ int main()
 			// print the word
 			printf("len=%d\tword=%s\n", (int) j->len, str);
 		}
- 	// done
+ 	
+ 	//
+ 	offset_list(s, max_len);
+ 	// done -- cleanup
  	stack_t *done;
 	for(done=s; done->top != NULL ; /*no need!! pop() does it*/)
 		pop(done);
-	free(s);	
- 	fclose(fp);
+	free(s);
+	fclose(fp);	
         return 0;
 
 }

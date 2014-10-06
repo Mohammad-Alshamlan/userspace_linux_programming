@@ -76,6 +76,7 @@ int main()
 	printf("largest word is %d\n", (int) max_len);
 	// let print the biggest words that we found
 	node_t *j=NULL;
+	/*
 	for(j=s->top; j!=NULL; j=j->next)
 		if(j->len == max_len){
 			// let get this word
@@ -85,6 +86,7 @@ int main()
 			// print the word
 			printf("len=%d\tword=%s", (int) j->len, str);
 		}
+	*/
 	// getting the file descriptor from a stream, and using lseek() instead of fseek()!!
 	int fd = fileno (fp);
 	char buff[max_len+1];

@@ -14,6 +14,7 @@ OBJ += ex4a_basic_scatter_input_readv_syscall
 OBJ += ex5a_create_concatenated_positional_words
 OBJ += ex5b_search_for_the_biggest_word
 OBJ += ex5c_getting_the_file_descriptor_from_a_stream
+OBJ += ex5d_show_all_possible_concencated_words
 
 ################################
 # generic makefile for c code  #
