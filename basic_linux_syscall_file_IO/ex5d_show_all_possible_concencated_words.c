@@ -19,6 +19,7 @@ typedef struct node {
 	size_t len;
 	off_t offset;
 	struct node *next;
+	struct node *previous;
 } node_t;
 
 // creating a stack
