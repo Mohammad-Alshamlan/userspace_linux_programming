@@ -42,20 +42,21 @@ void node_deletion(node_t **head)
 
 void print_combination(node_t *holder[], size_t holder_index)
 {
-	int print;
-	for(print=0; (print<holder_index) && (holder[print]!=NULL) ; print++)
-		printf("%zu\t", holder[print]->len);
+	int iterate;
+	for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
+		printf("%zu\t", holder[iterate]->len);
 	printf("\n");
 }
 
 void show (node_t *head)
 {
-	size_t limit=LIMIT, print, current=0,  holder_index=0;
-	node_t *holder[LIMIT];
+	size_t limit=LIMIT, iterate, current=0,  holder_index=0;
+	node_t *holder[LIMIT], *previous_holder[LIMIT];
 	node_t *i=head;
-	while(i!=NULL){
-		// print -- note, there is a repetation!!
-		print_combination(holder, holder_index);
+	while(i!=NULL){	
+		// copy the current holder to the previous_holder even if it is grabage!!
+		for(iterate=0; iterate < limit ; iterate++)
+			previous_holder[iterate]=holder[iterate];		
 		// search
 		if( ((current+i->len) < limit) && (holder_index<limit) ){
 			current+=i->len;
@@ -78,9 +79,21 @@ void show (node_t *head)
 			holder_index++;
 			//
 			current=0;
-			for(print=0; (print<holder_index) && (holder[print]!=NULL) ; print++)
-				current+=holder[print]->len;
+			for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
+				current+=holder[iterate]->len;
 		}
+		// Note, make sure you don't use repeated results
+		// compare the old with the new
+		for(iterate=0; iterate < limit ; iterate++){
+			if(previous_holder[iterate]!=holder[iterate]){
+				print_combination(holder, holder_index);
+				break;
+			}
+			
+		}
+		//print=1;
+		//while()
+		
 
 	}
 }
