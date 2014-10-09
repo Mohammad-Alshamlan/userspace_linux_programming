@@ -40,37 +40,48 @@ void node_deletion(node_t **head)
 	free(remove);
 }
 
+void print_combination(node_t *holder[], size_t holder_index)
+{
+	int print;
+	for(print=0; (print<holder_index) && (holder[print]!=NULL) ; print++)
+		printf("%zu\t", holder[print]->len);
+	printf("\n");
+}
+
 void show (node_t *head)
 {
-	size_t limit=LIMIT, current=0, *holder[LIMIT], holder_index=0;
-	int depth=0, shift;
+	size_t limit=LIMIT, print, current=0,  holder_index=0;
+	node_t *holder[LIMIT];
 	node_t *i=head;
 	while(i!=NULL){
-		// 
-		int print;
-		for(print=0; print<holder_index; print++)
-			printf("%zu\t", *holder[print]);
-		printf("\n");
+		// print -- note, there is a repetation!!
+		print_combination(holder, holder_index);
 		// search
 		if( ((current+i->len) < limit) && (holder_index<limit) ){
 			current+=i->len;
-			holder[holder_index]=&(i->len);
+			holder[holder_index]=i;
 			holder_index++;
 			i=head;
 		} else if (((current+i->len) >= limit) && (holder_index<limit) && (holder_index>0)){
 			i=i->next;
-			//holder_index--;
 		} else { // when  (holder_index>=limit)
-			shift=++depth;
-			//holder_index--;
-			holder_index=0;
-			//shift=--holder_index;
-			while(shift--){
-				current-=i->len;
-				i=i->next;
-				//current-=i->len;
-			}	
+			// first decrease holder_index
+			holder_index--;			
+			while( (holder_index > 0) && (holder[holder_index] != NULL) && (holder[holder_index]->next == NULL)){
+				// decrease holder_index more!!
+				holder_index--;	
+			}
+			// break when the first element is null!!
+			if(holder[0]==NULL)
+				return;
+			holder[holder_index]=holder[holder_index]->next;
+			holder_index++;
+			//
+			current=0;
+			for(print=0; (print<holder_index) && (holder[print]!=NULL) ; print++)
+				current+=holder[print]->len;
 		}
+
 	}
 }
 
