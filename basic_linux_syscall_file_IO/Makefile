@@ -17,7 +17,7 @@ OBJ += ex5c_getting_the_file_descriptor_from_a_stream
 #OBJ += ex5d_show_all_possible_concencated_words
 OBJ += ex5e_show_all_number_combinations
 OBJ += ex5f_double_linkedlist
-
+OBJ += ex6a_compressing_a_file_with_zlib
 
 ################################
 # generic makefile for c code  #
