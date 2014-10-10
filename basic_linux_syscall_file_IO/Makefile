@@ -14,9 +14,10 @@ OBJ += ex4a_basic_scatter_input_readv_syscall
 OBJ += ex5a_create_concatenated_positional_words
 OBJ += ex5b_search_for_the_biggest_word
 OBJ += ex5c_getting_the_file_descriptor_from_a_stream
-#OBJ += ex5d_show_all_possible_concencated_words
+OBJ += ex5d_search_for_the_biggest_word_simplified
 OBJ += ex5e_show_all_number_combinations
 OBJ += ex5f_double_linkedlist
+OBJ += ex5g_all_possible_sting_concatenation_that_do_not_exceed_the_maximum_detected_string_size
 OBJ += ex6a_compressing_a_file_with_zlib
 
 ################################
@@ -25,7 +26,7 @@ OBJ += ex6a_compressing_a_file_with_zlib
 all: $(OBJ)
 
 $(OBJ): 
-	$(CC) $(CFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ -lz
 
 clean:
 	$(RM) $(OBJ) 

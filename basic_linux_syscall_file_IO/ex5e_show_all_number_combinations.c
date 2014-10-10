@@ -6,8 +6,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define LIMIT 5
-
+#define LIMIT 7
 typedef struct node {
 	size_t len;
 	struct node *next;
@@ -68,32 +67,26 @@ void show (node_t *head)
 		} else { // when  (holder_index>=limit)
 			// first decrease holder_index
 			holder_index--;			
-			while( (holder_index > 0) && (holder[holder_index] != NULL) && (holder[holder_index]->next == NULL)){
+			while( (holder_index > 0) && (holder[holder_index] != NULL) && (holder[holder_index]->next == NULL))
 				// decrease holder_index more!!
 				holder_index--;	
-			}
 			// break when the first element is null!!
 			if(holder[0]==NULL)
 				return;
 			holder[holder_index]=holder[holder_index]->next;
 			holder_index++;
-			//
+			// measure current again
 			current=0;
 			for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
 				current+=holder[iterate]->len;
 		}
 		// Note, make sure you don't use repeated results
 		// compare the old with the new
-		for(iterate=0; iterate < limit ; iterate++){
+		for(iterate=0; iterate < limit ; iterate++)
 			if(previous_holder[iterate]!=holder[iterate]){
 				print_combination(holder, holder_index);
 				break;
-			}
-			
-		}
-		//print=1;
-		//while()
-		
+			}	
 
 	}
 }
