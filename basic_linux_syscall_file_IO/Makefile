@@ -17,7 +17,8 @@ OBJ += ex5c_getting_the_file_descriptor_from_a_stream
 OBJ += ex5d_search_for_the_biggest_word_simplified
 OBJ += ex5e_show_all_number_combinations
 OBJ += ex5f_double_linkedlist
-OBJ += ex5g_all_possible_sting_concatenation_that_do_not_exceed_the_maximum_detected_string_size
+OBJ += ex5g_sorted_linked_list
+OBJ += ex5z_all_possible_sting_concatenation_that_do_not_exceed_the_maximum_detected_string_size
 OBJ += ex6a_compressing_a_file_with_zlib
 
 ################################
