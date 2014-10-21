@@ -42,6 +42,58 @@ void node_deletion(node_t **head)
 	free(remove);
 }
 
+void print_combination(node_t *holder[], size_t holder_index)
+{
+	int iterate;
+	for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
+		printf("%zu\t", holder[iterate]->len);
+	printf("\n");
+}
+
+void show_combination (node_t *head, size_t limit)
+{
+	size_t iterate=0, current=0,  holder_index=0;
+	node_t *holder[limit], *previous_holder[limit];
+	node_t *i=head;
+	while(i!=NULL){	
+		// copy the current holder to the previous_holder even if it is grabage!!
+		for(iterate=0; iterate < limit ; iterate++)
+			previous_holder[iterate]=holder[iterate];		
+		// search
+		if( ((current+i->len) < limit) && (holder_index<limit) ){
+			current+=i->len;
+			holder[holder_index]=i;
+			holder_index++;
+			i=head;
+		} else if (((current+i->len) >= limit) && (holder_index<limit) && (holder_index>0)){
+			i=i->next;
+		} else { // when  (holder_index>=limit)
+			// first decrease holder_index
+			holder_index--;			
+			while( (holder_index > 0) && (holder[holder_index] != NULL) && (holder[holder_index]->next == NULL))
+				// decrease holder_index more!!
+				holder_index--;	
+			// break when the first element is null!!
+			if(holder[0]==NULL)
+				return;
+			holder[holder_index]=holder[holder_index]->next;
+			holder_index++;
+			// measure current again
+			current=0;
+			for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
+				current+=holder[iterate]->len;
+		}
+		// Note, make sure you don't use repeated results
+		// compare the old with the new
+		for(iterate=0; iterate < limit ; iterate++)
+			if(previous_holder[iterate]!=holder[iterate]){
+				print_combination(holder, holder_index);
+				break;
+			}	
+
+	}
+}
+
 // idea: *head is the only element isn't sorted, so just sort *head to its place!!
 void sort(node_t **head)
 {
@@ -85,18 +137,8 @@ void create_the_linkedlist(FILE *fp, node_t *head)
 		sort(&head);
 		offset_previous=ftell(fp);
 	}
-	printf("largest word is %d\nsmallest word is %d\n", (int) max_len, (int) min_len);
-	//
-	// printing top ten lengthest words
-	node_t *j;
-	for(i=0, j=head; (i<10) && (j!=NULL); i++, j=j->next){
-		// let get this word
-		// set the offset to this word
-		fseek(fp, j->offset, SEEK_SET );
-		fgets(str,MAX_WORD_LENGTH,fp);
-		// print the word
-		printf("len=%d\tword=%s\n", (int) j->len, str);
-	}
+	// checkout all possible combinations
+	show_combination(head, max_len +1);
 
 }
 
