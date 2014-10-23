@@ -2,6 +2,8 @@
  * the idea is to create a simplified linkedlist then I ever did!!
  * [1] we sill assume that the biggest word possible is 32 letters, and there is no way that we would have bigger than 32
  * [2] 
+ *
+ * rather than creating a stack, we can simple use double pointer for creating a robust linkedlist
  */
  
 #include<stdio.h>

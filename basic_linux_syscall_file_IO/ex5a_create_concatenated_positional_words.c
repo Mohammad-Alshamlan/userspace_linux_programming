@@ -55,7 +55,7 @@ int main()
 	// creating a stack to hold the metadata
 	stack_t *s = (stack_t *) malloc (sizeof(stack_t));
 	s->top=NULL;
-	// 
+	// using fgets() instead of getline()
 	while((fgets(str,MAX_WORD_LENGTH,fp)) != NULL){
 		// cleanup the word form '\n' and '\r'
 		for (i=0; str[i] != '\0' ; i++)

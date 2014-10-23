@@ -42,15 +42,40 @@ void node_deletion(node_t **head)
 	free(remove);
 }
 
-void print_combination(node_t *holder[], size_t holder_index)
+char *get_word(FILE *fp, off_t offset)
+{
+	char str[MAX_WORD_LENGTH];
+	fseek(fp, offset, SEEK_SET );
+	fgets(str,MAX_WORD_LENGTH,fp);
+	// cleanup the word form '\n' and '\r'
+	int i;
+	for (i=0; str[i] != '\0' ; i++)
+		if((str[i]=='\n') || (str[i]=='\r'))
+			str[i]='\0';
+	return str;
+}
+
+
+void print_combination(FILE *fp, node_t *holder[], size_t holder_index)
+{
+	int iterate;
+
+	for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
+		printf("%s", get_word(fp, holder[iterate]->offset));
+	printf("\n");
+}
+
+#if 0
+void print_combination(FILE *fp, node_t *holder[], size_t holder_index)
 {
 	int iterate;
 	for(iterate=0; (iterate<holder_index) && (holder[iterate]!=NULL) ; iterate++)
 		printf("%zu\t", holder[iterate]->len);
 	printf("\n");
 }
+#endif
 
-void show_combination (node_t *head, size_t limit)
+void show_combination (FILE *fp, node_t *head, size_t limit)
 {
 	size_t iterate=0, current=0,  holder_index=0;
 	node_t *holder[limit], *previous_holder[limit];
@@ -96,7 +121,9 @@ void show_combination (node_t *head, size_t limit)
 			// compare the old with the new
 			for(iterate=0; iterate < limit ; iterate++)
 				if(previous_holder[iterate]!=holder[iterate]){
-					print_combination(holder, holder_index);
+					// we don't want to print a single word
+					if(holder_index > 1)
+						print_combination(fp, holder, holder_index);
 					// copy the current holder to the previous_holder even if it is grabage!!
 					for(iterate=0; iterate < limit ; iterate++)
 						previous_holder[iterate]=holder[iterate];
@@ -156,7 +183,7 @@ void create_the_linkedlist(FILE *fp, node_t *head)
 		offset_previous=ftell(fp);
 	}
 	// checkout all possible combinations
-	show_combination(head, (head->len +1) );
+	show_combination(fp,head, (head->len +1) );
 
 }
 
