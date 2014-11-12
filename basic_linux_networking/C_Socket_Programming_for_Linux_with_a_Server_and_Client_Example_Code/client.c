@@ -34,48 +34,38 @@ int main(int argc, char *argv[])
         	herror("gethostbyname");
         	return 2;
 	}
-	// configure the socket struct
+	// configure the socket struct sockaddr_in serv_addr
 	serv_addr.sin_family = hostname->h_addrtype;	// most likey it is AF_INET
 	serv_addr.sin_port = htons(HARD_CODED_PORT);	// hard-coded port
-	memcpy(&(serv_addr.sin_addr.s_addr), hostname->h_addr, hostname->h_length);
+	// get the IP after converting the hostname
+	serv_addr.sin_addr = *((struct in_addr *) hostname->h_addr);
+	// or the below instruction is equivalent to the above
+	//memcpy(&(serv_addr.sin_addr.s_addr), hostname->h_addr, hostname->h_length);
 
-	// create a socket
-	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	// create a socket 
+	if((sockfd = socket(hostname->h_addrtype, SOCK_STREAM, 0)) < 0) {
 		printf("\n Error : Could not create socket \n");
 		return 1;
 	} 
-	// 
-#if 0
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5000); 
-    // check if given address is correct
-    if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
-    {
-        printf("\n inet_pton error occured\n");
-        return 1;
-    } 
-#endif
-    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-       printf("\n Error : Connect Failed \n");
-       return 1;
-    } 
-
-    while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0)
-    {
-        recvBuff[n] = 0;
-        if(fputs(recvBuff, stdout) == EOF)
-        {
-            printf("\n Error : Fputs error\n");
-        }
-    } 
-
-    if(n < 0)
-    {
-        printf("\n Read error \n");
-    } 
-
-    return 0;
+	// connect() the socket
+	if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+		printf("\n Error : Connect Failed \n");
+		return 1;
+	} 
+	// read()
+	while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0) {
+		recvBuff[n] = 0;
+		if(fputs(recvBuff, stdout) == EOF) {
+			printf("\n Error : Fputs error\n");
+		}
+	} 
+	// not sure the below error check is useful in this point
+	if(n < 0) {
+	        printf("\n Read error \n");
+	}
+	// done!!
+	close(sockfd); 
+	return 0;
 }
 
 
