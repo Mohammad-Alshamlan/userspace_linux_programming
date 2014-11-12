@@ -29,7 +29,37 @@ to-do-list:
 [12] write good examples for UPD/IP and TCP/IP server and client code
 [13] write good examples for simple kernel driver code
 [14] reintegrate dropbox notes with this github
-[15]
+[15] know how to install the needed docs for your system, 
+	//such as kernel docs
+	(bash) $ sudo apt-get install linux-doc
+	// userspace doc
+	(bash) $ sudo apt-get install user-mode-linux-doc
+	// or search for it!!
+	(bash) $ sudo apt-cache search doc
+	
+	// for example searching for c++ docs and example
+	(bash) $ sudo apt-cache search doc | grep -i c++
+	// I'm able to get the following:
+	libsigc++-2.0-doc - type-safe Signal Framework for C++ - reference documentation
+	libstdc++-4.8-doc - GNU Standard C++ Library v3 (documentation files)
+	libstdc++-4.9-doc - GNU Standard C++ Library v3 (documentation files)
+	libstdc++6-4.7-doc - GNU Standard C++ Library v3 (documentation files)
+	c++-annotations - Extensive tutorial and documentation about C++
+	c++-annotations-contrib - Extensive tutorial and documentation about C++ - contributed files
+	c++-annotations-dvi - Extensive tutorial and documentation about C++ - DVI output
+	c++-annotations-html - Extensive tutorial and documentation about C++ - html output
+	c++-annotations-latex - Extensive tutorial and documentation about C++ - LaTeX output
+	c++-annotations-pdf - Extensive tutorial and documentation about C++ - PDF output
+	c++-annotations-ps - Extensive tutorial and documentation about C++ - Postscript output
+	c++-annotations-txt - Extensive tutorial and documentation about C++ - text output
+	cwebx - C/C++ literate programming system (Marc van Leeuwen's version)
+	libace-doc - C++ network programming framework - documentation
+	libasio-doc - documentation for asio C++ library for network programming
+	libga2 - C++ Library of Genetic Algorithm Components
+	stl-manual - C++-STL documentation in HTML
+	stx-btree-doc - b+tree implementation in c++, doxygen documentation
+	cppreference-doc-en-html - C and C++ standard library reference (English, Devhelp variant)
+
 
 Mon Sep 29, 2014
 -----------------
