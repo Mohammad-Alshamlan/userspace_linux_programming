@@ -1,0 +1,489 @@
+//
+
+Thu Jun 5, 2014
+----------------
+
+steps:
+assumaptions:
+	1. using modprobe for busybox v1.22.1
+[1] get info about all inserted kernel 
+	$ modinfo `lsmod | awk '{print $1}'`
+		
+[2] get ifo about all available kernel
+
+	$ modinfo `modprobe -l`
+  
+// however, for generic approach
+
+	$ modinfo `find /lib/modules/$(uname -r)/ -name *.ko`
+
+Tue Jun 3, 2014
+-------------------
+objective:
+[1] get info about all inserted kernel 
+[2] get ifo about all available kernel
+
+background and summary:
+// check all inserted kernel module
+	$ lsmod
+// check all available kernel module in the system
+	1. for busybox v1.22.1
+		tango3-paco[~]# modprobe -h
+		modprobe: invalid option -- 'h'
+		BusyBox v1.22.1 (2014-05-29 15:16:43 EDT) multi-call binary.
+
+		Usage: modprobe [-alrqvsD] MODULE [symbol=value]...
+
+			-a	Load multiple MODULEs
+			-l	List (MODULE is a pattern)
+			-r	Remove MODULE (stacks) or do autoclean
+			-q	Quiet
+			-v	Verbose
+			-s	Log to syslog
+			-D	Show dependencies
+	
+	// do this (for busybox v1.22.1)
+	$ modprobe -l
+
+	2. for ubuntu 14.04
+		alshamlan@alshamlan-OptiPlex-980:~$ modprobe -h
+		Usage:
+			modprobe [options] [-i] [-b] modulename
+			modprobe [options] -a [-i] [-b] modulename [modulename...]
+			modprobe [options] -r [-i] modulename
+			modprobe [options] -r -a [-i] modulename [modulename...]
+			modprobe [options] -c
+			modprobe [options] --dump-modversions filename
+		Management Options:
+			-a, --all                   Consider every non-argument to
+					            be a module name to be inserted
+					            or removed (-r)
+			-r, --remove                Remove modules instead of inserting
+			    --remove-dependencies   Also remove modules depending on it
+			-R, --resolve-alias         Only lookup and print alias and exit
+			    --first-time            Fail if module already inserted or removed
+			-i, --ignore-install        Ignore install commands
+			-i, --ignore-remove         Ignore remove commands
+			-b, --use-blacklist         Apply blacklist to resolved alias.
+			-f, --force                 Force module insertion or removal.
+					            implies --force-modversions and
+					            --force-vermagic
+			    --force-modversion      Ignore module's version
+			    --force-vermagic        Ignore module's version magic
+
+		Query Options:
+			-D, --show-depends          Only print module dependencies and exit
+			-c, --showconfig            Print out known configuration and exit
+			-c, --show-config           Same as --showconfig
+			    --show-modversions      Dump module symbol version and exit
+			    --dump-modversions      Same as --show-modversions
+
+		General Options:
+			-n, --dry-run               Do not execute operations, just print out
+			-n, --show                  Same as --dry-run
+			-C, --config=FILE           Use FILE instead of default search paths
+			-d, --dirname=DIR           Use DIR as filesystem root for /lib/modules
+			-S, --set-version=VERSION   Use VERSION instead of `uname -r`
+			-s, --syslog                print to syslog, not stderr
+			-q, --quiet                 disable messages
+			-v, --verbose               enables more messages
+			-V, --version               show version
+			-h, --help                  show this help
+		alshamlan@alshamlan-OptiPlex-980:~$ modprobe -V
+		kmod version 15
+		alshamlan@alshamlan-OptiPlex-980:~$ 
+
+	// do this for (kmod version 15) 
+	$  modprobe -c
+	
+	3. for generic approach
+	$ ls -R /lib/modules/$(uname -r)/
+	// or
+	$ find /lib/modules/$(uname -r)/ -name *.ko
+
+// checking more info about the module by using modinfo
+Example
+	alshamlan@alshamlan-OptiPlex-980:~$ modinfo /lib/modules/3.13.0-29-generic/kernel/fs/btrfs/btrfs.ko
+	filename:       /lib/modules/3.13.0-29-generic/kernel/fs/btrfs/btrfs.ko
+	license:        GPL
+	alias:          devname:btrfs-control
+	alias:          char-major-10-234
+	alias:          fs-btrfs
+	srcversion:     ABF5035454EFAAD444CB9FE
+	depends:        libcrc32c,raid6_pq,xor
+	intree:         Y
+	vermagic:       3.13.0-29-generic SMP mod_unload modversions 
+	signer:         Magrathea: Glacier signing key
+	sig_key:        D9:AB:17:E2:ED:8B:EB:25:23:A5:5E:97:A2:28:61:F9:23:6E:AC:A3
+	sig_hashalgo:   sha512
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+// insmod vs modprobe
+insmod inserts kernel module without checking dependces nor assuming the location of the kernel module. Hence, it us useful for development for verfiying your module, but it is not for common use anymore because modprobr takes care of all the needed dependeces
+
+modprobe manages the dependeces, and assume the kernel module path the following: /lib/modules/$(uname -r)/
+
+// rmmod vs modprobe -r  	
+Honestly, I'm not sure want the different between rmmod vs modprobe -r because 
+Example:
+
+	alshamlan@alshamlan-OptiPlex-980:~$ modprobe -h
+	Usage:
+		modprobe [options] [-i] [-b] modulename
+		modprobe [options] -a [-i] [-b] modulename [modulename...]
+		modprobe [options] -r [-i] modulename
+		modprobe [options] -r -a [-i] modulename [modulename...]
+		modprobe [options] -c
+		modprobe [options] --dump-modversions filename
+	Management Options:
+		-a, --all                   Consider every non-argument to
+			                    be a module name to be inserted
+			                    or removed (-r)
+		-r, --remove                Remove modules instead of inserting
+		    --remove-dependencies   Also remove modules depending on it
+	...
+
+steps:
+assumaptions:
+	1. using modprobe for busybox v1.22.1
+[1] get info about all inserted kernel 
+	$ modinfo `lsmod | awk '{print $1}'`
+
+example:
+	tango3-paco[~]# lsmod 
+	Module                  Size  Used by    Tainted: PF 
+	ipfilter_v2            10032  0 
+	ipfilter               17040  0 
+	irkernel                9568  2 
+	em8xxx                933504  2 
+	llad                  144800  5 em8xxx
+	sata_tango3            16592  1 
+	ext3                  144544  2 
+	jbd                    74928  1 ext3
+	mbcache                 8464  1 ext3
+	kseg1                   1984  0 
+	tango3_keypad           4496  0 
+	sigmablock             80800  2 
+	tango3-paco[~]# modinfo `lsmod | awk '{print $1}'`
+	filename:       extra/sigmablock.ko
+	license:        Proprietary
+	license:        Proprietary
+	author:         Max Lo
+	author:         Max Lo <max_lo@sdesigns.com>/YH Lin<YH_Lin@sdesigns.com>
+	description:    NAND flash Disk driver
+	description:    NAND Block device driver for connecting NAND flash Library and low level device driver
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	parm:           hw_sector_size:hardware sector size default 512 bytes
+	filename:       extra/kseg1.ko
+	license:        Proprietary
+	author:         Vincent Trinh
+	description:    SMP865x KSEG1 Access Driver
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	filename:       extra/tango3_keypad.ko
+	license:        GPL
+	author:         James Kim<james_kim@sdesigns.com>
+	description:    TANGO3(SMP8652) KEYPAD driver
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	filename:       kernel/fs/jbd/jbd.ko
+	license:        GPL
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	filename:       kernel/fs/ext3/ext3.ko
+	license:        GPL
+	author:         Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
+	description:    Second Extended Filesystem with journaling extensions
+	depends:        mbcache,jbd
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	filename:       kernel/fs/mbcache.ko
+	license:        GPL
+	author:         Andreas Gruenbacher <a.gruenbacher@computer.org>
+	description:    Meta block cache (for extended attributes)
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	filename:       kernel/drivers/char/irkernel.ko
+	license:        GPL
+	author:         TANGOX standalone team
+	description:    TANGOX ir remote driver
+
+	version:        1.18
+	srcversion:     B00FB40E59F212A3DE62804
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	filename:       kernel/drivers/ata/sata_tango3.ko
+	license:        GPL
+	author:         Sigma Designs Inc.
+	description:    TANGOX Bulid-in SATA Host Controller device driver
+	depends:        
+	vermagic:       2.6.22.19-39-sigma preempt mod_unload MIPS32_R2 32BIT 
+	parm:           disable_ports:which port to disable (1: disable port 0, 2: disable port 1, 3: both ports)
+	filename:       Module
+	filename:       ipfilter_v2
+	filename:       ipfilter
+	filename:       em8xxx
+	filename:       llad
+	tango3-paco[~]# 	
+	
+[2] get ifo about all available kernel
+
+	$ modinfo `modprobe -l`
+  
+// however, for generic approach
+
+	$ modinfo `find /lib/modules/$(uname -r)/ -name *.ko`
+	
+
+
+Wed May 28, 2014
+---------------------
+objective:
+[1] list all kernel modules
+[2] list inserted kernel modules
+[3] get more info about them
+
+
+resource:
+[1] http://www.cyberciti.biz/faq/howto-display-list-of-modules-or-device-drivers-in-the-linux-kernel/
+[2] https://bbs.archlinux.org/viewtopic.php?id=14172
+
+steps:
+[1] look to all kernel modules in the system, regardless if there were insreted or not:
+	
+	$ ls -R /lib/modules/`uname -r`/kernel/
+	
+Example:
+
+	tango3-paco[~]# uname -a 
+	Linux tango3-paco 2.6.22.19-39-sigma #2 PREEMPT Fri May 23 12:31:25 EDT 2014 mips GNU/Linux
+	tango3-paco[~]# 
+
+	tango3-paco[~]# ls -R /lib/modules/`uname -r`/kernel/
+	/lib/modules/2.6.22.19-39-sigma/kernel/:
+	arch/    drivers/ fs/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/arch:
+	mips/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/arch/mips:
+	oprofile/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/arch/mips/oprofile:
+	oprofile.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers:
+	ata/   char/  hid/   input/ media/ mmc/   scsi/  usb/   video/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/ata:
+	sata_tango3.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/char:
+	fipkernel.ko  fusion/       irkernel.ko   sckernel.ko   uirkernel.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/char/fusion:
+	fusion.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/hid:
+	usbhid/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/hid/usbhid:
+	usbhid.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/input:
+	misc/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/input/misc:
+	uinput.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/media:
+	dvb/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/media/dvb:
+	dvb-core/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/media/dvb/dvb-core:
+	dvb-core.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/mmc:
+	card/ host/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/mmc/card:
+	mmc_block.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/mmc/host:
+	sdhci-tangox.ko  sdhci.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/scsi:
+	scsi_wait_scan.ko  sg.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/usb:
+	gadget/  host/    storage/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/usb/gadget:
+	g_file_storage.ko  gadgetfs.ko        tango3_udc.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/usb/host:
+	tangox-ehci-hcd.ko  tangox-ohci-hcd.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/usb/storage:
+	usb-storage.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/video:
+	console/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/drivers/video/console:
+	bitblit.ko     fbcon.ko       font.ko        softcursor.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs:
+	autofs4/    ext3/       fuse/       jbd/        jfs/        mbcache.ko  xfs/
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs/autofs4:
+	autofs4.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs/ext3:
+	ext3.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs/fuse:
+	fuse.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs/jbd:
+	jbd.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs/jfs:
+	jfs.ko
+
+	/lib/modules/2.6.22.19-39-sigma/kernel/fs/xfs:
+	xfs.ko
+	tango3-paco[~]# 
+	
+// another way
+	
+	$ modprobe -l
+
+example: 
+
+	tango3-paco[~]# modprobe -h
+	modprobe: invalid option -- 'h'
+	BusyBox v1.22.1 (2014-05-23 11:53:17 EDT) multi-call binary.
+
+	Usage: modprobe [-alrqvsD] MODULE [symbol=value]...
+
+		-a	Load multiple MODULEs
+		-l	List (MODULE is a pattern)
+		-r	Remove MODULE (stacks) or do autoclean
+		-q	Quiet
+		-v	Verbose
+		-s	Log to syslog
+		-D	Show dependencies
+
+	tango3-paco[~]# modprobe -l
+	extra/kseg1.ko
+	kernel/fs/fuse/fuse.ko
+	kernel/arch/mips/oprofile/oprofile.ko
+	kernel/drivers/char/sckernel.ko
+	kernel/fs/ext3/ext3.ko
+	kernel/drivers/usb/host/tangox-ohci-hcd.ko
+	kernel/drivers/usb/gadget/tango3_udc.ko
+	kernel/drivers/video/console/font.ko
+	kernel/drivers/char/irkernel.ko
+	kernel/drivers/char/fipkernel.ko
+	kernel/drivers/video/console/fbcon.ko
+	extra/usb-otg.ko
+	kernel/drivers/usb/gadget/g_file_storage.ko
+	kernel/drivers/mmc/card/mmc_block.ko
+	kernel/fs/jfs/jfs.ko
+	extra/sigmablock.ko
+	kernel/fs/xfs/xfs.ko
+	kernel/drivers/ata/sata_tango3.ko
+	kernel/fs/mbcache.ko
+	kernel/fs/jbd/jbd.ko
+	kernel/drivers/video/console/softcursor.ko
+	kernel/drivers/scsi/sg.ko
+	kernel/drivers/input/misc/uinput.ko
+	kernel/drivers/usb/host/tangox-ehci-hcd.ko
+	kernel/drivers/mmc/host/sdhci.ko
+	kernel/drivers/media/dvb/dvb-core/dvb-core.ko
+	kernel/drivers/char/fusion/fusion.ko
+	kernel/drivers/scsi/scsi_wait_scan.ko
+	kernel/drivers/mmc/host/sdhci-tangox.ko
+	kernel/drivers/usb/gadget/gadgetfs.ko
+	extra/fctrl.ko
+	kernel/drivers/usb/storage/usb-storage.ko
+	kernel/drivers/hid/usbhid/usbhid.ko
+	kernel/drivers/char/uirkernel.ko
+	extra/tango3_keypad.ko
+	kernel/drivers/video/console/bitblit.ko
+	kernel/fs/autofs4/autofs4.ko
+	tango3-paco[~]# 
+
+	
+[2] check what is insreted 
+
+	$ lsmod
+	
+// which is equivalent to
+
+	$ less /proc/modules
+	
+Example:
+
+	tango3-paco[~]# lsmod 
+	Module                  Size  Used by    Tainted: PF 
+	ipfilter_v2             9968  2 
+	ipfilter               17040  0 
+	irkernel                9568  2 
+	em8xxx                933440  2 
+	llad                  144800  5 em8xxx
+	sata_tango3            16592  1 
+	ext3                  144544  2 
+	mbcache                 8464  1 ext3
+	jbd                    74928  1 ext3
+	kseg1                   1984  0 
+	tango3_keypad           4496  0 
+	sigmablock             80736  2 
+	tango3-paco[~]# 
+
+
+[3] get some info from the kernel module
+
+	$  modinfo 
+	
+Example: 
+
+	tango3-paco[~]# modinfo  -F  usb-storage.ko
+	BusyBox v1.22.1 (2014-05-23 11:53:17 EDT) multi-call binary.
+
+	Usage: modinfo [-adlp0] [-F keyword] MODULE
+
+		-a		Shortcut for '-F author'
+		-d		Shortcut for '-F description'
+		-l		Shortcut for '-F license'
+		-p		Shortcut for '-F parm'
+		-F keyword	Keyword to look for
+		-0		Separate output with NULs
+
+	tango3-paco[~]# modinfo  -a -d -l -p   usb-storage.ko
+	tango3-paco[~]# modinfo  -a -d -l -p -n  usb-storage.ko
+	filename:       usb-storage.ko
+	tango3-paco[~]# 
+
+[4] insert or remove kernel modules
+
+	tango3-paco[~]# modprobe --h
+	modprobe: unrecognized option '--h'
+	BusyBox v1.22.1 (2014-05-23 11:53:17 EDT) multi-call binary.
+
+	Usage: modprobe [-alrqvsD] MODULE [symbol=value]...
+
+		-a	Load multiple MODULEs
+		-l	List (MODULE is a pattern)
+		-r	Remove MODULE (stacks) or do autoclean
+		-q	Quiet
+		-v	Verbose
+		-s	Log to syslog
+		-D	Show dependencies
+
+	tango3-paco[~]# 
+
+

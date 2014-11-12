@@ -1,0 +1,198 @@
+// 
+queue is Frist in First Out (FIFO). Implementation can be done with array or a linkedlist
+	/*
+	 * queue: first in first out (FIFO) Using LinkedList
+	 */
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	// linkedlist
+	typedef struct node{
+		int data;
+		struct node * next;
+	} node_t;
+
+	// queue: which is Circular double LinkedList 
+	typedef struct queue{
+		node_t *front; 	// head
+		node_t *rear;	// tail
+	} queue_t;
+
+	void enqueue (queue_t *q, int data)
+	{
+		// prepare the new variable
+		node_t *new = (node_t *) malloc (sizeof(node_t));
+		new->data= data;
+		new->next= NULL;
+		// doing the enqu for the new variable
+		if(q->front){
+			// honestly i don't understand this
+			q->rear->next= new;
+			q->rear= new;
+		} else {
+			q->front=new;
+			q->rear= new;
+		}
+	}
+
+	int dequeue (queue_t *q)
+	{
+		node_t *remove= q->front;
+		int result = remove->data;
+		if((q->front)==(q->rear)) {
+			q->front= NULL;
+			q->rear= NULL;
+		} else 
+			q->front = remove->next;
+		// removing the node
+		free(remove);	
+		return result;
+	}
+
+	int main()
+	{
+		queue_t *q= (queue_t *) malloc (sizeof(queue_t));
+		q->front = q->rear =NULL; // inistialize
+		enqueue(q, 11);
+		enqueue(q, 22);
+		enqueue(q, 33);
+		printf("%d %d %d\n", dequeue(q), dequeue(q), dequeue(q));
+		free(q);
+		return 0; 
+	}
+/*
+// output
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make -B q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	33 22 11
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+Note that the output of stack as follow:
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make -B q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	11 22 33
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+
+// ------------------------
+implementing a print() function that can print queue interinal!!
+	/*
+	 * queue: first in first out (FIFO)
+	 */
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	// linkedlist
+	typedef struct node{
+		int data;
+		struct node * next;
+	} node_t;
+
+	// queue: which is Circular double LinkedList 
+	typedef struct queue{
+		node_t *front; 	// head
+		node_t *rear;	// tail
+	} queue_t;
+
+	void enqueue (queue_t *q, int data)
+	{
+		// prepare the new variable
+		node_t *new = (node_t *) malloc (sizeof(node_t));
+		new->data= data;
+		new->next= NULL;
+		// doing the enqu for the new variable
+		if(q->front){
+			// honestly i don't understand this
+			q->rear->next= new;
+			q->rear= new;
+		} else {
+			q->front=new;
+			q->rear= new;
+		}
+	}
+
+	int dequeue (queue_t *q)
+	{
+		node_t *remove= q->front;
+		int result = remove->data;
+		if((q->front)==(q->rear)) {
+			q->front= NULL;
+			q->rear= NULL;
+		} else 
+			q->front = remove->next;
+		// removing the node
+		free(remove);	
+		return result;
+	}
+
+	void print_queue (queue_t *p)
+	{
+		node_t *i;
+		printf("**************\n begin reading the queue\n**************\n");
+		for(i=p->front; i != NULL ; i=i->next)
+			printf("\t%d\n", i->data);
+		printf("**************\n finish reading the queue\n**************\n");
+	}
+
+	int main()
+	{
+		queue_t *q= (queue_t *) malloc (sizeof(queue_t));
+		q->front = q->rear =NULL; // inistialize
+		print_queue(q);
+		enqueue(q, 11);
+		print_queue(q);
+		enqueue(q, 22);
+		print_queue(q);
+		enqueue(q, 33);
+		print_queue(q);
+		printf("%d %d %d\n", dequeue(q), dequeue(q), dequeue(q));
+		print_queue(q);
+		free(q);
+		return 0; 
+	}
+/*
+// output
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	**************
+	 begin reading the queue
+	**************
+	**************
+	 finish reading the queue
+	**************
+	**************
+	 begin reading the queue
+	**************
+		11
+	**************
+	 finish reading the queue
+	**************
+	**************
+	 begin reading the queue
+	**************
+		11
+		22
+	**************
+	 finish reading the queue
+	**************
+	**************
+	 begin reading the queue
+	**************
+		11
+		22
+		33
+	**************
+	 finish reading the queue
+	**************
+	33 22 11
+	**************
+	 begin reading the queue
+	**************
+	**************
+	 finish reading the queue
+	**************
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/

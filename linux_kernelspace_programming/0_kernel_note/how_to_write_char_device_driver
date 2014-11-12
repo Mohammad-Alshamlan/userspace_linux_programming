@@ -1,0 +1,585 @@
+//
+
+Tue Aug 26, 2014
+------------------
+objective:
+[1] 
+
+analysis:
+[1] there are these functions:
+
+	// first, moudel main function, which points to the spinor init function
+	module_init(spinor_init_module);
+	
+	// spinor init
+	int __init spinor_init_module(void)
+	{
+		int status = 0;
+		unsigned long i;
+		// ??? not sure why zeroing spinor_priv
+		memset(spinor_priv, 0, sizeof(struct spinor_private) * SPINOR_MAX_NUM_CS);
+		for (i = 0; i < SPINOR_MAX_NUM_CS; i++) {
+			spin_lock_init(&(spinor_priv[i].lock));
+		}
+		// ???
+		if ((tmpbuf = (void *)__get_free_pages(GFP_KERNEL, 4)) == NULL) { /* Get 64KB */
+			printk("%s: error allocating %ld bytes of memory.\n", spinor_devname, PAGE_SIZE << 4);
+			return(-ENOMEM);
+		}
+		
+		/* Register device, and may be allocating major# */
+		status = register_chrdev(major_num, spinor_devname, &spinor_fops); // the supported functions are stored in "spinor_fops"
+		if (status < 0) {
+			printk("%s: cannot get major number\n", spinor_devname); 
+			goto err_out1;
+		} else if (major_num == 0)
+			major_num = status;	/* Dynamic major# allocation */
+	
+		printk("TANGOX %s (%d:0): driver loaded\n", spinor_devname, major_num);
+
+		return(0);
+
+	err_out1:
+		return(status);
+	}
+	
+	// defining some stucts
+
+		#define SPINOR_MAX_CPU_CS   3
+		#define SPINOR_MAX_PB_CS    5
+		#define SPINOR_MAX_GPIO_CS  1
+		#define SPINOR_MAX_NUM_CS   (SPINOR_MAX_CPU_CS + SPINOR_MAX_PB_CS + SPINOR_MAX_GPIO_CS)
+	
+		static struct file_operations spinor_fops = {
+			open: spinor_open,
+			unlocked_ioctl: spinor_ioctl,
+			release: spinor_release,
+			owner: THIS_MODULE,
+		};
+
+		static struct spinor_private spinor_priv[SPINOR_MAX_NUM_CS]; /* a private struct for each chip select */
+	
+	// about the major number
+		/* The major device number and name */
+		#define SPINOR_DEV_MAJOR	0
+		#define SPINOR_DEV_NAME		"spinor"
+
+		#define MAX_BUF_SIZE		(PAGE_SIZE << 4) /* 64KB */
+
+		static int major_num = SPINOR_DEV_MAJOR;
+
+
+		/* Kernel module parameters */
+		module_param(major_num, int, 0);
+
+		/* Some prototypes */
+		static int spinor_open(struct inode *, struct file *);
+		static int spinor_release(struct inode *, struct file *);
+		static long spinor_ioctl(struct file *, unsigned int, unsigned long);
+
+		/* Global data */
+		static char *spinor_devname = SPINOR_DEV_NAME;
+		
+	// example for open device
+		/* Open the device */
+		static int spinor_open(struct inode *inode_ptr, struct file *fptr)
+		{
+			unsigned long spinor_cs, minor_num;
+			fptr->f_op = &spinor_fops;
+
+			minor_num = iminor(inode_ptr);
+			if (spinor_minor2cs(minor_num, &spinor_cs) != 0) {
+				printk("Invalid device minor number!\n");
+				return -1;
+			}
+	
+			spinor_priv[minor_num].minor = minor_num;
+			fptr->private_data = (void *)&(spinor_priv[minor_num]);
+			return(0);
+		}
+		
+	// close
+		/* Close the device */
+		static int spinor_release(struct inode *inode_ptr, struct file *fptr) 
+		{
+			struct spinor_private *priv = (struct spinor_private *)fptr->private_data;
+			unsigned long flags;
+
+			spin_lock_irqsave(&priv->lock, flags);
+			priv->minor = 0;
+			spin_unlock_irqrestore(&priv->lock, flags);
+
+			return(0);
+		}
+		
+	// remove the module
+		void __exit spinor_cleanup_module(void)
+		{
+			unregister_chrdev(major_num, spinor_devname);
+			if (tmpbuf)
+				free_pages((u32)tmpbuf, 4);
+		}
+
+
+		module_exit(spinor_cleanup_module);
+		
+[2] 
+// creating a header file for both kernelspace and uerspace code to include
+alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/vendor/kernel_source/2.6.29/proprietary/spinor$ cat -n spinor_ioctl.h 
+     1	/*****************************************
+     2	 Copyright (C) 2001-2009
+     3	 Sigma Designs, Inc. All Rights Reserved
+     4	 Proprietary and Confidential
+     5	 *****************************************/
+     6	                                                                                
+     7	/*
+     8	 * SPINOR related definitions, and function prototypes.
+     9	 */
+    10	#ifndef __SPINOR_IOCTL_H__
+    11	#define __SPINOR_IOCTL_H__
+    12	                                                                                
+    13	#ifdef __KERNEL__
+    14	#include <linux/kernel.h>
+    15	#include <linux/module.h>
+    16	#include <asm/ioctl.h>
+    17	#else
+    18	#include <sys/ioctl.h>
+    19	#endif /* __KERNEL__ */
+    20	
+    21	/* Minor numbers 0, 1, and 2 correspond to CPU-driven SPI NOR Chip Selects 0, 1 and 2.
+    22	   Minor number 3 corresponds to GPIO-driven SPI NOR (which only has 1 "Chip Select")
+    23	*/
+    24	#define SPINOR_IOC_MINORNUM_CPU_CS0   0
+    25	#define SPINOR_IOC_MINORNUM_CPU_CS1   1
+    26	#define SPINOR_IOC_MINORNUM_CPU_CS2   2
+    27	#define SPINOR_IOC_MINORNUM_PB_CS0    3
+    28	#define SPINOR_IOC_MINORNUM_PB_CS1    4
+    29	#define SPINOR_IOC_MINORNUM_PB_CS2    5
+    30	#define SPINOR_IOC_MINORNUM_GPIO_CS0  6
+    31	
+    32	
+    33	/* ioctl commands for user level applications*/
+    34	#define SPINOR_IOC_MAGIC		'R'
+    35	#define SPINOR_IOC_READID		_IO(SPINOR_IOC_MAGIC, 0)
+    36	#define SPINOR_IOC_ERASESECTOR		_IO(SPINOR_IOC_MAGIC, 1)
+    37	#define SPINOR_IOC_ERASEBLOCK 		_IO(SPINOR_IOC_MAGIC, 2)
+    38	#define SPINOR_IOC_ERASECHIP		_IO(SPINOR_IOC_MAGIC, 3)
+    39	#define SPINOR_IOC_READ			_IO(SPINOR_IOC_MAGIC, 4)
+    40	#define SPINOR_IOC_WRITE		_IO(SPINOR_IOC_MAGIC, 5)
+    41	#define SPINOR_IOC_READ_DUAL		_IO(SPINOR_IOC_MAGIC, 6)
+    42	#define SPINOR_IOC_READ_QUAD		_IO(SPINOR_IOC_MAGIC, 7)
+    43	
+    44	
+    45	/* Descriptor for init operation */
+    46	struct spinor_init_desc
+    47	{
+    48		unsigned long half_sclk_per;
+    49		unsigned long jedec_id;
+    50	};
+    51	
+    52	/* Descriptor for R/W operation */
+    53	struct spinor_rw_desc
+    54	{
+    55		unsigned long addr;
+    56		unsigned long size;
+    57		void *buffer;
+    58	};
+    59	
+    60	#endif /* __SPINOR_IOCTL_H__ */
+    61	
+alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/vendor/kernel_source/2.6.29/proprietary/spinor$ 
+
+
+[3] accessing the driver through the userspace
+
+alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/vendor/kernel_source/2.6.29/proprietary/spinor$ cat -n spinor_user.c 
+     1	/*****************************************
+     2	 Copyright (C) 2001-2009
+     3	 Sigma Designs, Inc. All Rights Reserved
+     4	 Proprietary and Confidential
+     5	 *****************************************/
+     6	
+     7	/* 
+     8	 * Sample SPINOR user level program 
+     9	 */
+    10	
+    11	#include <assert.h>
+    12	#include <stdio.h>
+    13	#include <errno.h>
+    14	#include <fcntl.h>
+    15	#include <stdlib.h>
+    16	#include <unistd.h>
+    17	#include <signal.h>
+    18	#include <string.h>
+    19	#include <sys/select.h>
+    20	#include <sys/time.h>
+    21	
+    22	#include "spinor_ioctl.h"
+    23	
+    24	/* SPINOR device node and file handle */
+    25	static const char *dev = "/dev/spinor";
+    26	static int fno = -1;
+    27	
+    28	enum spinor_readmode {
+    29		spinor_readmode_single,
+    30		spinor_readmode_dual,
+    31		spinor_readmode_quad,
+    32	};
+    33	
+    34	#define TEST_DATA_SIZE 0x20000	/* 128 KB, size of phyblock */
+    35	
+    36	unsigned char erasebuf[TEST_DATA_SIZE];	/* To be filled with all 0xff by main() below */
+    37	
+    38	
+    39	/* Signal handler */
+    40	static void terminate(int sig_no)
+    41	{
+    42		printf("Got signal %d, exiting ...\n", sig_no);
+    43		if (fno >= 0)
+    44			close(fno);
+    45		exit(1); 
+    46	}
+    47	
+    48	static void install_sig_handler(void)
+    49	{
+    50		signal(SIGBUS, terminate); //SIGBUS	A	Access to an undefined portion of a memory object.
+    51		signal(SIGFPE, terminate); //SIGFPE	A	Erroneous arithmetic operation. 
+    52		signal(SIGHUP, terminate);
+    53		signal(SIGILL, terminate);
+    54		signal(SIGINT, terminate);
+    55		signal(SIGIOT, terminate);
+    56		signal(SIGPIPE, terminate);
+    57		signal(SIGQUIT, terminate);
+    58		signal(SIGSEGV, terminate);
+    59		signal(SIGSYS, terminate);
+    60		signal(SIGTERM, terminate);
+    61		signal(SIGTRAP, terminate);
+    62		signal(SIGUSR1, terminate);
+    63		signal(SIGUSR2, terminate);
+    64	}
+    65	
+    66	int spinor_read_id(unsigned long *id)
+    67	{
+    68		struct spinor_init_desc init_desc;
+    69		int res;
+    70	
+    71		init_desc.half_sclk_per = 5;
+    72		if (fno < 0)
+    73			return(-1);
+    74	
+    75		res = ioctl(fno, SPINOR_IOC_READID, (unsigned long)(&init_desc));
+    76		if (res != 0)
+    77			return(-1);
+    78		*id = init_desc.jedec_id;
+    79		return(0);
+    80	}
+    81	
+    82	int spinor_erase_sector(unsigned long sector)
+    83	{
+    84		int res;
+    85		if (fno < 0)
+    86			return(-1);
+    87	
+    88		res = ioctl(fno, SPINOR_IOC_ERASESECTOR, sector);
+    89		if (res != 0)
+    90			return(-1);
+    91		return(0);
+    92	}
+    93	
+    94	int spinor_erase_block(unsigned long block)
+    95	{
+    96		int res;
+    97		if (fno < 0)
+    98			return(-1);
+    99	
+   100		res = ioctl(fno, SPINOR_IOC_ERASEBLOCK, block);
+   101		if (res != 0)
+   102			return(-1);
+   103		return(0);
+   104	}
+   105	
+   106	int spinor_read(enum spinor_readmode readmode, unsigned long addr, unsigned long size, char *buf)
+   107	{
+   108		int res;
+   109		struct spinor_rw_desc desc;
+   110		int ioctl_req;
+   111	
+   112		if (fno < 0)
+   113			return(-1);
+   114	
+   115		switch (readmode) {
+   116		case spinor_readmode_single:
+   117			ioctl_req = SPINOR_IOC_READ;
+   118			break;
+   119		case spinor_readmode_dual:
+   120			ioctl_req = SPINOR_IOC_READ_DUAL;
+   121			break;
+   122		case spinor_readmode_quad:
+   123			ioctl_req = SPINOR_IOC_READ_QUAD;
+   124			break;
+   125		}
+   126	
+   127		desc.addr = addr;
+   128		desc.size = size;
+   129		desc.buffer = buf;
+   130		res = ioctl(fno, ioctl_req, (unsigned long)&desc);
+   131		if (res != 0)
+   132			return(-1);
+   133		return(0);
+   134	}
+   135	
+   136	int spinor_write(unsigned long addr, unsigned long size, char *buf)
+   137	{
+   138		int res;
+   139		struct spinor_rw_desc desc;
+   140	
+   141		if (fno < 0)
+   142			return(-1);
+   143	
+   144		desc.addr = addr;
+   145		desc.size = size;
+   146		desc.buffer = buf;
+   147		res = ioctl(fno, SPINOR_IOC_WRITE, (unsigned long)&desc);
+   148		if (res != 0)
+   149			return(-1);
+   150		return(0);
+   151	}
+   152	
+   153	#define BUFFERMODE_ZERO_FILL      0
+   154	#define BUFFERMODE_PRANDOM_FILL   1 /* Pseudo-random fill pattern */
+   155	#define BUFFERMODE_PATTERN_FILL   2
+   156	static void setup_buffer(unsigned char *buf, int mode, unsigned long pattern, unsigned long size)
+   157	{
+   158		switch (mode) {
+   159		case BUFFERMODE_ZERO_FILL:
+   160			memset(buf, 0, size);
+   161			break;
+   162		case BUFFERMODE_PRANDOM_FILL:
+   163			srand(pattern);
+   164			{
+   165				unsigned long i;
+   166				for (i = 0; i < size; i++) {
+   167					buf[i] = (unsigned char)rand();
+   168				}
+   169			}
+   170			break;
+   171		case BUFFERMODE_PATTERN_FILL:
+   172			{
+   173				unsigned long i;
+   174				for (i = 0; i <= (size - 4); i += 4) {
+   175					*((unsigned long *)(&buf[i])) = pattern;
+   176				}
+   177			}
+   178			break;
+   179		}
+   180	}
+   181	
+   182	void print_usage(char *progname)
+   183	{
+   184		fprintf(stderr, "Usage: %s [readmode]\n"
+   185				"       readmode:\n"
+   186				"              s  -  single mode\n"
+   187				"              d  -  dual mode\n"
+   188				"              q  -  quad mode\n",
+   189			progname);
+   190	}
+   191	
+   192	int main(int argc, char *argv[])
+   193	{
+   194		unsigned char *readbuf = NULL;
+   195		unsigned char *writebuf = NULL;
+   196		unsigned char *originaldata = NULL; /* Saved data to be restored at the end */
+   197	
+   198		unsigned long readmode = spinor_readmode_single;
+   199	
+   200		install_sig_handler();
+   201	
+   202		switch (argc) {
+   203		case 1:
+   204			break;
+   205		case 2:
+   206			if (strlen(argv[1]) != 1) {
+   207				print_usage(argv[0]);
+   208				return -1;
+   209			}
+   210			switch (argv[1][0]) {
+   211			case 's':
+   212			case 'S':
+   213				readmode = spinor_readmode_single;
+   214				break;
+   215			case 'd':
+   216			case 'D':
+   217				readmode = spinor_readmode_dual;
+   218				break;
+   219			case 'q':
+   220			case 'Q':
+   221				readmode = spinor_readmode_quad;
+   222				break;
+   223			}
+   224			break;
+   225		default:
+   226			print_usage(argv[0]);
+   227			return -1;
+   228			break;
+   229		}
+   230	
+   231		if ((fno = open(dev, O_RDWR)) < 0) {
+   232			printf("error opening %s.\n", dev);
+   233			return(-1);
+   234		}
+   235	
+   236		readbuf = (unsigned char *)malloc(TEST_DATA_SIZE);
+   237		assert(readbuf);
+   238		writebuf = (unsigned char *)malloc(TEST_DATA_SIZE);
+   239		assert(writebuf);
+   240		originaldata = (unsigned char *)malloc(TEST_DATA_SIZE);
+   241		assert(originaldata);
+   242	
+   243		setup_buffer(readbuf, BUFFERMODE_ZERO_FILL, 0, TEST_DATA_SIZE);
+   244		setup_buffer(writebuf, BUFFERMODE_PRANDOM_FILL, 0x26541941, TEST_DATA_SIZE);
+   245		setup_buffer(erasebuf, BUFFERMODE_PATTERN_FILL, 0xffffffff, TEST_DATA_SIZE);
+   246		setup_buffer(originaldata, BUFFERMODE_ZERO_FILL, 0, TEST_DATA_SIZE);
+   247	
+   248		/* Get ID */
+   249		{
+   250			unsigned long id;
+   251			if (spinor_read_id(&id)) {
+   252				printf("error reading SPI NOR ID.\n");
+   253				goto err_out;
+   254			}
+   255			printf("SPI NOR initialized, ID=0x%08lx\n", id);
+   256		}
+   257	
+   258		sleep(1);
+   259	
+   260		/* Read first 128KB out and save it */
+   261		if (spinor_read(readmode, 0, TEST_DATA_SIZE, originaldata)) {
+   262			printf("Error reading first 128KB from SPI NOR to save original data.\n");
+   263			goto err_out;
+   264		}
+   265		printf("Read first 128KB from SPI NOR, saving original data...\n");
+   266		
+   267		/* Erase 128KB by sectors */
+   268		{
+   269			unsigned long i;
+   270			for (i = 0; i < 32; i++) { /* Erase 32 sectors of 4KB each, total of 128KB, size of phyblock image. */
+   271				if (spinor_erase_sector(i)) {
+   272					printf("error erasing sector#%d\n", i);
+   273					goto err_out;
+   274				}
+   275			}
+   276			printf("first 32 sectors erased.\n");
+   277		}
+   278	
+   279		/* Read 128KB to confirm erasure */
+   280		{
+   281			unsigned long i;
+   282			setup_buffer(readbuf, BUFFERMODE_ZERO_FILL, 0, TEST_DATA_SIZE);
+   283	
+   284			if (spinor_read(readmode, 0, TEST_DATA_SIZE, readbuf)) {
+   285				printf("Error reading first 128KB from SPI NOR.\n");
+   286				goto err_out;
+   287			}
+   288	
+   289			if (memcmp(readbuf, erasebuf, TEST_DATA_SIZE)) {
+   290				printf("Sector Erase failure.\n");
+   291				goto err_out;
+   292			}
+   293	
+   294			printf("Confirmed 128KB is erased.\n");
+   295		}
+   296	
+   297		/* Write 128KB of random data */
+   298		{
+   299			if (spinor_write(0, TEST_DATA_SIZE, writebuf)) {
+   300				printf("Error writing first 128KB with random data.\n");
+   301				goto err_out;
+   302			}
+   303			printf("First 128KB written with random data.\n");
+   304		}
+   305	
+   306		/* Read it back to confirm write of 128KB with random data */
+   307		{
+   308			unsigned long i;
+   309			setup_buffer(readbuf, BUFFERMODE_ZERO_FILL, 0, TEST_DATA_SIZE);
+   310	
+   311			if (spinor_read(readmode, 0, TEST_DATA_SIZE, readbuf)) {
+   312				printf("Error reading first 128KB from SPI NOR.\n");
+   313				goto err_out;
+   314			}
+   315	
+   316			if (memcmp(readbuf, writebuf, TEST_DATA_SIZE)) {
+   317				printf("Read error, data does not match what should have been written.\n");
+   318				goto err_out;
+   319			}
+   320	
+   321			printf("First 128KB read back, confirmed to have correct set of random data.\n");
+   322		}
+   323	
+   324		/* Erase 128KB by blocks */
+   325		{
+   326			unsigned long i;
+   327			for (i = 0; i < 2; i++) {
+   328				if (spinor_erase_block(i)) {
+   329					printf("error erasing block#%d\n", i);
+   330					goto err_out;
+   331				}
+   332			}
+   333			printf("first 2 blocks erased.\n");
+   334		}
+   335	
+   336		/* Read 128KB to confirm erasure */
+   337		{
+   338			unsigned long i;
+   339			setup_buffer(readbuf, BUFFERMODE_ZERO_FILL, 0, TEST_DATA_SIZE);
+   340	
+   341			if (spinor_read(readmode, 0, TEST_DATA_SIZE, readbuf)) {
+   342				printf("Error reading first 128KB from SPI NOR.\n");
+   343				goto err_out;
+   344			}
+   345	
+   346			if (memcmp(readbuf, erasebuf, TEST_DATA_SIZE)) {
+   347				printf("Block Erase failure.\n");
+   348				goto err_out;
+   349			}
+   350	
+   351			printf("Confirmed 128KB is erased.\n");
+   352		}
+   353	
+   354		/* Write the original data back */
+   355		if (spinor_write(0, TEST_DATA_SIZE, originaldata)) {
+   356			printf("Error writing first 128KB with original data.\n");
+   357			goto err_out;
+   358		}
+   359		printf("First 128KB written with original data.\n");
+   360	
+   361		/* Read it back to confirm */
+   362		{
+   363			if (spinor_read(readmode, 0, TEST_DATA_SIZE, readbuf)) {
+   364				printf("Error reading first 128KB from SPI NOR.\n");
+   365				goto err_out;
+   366			}
+   367	
+   368			if (memcmp(readbuf, originaldata, TEST_DATA_SIZE)) {
+   369				printf("Read data does not match original data!\n");
+   370				goto err_out;
+   371			}
+   372	
+   373			printf("Confirmed 128KB re-written with original data.\n");
+   374		}
+   375		
+   376		free(readbuf);
+   377		free(writebuf);
+   378		free(originaldata);
+   379		close(fno);
+   380		return(0);
+   381	
+   382	 err_out:
+   383		free(readbuf);
+   384		free(writebuf);
+   385		free(originaldata);
+   386		close(fno);
+   387		return -1;
+   388	}
+   389	
+alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/vendor/kernel_source/2.6.29/proprietary/spinor$ 	

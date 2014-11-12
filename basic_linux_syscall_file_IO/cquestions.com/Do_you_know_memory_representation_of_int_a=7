@@ -1,0 +1,18 @@
+/*
+ * Do you know memory representation of int a = 7?
+ */
+ 
+/*
+Explanation:
+Memory representation of:
+
+signed int a=7;         (In Turbo c compiler)
+signed short int a=7 (Both turbo c and Linux gcc compiler)
+
+Binary equivalent of data 7 in 16 bit:  00000000 00000111
+Data bit: 0000000 00000111 (Take first 15 bit form right side)
+
+Sign bit: 0 (Take leftmost one bit)
+
+First eight bit of data bit from right side i.e. 00000111 will store in the leftmost byte from right to left side and rest seven bit of data bit i.e. 0000000 will store in rightmost byte from right to left side.
+*/

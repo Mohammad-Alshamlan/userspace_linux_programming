@@ -1,0 +1,269 @@
+//
+
+Tue Jun 3, 2014
+----------------
+[1] familiarize yourself with kernel module development
+[2] cross-compile linux module 
+
+source:
+[1] http://wiki.centos.org/HowTos/BuildingKernelModules 
+
+steps:
+[1] let us have this kernel source code:
+	#include <linux/module.h>  /* Needed by all modules */
+	#include <linux/kernel.h>  /* Needed for KERN_ALERT */
+
+	MODULE_LICENSE("GPL");
+	MODULE_AUTHOR("viulian, 2011");
+	MODULE_DESCRIPTION("Demo module for X10i");
+
+	int init_module(void)
+	{
+	   printk("<1>Hello world\n");
+
+	   // A non 0 return means init_module failed; module can't be loaded.
+	   return 0;
+	}
+
+
+	void cleanup_module(void)
+	{
+	  printk(KERN_ALERT "Goodbye world 1.\n");
+	}
+
+[2] then you need to create a makefile that calls the kernel makefile, and then use the above code to compile. The makefile
+	
+	ROOTDIR="/home/alshamlan/vtilt_git/minerva-5.x/"
+	SMP86XX_TOOLCHAIN_PATH=$(ROOTDIR)/mips-4.3
+	KERNEL_DIR="../linux-2.6.22.19/"
+
+	obj-m := kernel_mod_hello_word.o
+	PWD := $(shell pwd)
+	default:
+		echo $(PWD)
+		echo $(KERNEL_DIR)
+		$(MAKE) ARCH=mips CROSS_COMPILE=$(SMP86XX_TOOLCHAIN_PATH)/bin/mips-linux-gnu- -C $(KERNEL_DIR) SUBDIRS=$(PWD) modules
+	clean:
+		$(MAKE) -C $(KERNEL_DIR) SUBDIRS=$(PWD) clean
+
+// note: make sure that you setup all the path correctly!!
+
+[3] run the make command
+
+example:
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/sigma/kernel_source/mine$ make 
+	echo /home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/mine
+	/home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/mine
+	echo "../linux-2.6.22.19/"
+	../linux-2.6.22.19/
+	make ARCH=mips CROSS_COMPILE="/home/alshamlan/vtilt_git/minerva-5.x/"/mips-4.3/bin/mips-linux-gnu- -C "../linux-2.6.22.19/" SUBDIRS=/home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/mine modules
+	make[1]: Entering directory `/home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/linux-2.6.22.19'
+	  CC [M]  /home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/mine/kernel_mod_hello_word.o
+	  Building modules, stage 2.
+	  MODPOST 1 modules
+	  CC      /home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/mine/kernel_mod_hello_word.mod.o
+	  LD [M]  /home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/mine/kernel_mod_hello_word.ko
+	make[1]: Leaving directory `/home/alshamlan/vtilt_git/minerva-5.x/sigma/kernel_source/linux-2.6.22.19'
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/sigma/kernel_source/mine$ 
+	
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/sigma/kernel_source/mine$ ls -lsh 
+	total 24K
+	4.0K -rw-rw-r-- 1 alshamlan alshamlan  428 Jun  3 16:46 kernel_mod_hello_word.c
+	4.0K -rw-rw-r-- 1 alshamlan alshamlan 2.8K Jun  3 17:06 kernel_mod_hello_word.ko
+	4.0K -rw-rw-r-- 1 alshamlan alshamlan  634 Jun  3 17:06 kernel_mod_hello_word.mod.c
+	4.0K -rw-rw-r-- 1 alshamlan alshamlan 2.1K Jun  3 17:06 kernel_mod_hello_word.mod.o
+	4.0K -rw-rw-r-- 1 alshamlan alshamlan 1.7K Jun  3 17:06 kernel_mod_hello_word.o
+	4.0K -rw-rw-r-- 1 alshamlan alshamlan  403 Jun  3 16:54 Makefile
+	   0 -rw-rw-r-- 1 alshamlan alshamlan    0 Jun  3 17:06 Module.symvers
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/sigma/kernel_source/mine$ 
+	
+[4] move to the target 
+
+	$ sshpass -p 'i95Ph7!B' scp kernel_mod_hello_word.ko root@10.10.139.34:/tmp
+
+[5] login to the target
+
+	$ sshpass -p 'i95Ph7!B' ssh root@10.10.139.34
+	
+[6] check the inserted kernel modules and dmesg
+
+	tango3-paco[~]# lsmod 
+	Module                  Size  Used by    Tainted: PF 
+	ipfilter_v2            10032  2 
+	ipfilter               17040  0 
+	irkernel                9568  2 
+	em8xxx                933504  2 
+	llad                  144800  5 em8xxx
+	sata_tango3            16592  1 
+	ext3                  144544  2 
+	jbd                    74928  1 ext3
+	mbcache                 8464  1 ext3
+	kseg1                   1984  0 
+	tango3_keypad           4496  0 
+	sigmablock             80800  2 
+	tango3-paco[~]# 
+
+	tango3-paco[~]# dmesg | tail -n 5
+	IPFILTER:                         12 bytes stream definitions
+	IPFILTER: Number of Big buffers allocated per stream: 16
+	ir: Enable NEC decoder (0x00000000)
+	ir: Enable RC5 decoder (0x00000000)
+	ir: Enable RC6 decoder
+
+[7] insert the linux module
+	
+	$ insmod /tmp/kernel_mod_hello_word.ko
+
+[8] check the inserted kernel modules and dmesg
+
+	tango3-paco[~]# lsmod 
+	Module                  Size  Used by    Tainted: PF 
+	kernel_mod_hello_word     1344  0 
+	ipfilter_v2            10032  2 
+	ipfilter               17040  0 
+	irkernel                9568  2 
+	em8xxx                933504  2 
+	llad                  144800  5 em8xxx
+	sata_tango3            16592  1 
+	ext3                  144544  2 
+	jbd                    74928  1 ext3
+	mbcache                 8464  1 ext3
+	kseg1                   1984  0 
+	tango3_keypad           4496  0 
+	sigmablock             80800  2 
+	tango3-paco[~]# 
+
+
+	tango3-paco[~]# dmesg | tail -n 5
+	IPFILTER: Number of Big buffers allocated per stream: 16
+	ir: Enable NEC decoder (0x00000000)
+	ir: Enable RC5 decoder (0x00000000)
+	ir: Enable RC6 decoder
+	Hello world
+
+[9] remove the kernel module
+
+	$  rmmod kernel_mod_hello_word
+
+[10] check the inserted kernel modules and dmesg
+
+	tango3-paco[~]# lsmod 
+	Module                  Size  Used by    Tainted: PF 
+	ipfilter_v2            10032  2 
+	ipfilter               17040  0 
+	irkernel                9568  2 
+	em8xxx                933504  2 
+	llad                  144800  5 em8xxx
+	sata_tango3            16592  1 
+	ext3                  144544  2 
+	jbd                    74928  1 ext3
+	mbcache                 8464  1 ext3
+	kseg1                   1984  0 
+	tango3_keypad           4496  0 
+	sigmablock             80800  2 
+	tango3-paco[~]# 
+
+
+	tango3-paco[~]# dmesg | tail -n 5
+	ir: Enable NEC decoder (0x00000000)
+	ir: Enable RC5 decoder (0x00000000)
+	ir: Enable RC6 decoder
+	Hello world
+	Goodbye world 1.
+	tango3-paco[~]# 
+
+
+// didn't work
+Tue Jun 3, 2014
+-----------------
+objective:
+[1] familiarize yourself with kernel module development
+
+source:
+[1] http://www.freesoftwaremagazine.com/articles/drivers_linux
+
+note:
+[1] The first driver: loading and removing the driver in user space
+
+I’ll now show you how to develop your first Linux device driver, which will be introduced in the kernel as a module.
+
+For this purpose I’ll write the following program in a file named nothing.c
+
+<nothing.c> =
+
+	#include <linux/module.h>
+
+	MODULE_LICENSE("Dual BSD/GPL");
+	
+Since the release of kernel version 2.6.x, compiling modules has become slightly more complicated. First, you need to have a complete, compiled kernel source-code-tree. If you have a Debian Sarge system, you can follow the steps in Appendix B (towards the end of this article). In the following, I’ll assume that a kernel version 2.6.8 is being used.
+
+Next, you need to generate a makefile. The makefile for this example, which should be named Makefile, will be:
+
+<Makefile1> =
+	obj-m := nothing.o
+	
+Unlike with previous versions of the kernel, it’s now also necessary to compile the module using the same kernel that you’re going to load and use the module with. To compile it, you can type:
+
+	$ make -C /usr/src/kernel-source-2.6.8 M=pwd modules
+
+This extremely simple module belongs to kernel space and will form part of it once it’s loaded.
+
+In user space, you can load the module as root by typing the following into the command line:
+
+	# insmod nothing.ko
+	
+The insmod command allows the installation of the module in the kernel. However, this particular module isn’t of much use.
+
+It is possible to check that the module has been installed correctly by looking at all installed modules:
+
+	$ lsmod
+
+Finally, the module can be removed from the kernel using the command:
+
+	$ rmmod nothing
+
+By issuing the lsmod command again, you can verify that the module is no longer in the kernel.	
+
+[2] The “Hello world” driver: loading and removing the driver in kernel space
+
+When a module device driver is loaded into the kernel, some preliminary tasks are usually performed like resetting the device, reserving RAM, reserving interrupts, and reserving input/output ports, etc.
+
+These tasks are performed, in kernel space, by two functions which need to be present (and explicitly declared): module_init and module_exit; they correspond to the user space commands insmod and rmmod , which are used when installing or removing a module. To sum up, the user commands insmod and rmmod use the kernel space functions module_init and module_exit.
+
+Let’s see a practical example with the classic program Hello world:
+
+<hello.c> =
+
+	#include <linux/init.h>
+	#include <linux/module.h>
+	#include <linux/kernel.h>
+
+	MODULE_LICENSE("Dual BSD/GPL");
+
+	static int hello_init(void) {
+	  printk("<1> Hello world!\n");
+	  return 0;
+	}
+
+	static void hello_exit(void) {
+	  printk("<1> Bye, cruel world\n");
+	}
+
+	module_init(hello_init);
+	module_exit(hello_exit);
+	
+The actual functions hello_init and hello_exit can be given any name desired. However, in order for them to be identified as the corresponding loading and removing functions, they have to be passed as parameters to the functions module_init and module_exit.
+
+The printk function has also been introduced. It is very similar to the well known printf apart from the fact that it only works inside the kernel. The <1> symbol shows the high priority of the message (low number). In this way, besides getting the message in the kernel system log files, you should also receive this message in the system console.
+
+This module can be compiled using the same command as before, after adding its name into the Makefile.
+
+<Makefile2> =
+
+	obj-m := nothing.o hello.o 
+
+When the module is loaded or removed, the messages that were written in the printk statement will be displayed in the system console. If these messages do not appear in the console, you can view them by issuing the dmesg command or by looking at the system log file with cat /var/log/syslog.	
+
+
+
