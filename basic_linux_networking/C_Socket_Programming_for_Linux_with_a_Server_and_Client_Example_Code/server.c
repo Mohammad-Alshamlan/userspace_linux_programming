@@ -1,7 +1,15 @@
 /*
  * Let create a server that continuously runs and sends the date and time as soon as 
  * a client connects to it.
+ * 
+ * Example 1:
+ * [1] first open two terminals, let call them terminal x and y
+ *	(terimanl x) $ ./server
+ *	(terimanl y) $ ./client 127.0.0.1
  *
+ * Example 2: use hostname command
+ *	(terimanl x) $ ./server
+ *	(terimanl y) $ ./client `hostname`
  * to-do-list:
  * [1] add error checks!!
  */
@@ -46,4 +54,7 @@ int main(int argc, char *argv[])
         close(connfd);
         sleep(1);
      }
+     // done!!
+     close(listenfd);
+     return 0;
 }
