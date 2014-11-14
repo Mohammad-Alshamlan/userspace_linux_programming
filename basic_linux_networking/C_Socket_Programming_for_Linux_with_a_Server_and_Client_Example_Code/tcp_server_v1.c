@@ -13,16 +13,19 @@
  * to-do-list:
  * [1] add error checks!!
  */
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
+// I used these before
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/types.h>
 #include <time.h> 
+#include <sys/types.h>
+// these are new to me!!
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int main(int argc, char *argv[])
 {
