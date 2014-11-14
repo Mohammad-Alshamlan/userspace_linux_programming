@@ -1,0 +1,148 @@
+//
+
+// code: examing return in main function
+	#include<stdio.h>
+
+	int main (){
+	printf("Check point[1]\n");
+	return 10;
+	printf("Check point[2]\n");
+	return 0;
+	}
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc  break_program.c
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./a.out 
+Check point[1]
+*/
+
+// analyzing:
+	[1] the first return stops the program in main function
+
+// code: using boolean-like algrothm in if condition
+	#include<stdio.h>
+
+	int main (){
+	if (0)
+		printf("Check point[1]\n");
+	if (1)
+		printf("Check point[2]\n");
+	if (2)
+		printf("Check point[3]\n");
+	return 0;
+	}
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc  break_program.c
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./a.out 
+Check point[2]
+Check point[3]
+*/
+
+// analyzing:
+	[1] 0 in if statement means "Don't do it!!" but greater than 0 is operational -- correction: nonzero (negtive and nonnegative) is operational
+
+// code: further understanding how mod works!!
+// note: this code should print float-point number rather than integer!!
+	#include<stdio.h>
+
+	int foo(int var){
+	return var%2;
+	}
+
+	int main (){
+	int var = 10;
+	if (foo(var--))
+		printf("Check point[1] where var=%d\n", var);
+	if (foo(var--))
+		printf("Check point[2] where var=%d\n", var);
+	if (foo(var--))
+		printf("Check point[3] where var=%d\n", var);
+
+	printf("%d mod 2 =%d\n", var, var%2);
+	var--;
+	printf("%d mod 2 =%d\n", var, var%2);
+
+	return 0;
+	}
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc  break_program.c
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./a.out 
+Check point[2] where var=8
+7 mod 2 =1
+6 mod 2 =0
+*/
+
+// analyzing
+	[1] even%2= 0 
+	[2] odd %2= 1
+
+// code: break main from external function
+	#include<stdio.h>
+
+	int foo(){
+	return -1;
+	}
+
+	int main (){
+	if ( foo() == -1) 
+		return -1;
+	int var = 10;
+	if (foo())
+		printf("Check point[1] where var=%d\n", var);
+	if (foo())
+		printf("Check point[2] where var=%d\n", var);
+	if (foo())
+		printf("Check point[3] where var=%d\n", var);
+
+	printf("%d mod 2 =%d\n", var, var%2);
+	var--;
+	printf("%d mod 2 =%d\n", var, var%2);
+
+	return 0;
+	}
+/*
+// old test method
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc  break_program.c
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./a.out 
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+// newer test method
+	alshamlan@alshamlan-K55A:/tmp/interview$ cat -n Makefile 
+	     1	CFLAGS= -g -Wall
+	alshamlan@alshamlan-K55A:/tmp/interview$ make q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-K55A:/tmp/interview$ ./q1
+	alshamlan@alshamlan-K55A:/tmp/interview$ echo $?
+	255
+	alshamlan@alshamlan-K55A:/tmp/interview$ 
+*/
+
+// code: using recursive function 
+	#include<stdio.h>
+	// global variable
+	int cont = 0;
+
+	int foo(int i){
+	printf("cont=%d\t \bi=%d\n", cont, i);
+	cont++;
+	if ( i <= 0)
+		return 1;
+	return (i * foo( i - 1));
+	}
+
+	int main (){
+	int i=4;
+	printf("%d!=%d\n", i, foo(i));
+	return 0;
+	}
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc  break_program.c
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./a.out 
+cont=0	i=4
+cont=1	i=3
+cont=2	i=2
+cont=3	i=1
+cont=4	i=0
+4!=24
+*/
+
+// analyzing
+	[1] a recorsive function must have more than one return

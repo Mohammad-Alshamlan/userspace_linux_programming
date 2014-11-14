@@ -1,0 +1,1154 @@
+//
+
+//-------------------------------------------------
+// experment!!
+//-----------------------------------------------
+
+// knowing how many elemnt in an array becuase strlen doesn't work with seprate element in array
+	int main()
+	{
+	    int cnt, len;
+	    char buf[] = {'a','a', 'u', 'b'};
+	    len= strlen(buf);
+	    cnt = sizeof(buf)/sizeof(buf[0]);
+	    printf("cnt=\t%d\n \blen=\t%d\n", cnt, len);
+	    //first_unique(buf, cnt);
+	    return 0;
+	}
+
+//ouput result
+/*
+	alshamlan@alshamlan-Precision-T1500:/tmp/c_code$ ./q2 
+	cnt=	4
+	len=	6
+*/
+// as we can see, that strlen gives us value 6, but we just have 4 element, so to overcome this problem we can use sizeof. 
+
+// understanding sizeof more
+	int main()
+	{
+	    int cnt, len;
+	    char buf[] = {'a', 'a', 'u', 'b'};
+	    len= strlen(buf);
+	    printf("sizeof(buf)=\t%d\n \bsizeof(buf[0])=\t%d\n", sizeof(buf), sizeof(buf[0])); 
+	    cnt = sizeof(buf)/sizeof(buf[0]);
+	    printf("cnt=\t%d\n \blen=\t%d\n", cnt, len);
+	    return 0;
+	}
+// gcc warnings
+alshamlan@alshamlan-Precision-T1500:/tmp/c_code$ gcc  q2.c -o q2
+q2.c: In function ‘main’:
+q2.c:5:10: warning: incompatible implicit declaration of built-in function ‘strlen’
+q2.c:6:5: warning: incompatible implicit declaration of built-in function ‘printf’
+q2.c:6:5: warning: format ‘%d’ expects type ‘int’, but argument 2 has type ‘long unsigned int’
+q2.c:6:5: warning: format ‘%d’ expects type ‘int’, but argument 3 has type ‘long unsigned int’
+
+// result output
+/*
+alshamlan@alshamlan-Precision-T1500:/tmp/c_code$ ./q2 
+sizeof(buf)=	4
+sizeof(buf[0])=	1
+cnt=	4
+len=	6
+*/
+
+// to fix these warnings:
+	[1] include the libraries
+	[2] fix the printf type issue. Note: sizeof takes %zu in printf becuase long unsigned int!!!
+
+// code free of error:
+	#include<stdio.h>
+	#include<string.h>
+	int main()
+	{
+	    int cnt, len;
+	    char buf[] = {'a', 'a', 'u', 'b'};
+	    len= strlen(buf);
+	    printf("sizeof(buf)=\t%zu\n \bsizeof(buf[0])=\t%zu\n", sizeof(buf), sizeof(buf[0])); 
+	    cnt = sizeof(buf)/sizeof(buf[0]);
+	    printf("cnt=\t%d\n \blen=\t%d\n", cnt, len);
+	    return 0;
+	}
+
+// sizeof with types of c
+	#include<stdio.h>
+	#include<string.h>
+	int main()
+	{
+	    printf("char=\t%zu\n \bshort=\t%zu\n \bint=\t%zu\n \blong=\t%zu\n \bfloat=\t%zu\n \bdouble=\t%zu\n", sizeof(char), sizeof(short), sizeof(int), sizeof(long), sizeof(float), sizeof(double));
+	    return 0;
+	}
+// no warnings!! good!!
+//output
+/*
+char=	1
+short=	2
+int=	4
+long=	8
+float=	4
+double=	8
+*/
+
+//---------------------------------
+//	string
+//	source(s):
+//		[1]	http://www.eskimo.com/~scs/cclass/notes/sx8.html 
+//		[2]	http://cplus.about.com/od/learningc/ss/strings.htm
+//---------------------------------
+
+// about NULL for ASCII
+Strings in C are represented by arrays of characters. The end of the string is marked with a special character, the null character, which is simply the character with the value 0. (The null character has no relation except in name to the null pointer. In the ASCII character set, the null character is named NUL.) The null or string-terminating character is represented by another character escape sequence, \0.
+
+// so for this example:
+char string[] = "Hello, world!";
+// we can leave out the dimension of the array, since the compiler can compute it for us based on the size of the initializer (14, including the terminating \0).
+
+// Since C never lets us assign entire arrays, we use the strcpy function to copy one string to another:
+
+	#include <string.h> // calling string library
+
+		char string1[] = "Hello, world!"; // having a string that contains vaild data
+		char string2[20];		// making sure it larger than the source
+
+		strcpy(string2, string1);	// copying string1 ==> string2
+
+// so to write this in bash do the following in bash terminal
+nano string1.c	# where nano is text editor, and strin1.c is the name of the new file
+
+// now, I want a[] and b[] same sizes, but I want the size value compited from the code/*
+	/*
+	objective: I don't want the destanaction variable Arry to be larger or smaller than the source, I want it exatct!!
+	*/
+
+	#include<string.h> // if you're using string.h, then you don't need to import stdio.h!!
+
+	int main (){
+
+	char a[]= "hello world!!"; 
+	char b[strlen (a)];		// the same size as a[]
+
+	printf("%s\n\%s\n", a, b);
+	strcpy (b, a);  // note: b doesn't have anything that we stored into it, so the contant is garbage!!
+	printf ("%s\n%s\n", a, b);
+	return 0; // is better to have when main in int type
+	}
+
+
+// for revering  a string
+
+	#include<string.h> // if you're using string.h, then you don't need to import stdio.h!!
+
+	int main (){
+
+	char a[]= "hello world!!";
+	for ( int i=0 ; i <= strlen(a) ; i++)	// for loop using strlen for string length
+	printf("%c", a[strlen (a) - i]);	// using backward approach in the for loop
+	printf("\n");				// just having a new-space for the bash schell command-line
+	return 0; // is better to have when main in int type
+	}
+
+//---------------------------------
+//second source
+
+// note [1]: 
+There is no such thing as a string type in c. Other languages - C++, Delphi, C#, Java etc, all support a string type but C doesn't. In C, if you want to process text, you have to treat it as an array of char with a terminating \0
+
+// that wouldn't work in C 
+buffer = "a test string";	// that's not okay
+// but a char pointer string initialization is allowed.
+char * myName = "David"; 	// that is okay
+
+// note [2]:
+We'll see later how to assign a string at runtime using a built-in function called strcpy(). 
+
+// note [3]: Don't be tempted to add [] to the definition - this will create an array of pointers to a char, not a pointer to a char array! The code below allocates 3 strings and then prints them to the console.
+char * name[3]={"alpha","beta","gamma"};
+printf("%s %s %s",name[0],name[1],name[2]) ; 
+
+// from above note, we can create a reverse words and not reversing every charchters as shown below:
+
+	#include<string.h> // if you're using string.h, then you don't need to import stdio.h!!
+
+	int main (){
+
+	char * name[]={"Citrix","in","Florida"};	// create an array of pointers to a char, not a pointer to a char array!
+	printf("%s %s %s\n",name[0],name[1],name[2]) ;	// print the right order
+	int i;						// we are using ANSI style, so this is not part of for loop
+	for ( i=1 ; i<= strlen(name) ; i++)		// using i=1 and not i=0 because reversing issue with Null value!!
+		printf("%s ", name[strlen(name) - i]);	// print the reverse values
+	printf("\n");					// just a new-line for the bash shell  
+	return 0; // is better to have when main in int type
+	}
+
+// note [4]: 
+One of the big problems with text processing in C is that you have to code every last detail and it's easy to make mistakes. 
+
+// note [5]:
+Also, because you are generally working with pointers, it doesn't take too much effort to get a buffer overflow. Many vulnerabilities and exploits in operating system software have been due to buffer overflow exploits.
+
+//note [6]: Unicode and C
+C was written at a time when foreign characters were not much of a consideration. There were a couple of main character encodings in use- ASCII and EBCDIC. It wasn't until the 90s that Unicode started appearing and standard C does not work easily with Unicode. If you go on down that route, forget one char = one byte. It's two bytes or in some cases four bytes per character. This tutorial is not going to dwell on Unicode or use it; that's for a future tutorial but I wanted you to be aware of it. One good resource for anyone using Unicode in Visual C++ is Tex Texin's Unicode enabling Microsoft C/C++ Source Code.
+
+// note [7]: Text Processing is by the Char -- code free from string.h. Basic programming style!!
+There is a <string.h> library that provides a set of string functions and well come to those shortly. If you choose not to use them, then you have to process text strings char by char. For some small applications that can be fun and very fast.
+If you grew up with Basic, you might be familiar with Left(), Right() and Mid() functions as described below.I've used a simple typedef string as an alias for char * to improve readability.
+
+[a] Left(string Source,int NewLen) returns a string that is NewLen characters long, starting at the left
+[b] Right(string Source,int NewLen) returns a string that is NewLen characters long, starting at the right
+[c] Mid(string Source,int Start,int Length) returns a string that starts at Start and is Length characters long. Start is 0 based.
+
+Lessons Learnt
+	[i] Sanity check all parameters.
+	[ii] Test with extreme and idiotic cases!
+	[iii] Do not allow any pointers to move before the start of a string or after the terminating zero.
+
+Of course as there is a <string.h> library provided, it makes sense not to reinvent this wheel.
+
+// note [8]: string.h library 
+There are two types of functions in string.h. The str... functions such as strcat() and the mem... functions like memset(). Generally the Mem... functions are for a fixed size and have an extra parameter specifying it while the str... require the terminating '\0'. The mem... functions are not for string handling but for working with structs etc. I list them here for completeness.
+
+[i] 	void * memset(void *s,int c, size_t n) // sets n bytes of *s to the value c and returns s.
+[ii] 	void memcpy(void *to, const void* from,size_t n) // copies a block of n bytes from *from to *to. Must not overlap.
+[iii]	void memmove(void *to, const void* from, size_t n) // copies a block of n bytes from *from to *to. Can overlap.
+[iv]	int memcmp(const void *s1, const void* s2, size_t n) // compares n bytes from *s1 with *s2. 0 if identical.
+[v]	void * memchr(const void *s, int c, size_t n) // Searches n bytes of *s for the value c and returns a void * pointer to it if found, null if not found.
+
+
+code: 
+
+	#include "stdlib.h" // I don't know why this one is used!!
+	#include <stdio.h>	// there is no need to include this if you import string.h in your code
+	#include <string.h>
+
+	typedef char * string;
+
+	struct s {
+		char  name[20];
+		int age;
+		char pin[9];  /* DFTTZ! */
+	};
+
+	typedef struct s badge;
+
+	int main(int argc, char* argv[])
+	{
+		badge b1,b2;
+		memset(&b1,0,sizeof(b1));
+		memset(&b2,0,sizeof(b1));
+		b1.age=78;
+		strcpy(b1.name,"My Name");
+		strcpy(b1.pin,"01234567"); // DFTTZ!
+		memcpy(&b2,&b1,sizeof(b1));
+		printf("Name = %s Age = %d Pin = %s\n",b2.name,b2.age,b2.pin);
+		return 0;
+	}
+
+This shows two badge structures initialized using memset() to clear all fields. The strcpy() function is used to assign strings and then memcpy() used to copy one badge into another before printing the values out. The memcpy() and memmove() functions are identical except that memmove() allows overlapping and memcpy() doesn't. Most CPUs have instructions to do fast copying and the compiler will use this if it can.
+
+
+// note [9]: Using ctype.h
+The ctype.h library has functions for classifying characters. Each of the functions below returns an int when passed in a char.
+
+[i] 	isalnum()	// Check if character is alphanumeric (isalpha) | isdigit()
+[ii] 	isalpha() 	// Check if character is alphabetic
+[iii] 	iscntrl() 	// Check if character is a control character
+[iv] 	isdigit() 	// Check if character is decimal digit
+[v] 	isgraph() 	// Check if character has graphical representation
+[vi]	islower() 	// Check if character is lowercase letter
+[vii]	isprint() 	// Check if character is printable
+[viii]	ispunct() 	// Check if character is a punctuation character
+[ix]	isspace() 	// Check if character is a white-space
+[x]	isupper()  	// Check if character is uppercase letter
+[xi]	isxdigit() 	// Check if character is hexadecimal digit
+
+These values returned from theese functions aren't just 0 or 1 type. 0 is returned for false but isalpha() for example returns 1 if the char is upper case and 2 if its lower case. Some of the values returned depend upon your locale so you'll get different results in different countries.
+
+
+code:
+
+	#include "stdlib.h"
+	#include <stdio.h>
+	#include <string.h>
+	#include <ctype.h>
+
+	typedef char * string;
+
+	struct s {
+		char  name[20];
+		int age;
+		char pin[9];  /* DFTTZ! */
+	};
+
+	typedef struct s badge;
+
+	int main(int argc, char* argv[])
+	{
+
+		int i;
+		printf(" ## C   Al Ap Ic Id Ig Ip Iu Is Ix\n\r");
+		for (i=0;i<128;i++) {
+			printf("%2d ",i);
+			if (isalpha(i))
+				printf("%c  ",i);
+			else
+				printf("   ");
+
+			printf("%3d %2d %2d %2d %2d %2d %2d %2d %2d\n\r",
+				isalnum(i),
+				isalpha(i),
+				iscntrl(i),
+				isdigit(i),	 
+				isgraph(i),	
+				isprint(i),
+				ispunct(i),
+				isspace(i),
+				isxdigit(i)	
+		
+			);
+			if ((i+1) %8==0) /* space every 8 lines */
+				printf("\n\r");
+		}
+		return 0;
+	}
+
+This example calls most of the functions except upper and lower case for each value in the range 0 to 127. You can see for example how isalnum() is just isalpha() binary ored with isdigit().
+
+
+// note [10]: converting upper case letter to lower case etc
+There are a couple of ancillary functions for converting upper case letter to lower case etc.
+
+[i]	tolower() 	// Converts upper case letter to lower case
+[ii]	toupper() 	// Converts lower case letter to upper case
+
+If you are doing any kind of input validation then the functions in ctype.h will simplify things for you.
+
+// note [11]: Using the str Functions
+
+There are quite a number of these but you'll probably only need these that are listed below:
+
+[i]	strcat() 	// concatenate two strings.
+[ii]	strcpy() 	// copy a string (handy for doing string assignments).
+[iii]	strcmp() 	// compare two strings.
+[iv]	strlen() 	// return the length of a string- this does not include the terminating zero.
+[v]	strchr() 	// find a character in a string searching from left.
+
+You also get strn.. versions of the first three (not strlen( and strchr) with an extra parameter size_t n
+
+[i]	strncat().
+[ii]	strncpy().
+[iii]	strncmp().
+
+These limit the operation to the first n chars. For instance strncat() appends a maximum of n chars from a string to another string.
+
+// note [12]: Memory Management
+
+You are responsible for making sure that strings are properly allocated and freed. For instance this
+
+partial code:
+
+	string a="A very Long String";
+	string b=strcat(a," and now even longer!") ;
+
+While it looks ok is a guaranteed disaster. The first line executes fine but the second takes exception. The strcat() function does not allocate any memory. The compiler would perceive this text as being read-only so it's probably located somewhere that cannot be written to. In this case you must allocate enough space to store the combined strings.
+
+complete code:
+	#include "stdlib.h"
+	#include <stdio.h>
+	#include <string.h>
+
+	typedef char * string;
+
+	int main(int argc, char* argv[])
+	{
+
+	  string a="A very Long String";
+	  string b=" and now even longer!";
+	  string c=malloc(strlen(a) + strlen(b)+1) ; /* +1 DFTTZ! */  // I don't know the uses of malloc() !!
+	  strcpy(c,a) ;
+	  strcat(c,b) ;
+	  printf("c = %s",c) ;
+	  free(c) ;		// freeing memory lack for c string
+	  return 0;
+	}
+
+ the strlen() function counts the number of chars before the terminating zero so you must allocate enough space for the terminating zero in the combined string, hence the +1. The strcpy() function copies a into c, the strcat() appends b to c. The append starts exactly on the terminating zero of c after a was copied into it.
+
+
+// for comparing string 
+With strcmp(s1,s2) it returns an int result which is -1, 0 or +1. 0 is a match, i.e the same but -1 means that s1 is less than s2 and 1 means s1 is greater than s2. This comparison is based on the ASCII value of the first char of s1 compared to the first char of s2. If there are non standard letters used (i.e. foreign characters) then you should call strcoll() instead of strcmp().
+
+code: 
+	/* ex4.c : */
+
+	#include "stdlib.h"
+	#include <stdio.h>
+	#include <string.h>
+	#include <ctype.h>
+
+	typedef char * string;
+
+	typedef struct wordrec * wordrecptr;
+	struct wordrec {
+		string word;
+		int count;
+		wordrecptr next;
+	};
+
+	int ReadFile(string Filename,string buffer) {
+		char c;
+		FILE * fp;
+		int filesize=0;
+	 if((fp=fopen(Filename,"r"))==NULL){
+	   perror("fopen");
+	   return -1;
+	 }
+	 while((c=getc(fp))!=EOF){
+		 *buffer++=c;
+		 filesize++;
+	 }
+	 *buffer='\0';
+	 return filesize;
+	 fclose(fp);
+	}
+
+	/* This adds a word to a list- if it's already there, it finds it and increments the count
+	   or it adds it on the end of the list */
+	void addword( string word,wordrecptr * list) {
+		wordrecptr head = *list;
+		wordrecptr prev = 0;
+		while (head) {
+			if (strcmp(head->word,word)) {
+				prev=head;
+				head=head->next;
+			}
+			else
+			{
+				head->count++;
+				return;
+			}
+		}
+		/* If here- didn't find word in list so create new struct 
+	     First time prev and head are both 0 so create new prev 
+		 and set all fields to 0 with memset */
+		if (!prev) 
+		{
+			prev= malloc(sizeof(struct wordrec));
+			head=prev;
+			*list = head;
+		}
+		else
+		{
+			prev->next =malloc(sizeof(struct wordrec));
+			head= prev->next;
+		
+		}
+		head->next =0; /* new end of list */
+		head->count=1;
+		head->word=malloc( strlen(word) +1 ); /* DFTTZ! */
+		strcpy(head->word,word); 
+	
+	}
+
+	int process( string input,wordrecptr * list) {
+		int count=0;
+		int len = strlen( input );
+		int i;
+		int inword=0; /* flag */
+		string aword=malloc(32); /* should be long enough for the longest word! */
+		string pword=aword;
+		char c;
+		string temp=input;
+		for (i=0;i< len; i++) {
+			c = *(temp++);
+			if (isalpha(c)) {
+				if (!inword ) {  /* start new word */	 
+					pword=aword;
+					inword=1;
+				}				
+				*pword++=c;
+			}
+			else
+			{ // Add word to list
+				if (pword != aword) 
+					*pword='\0';	/* terminate word */
+				inword=0; /* no longer in word */
+				addword(aword,list);
+				*aword='\0';
+				count++;
+			}
+		}
+		/* add the last word */
+		if (strlen(aword))
+		{
+			*pword='\0';
+			addword(aword,list);
+		}
+	
+		free(aword);
+		return count;
+	}
+
+	int DumpList( wordrecptr list ) {
+		wordrecptr head = list;
+		wordrecptr prev;
+		int		   strcount=0;	
+
+		while (head) {
+			prev= head;
+			if (prev->count >10)
+				printf("%d x %s\n\r",prev->count,prev->word);
+			head= head->next; /* get next in list */
+			free(prev->word);
+			free(prev);
+			strcount++;
+		}
+		return strcount;
+	}
+
+	int main(int argc, char* argv[])
+	{
+		string buffer=malloc(200000);
+		wordrecptr wordlist = 0;
+		int wordcount;
+		int strcount;
+
+		int fs=ReadFile("c:\\test.txt",buffer);
+		if ( fs >-1) {
+			wordcount = process(buffer, &wordlist );
+
+			printf("Dump of Words\n\r");
+			strcount=DumpList(wordlist); /* also frees up list */		
+			printf("File size =%d bytes\n\r",fs);
+			printf("Number of words found = %d\n\r",wordcount);
+			printf("Number of unique words = %d\n\r",strcount);
+		}
+		free(buffer);
+		return 0;
+	}
+
+This is a longer example about 140 lines long. It reads a text file into a string buffer, extracts words from the text adding them to a list of unique words and counts how many times each word was found.
+
+How It Works:
+
+Accept the ReadFile() function for now; file handling will be covered in the next C tutorial. This function reads in the file into a string buffer and returns -1 if the file isn't found, or the size of the file in bytes if it is. The buffer was set to a size big enough to hold the test file. Of course it would be better to get the file length from the file and allocate just enough memory to hold that.
+
+The main structure is defined in the struct wordrec.
+	typedef char * string;
+
+	typedef struct wordrec * wordrecptr;
+	struct wordrec {
+	  string word;
+	  int count;
+	  wordrecptr next;
+	};
+
+This includes the next field, a pointer to another wordrec. The data structure for this application is a single linked list. If you are unfamiliar with linked lists, see the tutorial on advanced pointers which discusses single linked lists.
+
+here:	http://cplus.about.com/od/learningc/ss/pointers2.htm
+
+// note about * vs **
+The process() function takes the input buffer and a pointer to a pointer for the list! Personally I always find more than one *, eg ** confusing to work with. This is why I prefer to use typedefs like string or wordrecptr to minimize the number of *.
+
+Why do I use a pointer to a pointer? Simply because the list starts empty and doesn't exist until the first word is added in the addword() function. To return the value of list from this function I had to make it a pointer! This is quite confusing- conceptually there is no list, just a pointer to the first struct. The value of this pointer is what we want to return to the caller of the function, so we need a pointer to it.
+
+The for loop in process() uses the isalpha() function to extract characters and build up words. Anything non alphabetic ends a word and sets the inword flag to false and calls the addword() function. As soon as an alphabetic char is found it starts a new word. The function addword() does much of the work. It uses strcpy() to compare the word being added with every word in the list until it finds it or hits the end of the list.
+
+This is a somewhat inefficient way of searching the list but it does ok. If it locates the word, it increments the count. The prev pointer variable points one structure behind the head, so that when the list is searched, when head hits the end, prev points to the last element. With the first word added, there is no list so the first structure is created and the list pointed to it.
+
+At the end of this function, head points to the newly created struct which is populated with a copy of the word, a count of 1 and a null pointer marking the new end of the list.
+
+Finally the DumpList() function outputs all words that occur ten or more times. You can see all of the words by commenting the line with an if statement out. This function also frees up all allocated memory, both the words and the structures and returns a count of how many unique words were found.
+
+Using the changelog.txt file from Tortoise, (the Subversion gui) as input produced these results in under a second. It built up a linked list with 2,106 structs calling addword() 38,815 times.
+
+	File size =132097 bytes
+	Number of Words found = 38815
+	Number of unique words = 2106
+
+// Other Str Functions
+
+In these definitions, string is a synonym for char *.
+
+[i]	strchr() 	// Find character in string.
+[ii]	strrchr()	// Find character in string, searching from the end.
+[iii]	strcspn() 	// Find a string in another string.
+[iv]	strxfrm() 	// Transform string using locale
+[v]	strpbrk() 	// Find a string in another string.
+[vi]	strspn() 	// Find the first element in a string that doesn't match another string.
+[vii]	strstr() 	// Find a string in another.
+[viii]	strtok() 	// A persistent search (between calls) of one string in another. Can be called repeatedly.
+[ix]	strxfrm() 	// Translate a string according to the locale.
+
+Why so many string search functions? Some include '\0' in the searched text, though strstr() doesn't. So far I've never written anything that needed any of these! but the most useful is possibly strtok() if you have to do multiple searches in a string.
+
+// Conclusion
+C is probably not the best programming language for text processing as it uses pointers and needs careful coding. It is all too easy to introduce bugs if you're not careful!
+
+That completes this tutorial. The next one is on file handling.
+
+
+
+//---------------------------------
+//	Storing Data in RAM
+//	source(s):
+//		[1]	http://cplus.about.com/od/learningc/ss/pointers2.htm
+//		[2]	
+//---------------------------------
+
+// note [1]:
+When you write an application, unless it is trivial, one of the first problems you need to think about is how to hold data in memory. Your application may use a database but you will probably need some way to handle the data in memory.
+
+// note [2]:
+One way to hold it is in an array of structs, unless the data is particularly complicated like in a text editor, word processor, or a web server. What it really means is that you need a dynamic storage method not a static one. 
+
+Arrays in C for example are static. You specify how big each element is and how many there are. If it's too big for what was needed you've wasted space. Too small and your application will probably go into a permanent sulk sometime- i.e. it will crash.
+
+// note [3]: Pointers are the Answer
+More modern languages such as C# or Java offer libraries of advanced data structures and even C++ has the STL types like vector etc. There are a considerable number of dynamic storage methods possible- not just dynamics arrays - but jagged arrays, sparse arrays, index sequential, maps, trees, queues etc.
+
+Do you need a list that you can process randomly or just serially (element one then element two etc)? Those are the stuff of much more advanced tutorials but this lesson will start by showing how to build and use a single linked list.
+
+// note [4]: About Linked Lists
+A linked list a bunch of structs all connected by pointers. There are basically two types of linked lists: single and double.
+
+ In a single linked list (shown), each node in the list is a struct and contains data plus a pointer to the next node. 
+
+In a double linked list, each node has two pointers not one- one to the next node and one to the previous. It's also possible to hook up the ends of a double linked list to make a circular linked list.
+
+code:
+	/* ex1 Single Linked List functions */
+	//
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	typedef struct dataElement {
+	  char * key;
+	  int id;
+	};
+
+	typedef struct dataElement * pElement;
+	typedef struct Node * pNode;
+	typedef char * pChar;
+
+
+	typedef struct Node {
+	  pNode next;
+	  pElement data;
+	};
+
+	int getNextID() {
+		static int id=0;
+		return id++;
+	}
+
+	/* how big is a Node? */
+	const nodeSize = sizeof(struct Node  );
+	const keySize = 16;
+	const elementSize = sizeof( struct dataElement );
+
+	// Create a new node, initialize it add it to the end of the list
+
+	pNode AddElement( pNode listtail )
+	{
+		pNode result=0;
+
+		result = malloc( nodeSize );
+		if (result) {
+			result->data = malloc( elementSize );
+			if (result->data)
+			{
+				result->data->id=getNextID();
+				result->data->key = (pChar)malloc(keySize+1);
+				if (!result->data->key)
+				{  /* failed so start destroying the element */
+					free( result->data );
+					result->data=0;
+				}
+			}
+
+			if (!result->data)	/* element or its key failed so free up the node*/
+			{
+				free(result);
+				result =0;
+			}
+
+		}
+		/* If built ok add to end of list*/
+		if (result) {
+			if (!listtail)  /* we have an empty list! */
+			{
+				listtail = result;
+			}
+			else /* point the current tail to the new node */
+			{
+				listtail->next= result;
+				listtail = result;  /* new node is now the tail */
+			}
+		}
+		return result;
+	}
+
+
+	void printList( pNode head) {
+		pElement element=0;
+		while ( head )
+		{
+			element = head->data;
+			printf("Id = %i Key = %s\n\r",element->id,element->key);
+			head=head->next;
+		}
+	}
+
+	pNode findKey(pNode head,pChar searchKey) {
+	    pElement element=0;
+		int found =0;
+		while (head) {
+			element = head->data;
+			if (strstr(element->key,searchKey ) )
+			{
+				return head;
+			}
+			else
+			{
+				head= head->next;
+			}
+		}
+		return NULL;
+	}
+
+	void killList ( pNode head ) {
+		pElement element=0;
+		pNode    node =0;
+
+		while ( head )
+		{
+			node = head;
+			element = node->data;
+			head = node->next;
+			free( element->key );
+			free( element );
+			free( node ); 
+		}
+	}
+
+	int main(int argc, char* argv[])
+	{
+		int i;
+		pNode head=0;
+		pNode tail=0;
+		pNode search=0;
+		pElement element;
+		pChar key= (pChar) malloc(keySize +1 );;
+
+		for (i=0;i<100;++i) {
+			tail = AddElement( tail );
+			if (!tail)
+				break; /* Something failed so add no more */
+
+			if (i==1)
+			{
+
+				head=tail; /* heads points to the first node */
+			}
+			element=tail->data;
+			sprintf( key, "KEYID:%i", i);
+			strcpy(element->key, key);
+		}
+
+		if (head ) {
+			search = findKey( head,"KEYID:78");
+			if (search) {
+				element=search->data;
+				printf("found at element %i\n\r",element->id);
+			}
+			else
+			{
+				printf("Key not found");
+			}
+		}
+	
+		//printList( head ); 
+		killList( head );
+		head=0;
+		tail=0;
+		free( key );
+		return 0;
+	}
+
+This implements a single linked list consisting of nodes and dataElements. The list itself is made up of nodes. Each node has a pointer to the next node in the list and a pointer to a dataElement. The idea is that dataElements are essentially separate from the list and you can modify the definition of a dataElement at any time. For this example a dataElement has just a char * key and a numeric id.
+
+
+One design decision I made is to use typedefs for all pointers - in the entire application, the only place you will see a * used for a pointer is in these three lines. That minimizes the chance of removing a * and breaking something. I also believe that it makes the code easier to read and understand.
+
+	typedef struct dataElement * pElement;
+	typedef struct Node * pNode;
+	typedef char * pChar;
+
+To access a member of a struct accessed by pointer, the arrow notation is used.
+
+	if (result->data)
+/*
+Definition: 
+	In Object Oriented Programming, a member is any function or variable in a class or object.
+	Member functions and methods tend to be used interchangeably.
+*/
+This is the same as
+
+	if ((*result).data)
+
+but a lot more readable and the arrow notation is used in C++ for accessing object methods via a pointer.
+
+The list is maintained by two pNode pointers called tail and head. Once the list is built, head always points to the head of it- the first element and tail always points to the last element. It's efficient in that it saves having to loop through all nodes from the head forward to find the last element. Note that this is not a circular list and so the next pointer in the last node must always be 0 (or NULL).
+/*
+Definition:
+NULL is a built-in constant which has a value of 0. It is also the same as the character '\0' used to terminate strings in C
+
+Null can also be the value of a pointer which is really the same as 0 unless the CPU supports a special bit pattern for a null pointer.
+
+In a database, the value null means that no value exists. The Language C# deals with this by having a nullable operator so for example an int value that is read from a database can be declared as int? to show that it can take a null value.
+*/
+
+I've given each dataElement a couple of fields- one is id, just a number that starts at 0 and auto increments by 1 for each node. The other is key and the idea is that you can search for a matching key using the function findKey(). This searches the list from head to tail.
+
+The function AddElement does all the real work. It uses malloc() to allocate memory for
+[i]	The new node
+[ii]	The new element
+[iii]	The key string within the element.
+
+
+It's very good practice to always check calls to malloc() in case the application runs out of memory, This complicates AddElement a bit because if any of the mallocs() fail, it backs out and frees up any memory that has been allocated. If it can't allocate the memory for the element's key, it frees up the element.
+
+Note that after freeing a pointer I set it to 0. That's also a very good habit to get into. If the element can't be created then the node itself is freed up. AddElement is very much like a constructor in C++. It either fully succeeds in allocating everything or it fails and leaves allocated memory in a consistent state. The code relies on every node having a valid dataElement. You don't have to do this but I reckon it keeps the functions that use the list a bit simpler- there's no need to check if data is valid.
+
+Only if the node etc is successfully allocated is the node added on the end of the list. In the test code (in the main function), every node added is checked to see that it worked ok. If any fail, no more are added as the only reason it could fail is running out of memory.
+
+As each node is added, its associated element gets the auto incremented id and a string key.
+
+The function getNextID() uses a static variable to make auto incrementing work. This starts with the initial value of 0 but because it is marked static, the value is not lost when the function exits. The first time it is called it returns 0 and then increments to 1. Next time it returns 1 and increments to 2.
+
+	int getNextID() {
+	  static int id=0;
+	  return id++;
+	}
+
+The function sprintf() is like printf but outputs the text string to a specified buffer. It's used to build a key in the 16 character buffer variable key. As a proof that the list built and populated successfully you can call the findkey function or uncomment printList(). Both use a while loop which starts at the head and loops through the entire list.
+
+Finally the killList() function frees up all of the memory in the list. The great thing with pointers is that you are free to construct sophisticated and complex data storage methods according to your needs. Let me say though, that apart from the interesting exercise of writing your own, there are several open source or free libraries that have well tested code and you may save considerable time (and hair) not having to debug your own. I've added one set (ubiqx) to the C code library.
+
+
+// Topic:  Data Structures
+This list is useful for storing items in memory and processing them by one by one. It's not so good say for accessing any individual element directly (called random access) as getting an element out of the list requires that you have to count forward from the head which slows it down. You could add this functionality by creating an index array of pointers and as each element is added to the list, use the id to store each element's address in this array.
+
+It really depends on how you intend to use the storage- do you want random or serial access, fast addition and removal of elements etc? This is where the different storage data structures can be used. Some databases use binary trees for fast access.
+
+// Function Pointers
+What exactly is a function pointer? Just what it says; a pointer to any function that you have defined or wish to call indirectly. The point is that you call functions and they do something. But instead of calling a function directly as we've done so far, it is called indirectly via a pointer. This can be changed at runtime, as long as the desired function matches the required signature. Matching means that it must have the same return type and the same number and types of parameters. Fortunately void * matches most pointer types so this gives a little more flexibility.
+
+// Where would you use a Function pointer?
+Well anywhere where you don't want to hard code just one function. Take example one. What if we wanted to process every item in this list with a particular function. Well we could write a loop and call a particular function for each entry, passing in a pointer to each dataElement. If we needed to process it with a different function we could then copy the first code, loop and all and change the function. But why not instead write just one loop, which calls the specified function through a function pointer which we have assigned?
+
+Here is how we do that. First we declare a variable that will hold the function pointer. This is the slightly messy bit.
+
+	int (*pointerToFunction) (pElement) = NULL ;
+
+Note that the *pointerToFunction is within brackets. Without the brackets you'd have a function that returned a pointer to an int. Just remember- the *pointertofunction must be in brackets. To the left you have the return result and to the right the parameters, the assignment = and the NULL. It's just like a normal function declaration except that it is a variable and you assign it 0 or NULL or the name of a matching function.
+
+
+code: 
+	/* ex2 Single Linked List functions with function Pointers*/
+	//
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	typedef struct dataElement {
+	  char * key;
+	  int id;
+	};
+
+	typedef struct dataElement * pElement;
+	typedef struct Node * pNode;
+	typedef char * pChar;
+
+
+	typedef struct Node {
+	  pNode next;
+	  pElement data;
+	};
+
+	int getNextID() {
+		static int id=0;
+		return id++;
+	}
+
+	/* how big is a Node? */
+	const nodeSize = sizeof(struct Node  );
+	const keySize = 16;
+	const elementSize = sizeof( struct dataElement );
+
+
+	// Declare the function pointer
+	int (*pointerToFunction) (pElement) = NULL;
+
+	/* definitions of function */
+	int ShowEvenKeys(pElement Element) {
+		if ((Element->id & 1)==0) 
+		{
+			printf("%s\n", Element->key);
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	int ShowOddKeys(pElement Element) {
+		if ((Element->id & 1)!=0) 
+		{
+			printf("%s\n", Element->key);
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	/* Create a new node, initialize it add it to the end of the list */
+	pNode AddElement( pNode listtail )
+	{
+		pNode result=0;
+
+		result = malloc( nodeSize );
+		if (result) {
+			result->data = malloc( elementSize );
+			result->next = NULL;
+			if (result->data)
+			{
+				result->data->id=getNextID();
+				result->data->key = (pChar)malloc(keySize+1);
+				if (!result->data->key)
+				{  /* failed so start destroying the element */
+					free( result->data );
+					result->data=0;
+				}
+			}
+
+			if (!result->data)	/* element or its key failed so free up the node*/
+			{
+				free(result);
+				result =0;
+			}
+
+		}
+		/* If built ok add to end of list*/
+		if (result) {
+			if (!listtail)  /* we have an empty list! */
+			{
+				listtail = result;
+			}
+			else /* point the current tail to the new node */
+			{
+				listtail->next= result;
+				listtail = result;  /* new node is now the tail */
+			}
+		}
+		return result;
+	}
+
+
+	void printList( pNode head) {
+		pElement element=0;
+		while ( head )
+		{
+			element = head->data;
+			printf("Id = %i Key = %s\n\r",element->id,element->key);
+			head=head->next;
+		}
+	}
+
+	pNode findKey(pNode head,pChar searchKey) {
+	    pElement element=0;
+		int found =0;
+		while (head) {
+			element = head->data;
+			if (strstr(element->key,searchKey ) )
+			{
+				return head;
+			}
+			else
+			{
+				head= head->next;
+			}
+		}
+		return NULL;
+	}
+
+	void killList ( pNode head ) {
+		pElement element=0;
+		pNode    node =0;
+
+		while ( head )
+		{
+			node = head;
+			element = node->data;
+			head = node->next;
+			free( element->key );
+			free( element );
+			free( node ); 
+		}
+	}
+
+	void ProcessList( pNode node) {
+		pElement element=0;	
+		while (node) {
+			element = node->data;
+			if (pointerToFunction)
+				pointerToFunction(element);
+			node = node->next;
+		}
+	}
+
+
+	int main(int argc, char* argv[])
+	{
+		int i;
+		pNode head=0;
+		pNode tail=0;
+		pNode search=0;
+		pElement element;
+		pChar key= (pChar) malloc(keySize +1 );;
+
+		for (i=0;i<100;++i) {
+			tail = AddElement( tail );
+			if (!tail)
+				break; /* Something failed so add no more */
+
+			if (i==1)
+			{
+
+				head=tail; /* heads points to the first node */
+			}
+			element=tail->data;
+			sprintf( key, "KEYID:%i", i);
+			strcpy(element->key, key);
+		}
+
+		if (head ) {
+			pointerToFunction = ShowEvenKeys;
+			ProcessList( head );
+			pointerToFunction = ShowOddKeys;
+			ProcessList( head );
+		}
+	
+		killList( head );
+		head=0;
+		tail=0;
+		free( key );
+		return 0;
+	}
+
+
+As you can see in:
+	if (head ) {
+	  pointerToFunction = ShowEvenKeys;
+	  ProcessList( head ) ;
+	  pointerToFunction = ShowOddKeys;
+	  ProcessList( head ) ;
+	}
+
+There are two functions which match the function pointers definition. ShowOddKeys() and ShowEvenKeys(). By matching I mean that both functions pass in the same parameters and return the same type as the definition. This example iterates through the list twice, calling the assigned function pointer. On the first pass it outputs
+
+	KEYID:2
+	KEYID:4
+	KEYID:6
+	KEYID:8
+	KEYID:10
+	KEYID:12
+	KEYID:14
+	..
+	KEYID:100
+
+and then
+
+	KEYID:1
+	KEYID:3
+	KEYID:5
+	KEYID:7
+	KEYID:9
+	..
+	KEYID:99
+
+
+Also for this part of code:
+	void ProcessList( pNode node) {
+	  pElement element=0; 
+	  while (node) {
+	      element = node->data;
+	      if (pointerToFunction)
+		  pointerToFunction(element) ;
+	    node = node->next;
+	    }
+	}
+
+ProcessList checks that the function pointer has been assigned a function then calls it, just as if it were a normal function.
+
+// Points to Note
+[i] Easy Function declaration- Declare the function then add (* ) around the function name.
+[ii] You don't need & to get the address of a function, this is the same as an array.
+[iii] Functions must match in same number and types of parameters and the same return type but you can use void *.
+[iv] Call the function via the function pointer just like calling a function directly. eg fp(x) ;
+
+// Other Uses of Function Pointers
+This can requires a slight shift in your thinking especially if you are new to pointers. If you are writing library routines and want to provide the caller of your routines with some kind of status then you need to implement a callback routine. When you call the library routine, you provide the callback function name and during processing the library routine will call your status function a number of times.
+
+Always check a function pointer has been assigned before calling it.
+
+Some libraries like qsort in <stdlib.h> requires that you provide or even implement a comparison routine. You don't need to implement one for sorting strings because qsort can use strcmp() for string comparisons.
+
+This is the declaration for qsort.
+	void qsort(void *base, size_t nitems, size_t size, int (*compar)(const void *, const void*)) ;
+
+The declaration for strcmp below matches qsort's requirements.
+	int strcmp(const char *str1, const char *str2) ;	
+
+Example 3 on page 8 shows qsort working with a function we provide to sort ints. The great thing about qsort is that it sorts anything, as long as you provide it with a means to compare two objects. This comparison function must match this definition
+
+	int function (const void *,const void *)
+
+This should return 0 if the objects match, -1 if the left one is less than the right one and 1 if the right one is less than the left one. In example 3, comp does this. Remember that void * means a pointer to anything. It can be a char *, int, struct whatever.
+
+code: 
+	/* ex3 Sorting ints with qsort */
+	//
+
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int comp(const int * a,const int * b) 
+	{
+	  if (*a==*b)
+		return 0;
+	  else
+		if (*a < *b)
+	      return -1;
+		else
+		  return 1;
+	}
+
+	int main(int argc, char* argv[])
+	{
+	   int numbers[10]={1892,45,200,-98,4087,5,-12345,1087,88,-100000};
+	   int i;
+
+	  /* Sort the array */
+	  qsort(numbers,10,sizeof(int),comp);
+	  for (i=0;i<9;i++)
+	    printf("Number = %d\n",numbers[i]);
+	  return 0;
+	}
+
+The parameters to qsort are the address of the objects to be sorted, the number of objects, the size of each object and the function that compares two objects.

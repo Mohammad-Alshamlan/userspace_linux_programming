@@ -1,0 +1,439 @@
+//
+
+
+Thu Jul 4, 2013
+//-------------------
+//	topic: linked list learning by trial and error
+//	source:	
+//-------------------
+
+// I wrote this code, but I couldn't compile it because of these bugs
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	struct ListItem {
+		char *name;
+		struct ListItame *next;
+
+	};
+
+	typedef struct  ListItem item;
+
+	int main (int argc, char * argv[]){
+	// declaring three nodes for linked list
+	item a, b, c;
+	// confegering their values
+	a.name = "Eric";
+	a.next = NULL; 
+	b.name = "Sarah";
+	b.next = NULL;
+	c.name = "Luis";
+	c.next = NULL;
+	// linking them
+	a.next = &b;
+	b.next = &c;
+	// printing their content
+	item i= &a;
+	for ( ; i != NULL ; i = i->next)
+		printf("%s", i->name);
+	return 0;
+	}
+// gcc output
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc -Wall q3.c -o q3
+q3.c: In function ‘main’:
+q3.c:23:8: warning: assignment from incompatible pointer type [enabled by default]
+q3.c:24:8: warning: assignment from incompatible pointer type [enabled by default]
+q3.c:26:1: error: invalid initializer
+q3.c:27:11: error: invalid operands to binary != (have ‘item’ and ‘void *’)
+q3.c:27:26: error: invalid type argument of ‘->’ (have ‘item’)
+q3.c:28:16: error: invalid type argument of ‘->’ (have ‘item’)
+
+// ---------------------
+// doing the same as this source
+// source: http://www.youtube.com/watch?v=zij-SICeTWY
+//---------------------
+
+// the orginal code:
+	#include<stdlib.h>
+	#include<stdio.h>
+
+	struct ListItem {
+		int data;
+		struct ListItem *next;
+	};
+
+	int main (int argc, char *argv[]){
+
+	// declaring linked list nodes and pupolate their variables
+	struct ListItem a;
+	a.data= 11;
+	a.next= NULL; 	// mapping it to NULL to make sure there isn't any weird behavior!! 
+	struct ListItem b;
+	b.data = 22;
+	b.next= NULL;
+	struct ListItem c;
+	c.data = 33;
+	c.next = NULL;
+	// mapping nodes together!!
+	a.next= &b;
+	b.next= &c;
+
+	// printing their content
+	int cnt=0;
+	struct ListItem *i= &a;
+	for (; i != NULL; i= i->next) {
+		printf("Item %d value is %d\n\r", cnt, i->data);
+		cnt++; 
+	}
+
+	return 0;
+	}
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc -Wall q4.c -o q4
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q4
+Item 0 value is 11
+Item 1 value is 22
+Item 2 value is 33
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+
+// some improvement in the "printing their content" section
+	#include<stdlib.h>
+	#include<stdio.h>
+
+	struct ListItem {
+		int data;
+		struct ListItem *next;
+	};
+
+	int main (int argc, char *argv[]){
+
+	// declaring linked list nodes and pupolate their variables
+	struct ListItem a;
+	a.data= 11;
+	a.next= NULL; 	// mapping it to NULL to make sure there isn't any weird behavior!! 
+	struct ListItem b;
+	b.data = 22;
+	b.next= NULL;
+	struct ListItem c;
+	c.data = 33;
+	c.next = NULL;
+	// mapping nodes together!!
+	a.next= &b;
+	b.next= &c;
+
+	// printing their content
+	int cnt=0;
+	struct ListItem *i;
+	// note: I got an error when I used *i= &a in the foor-loop!!
+	for (i = &a; i != NULL; i= i->next)
+		printf("Item %d value is %d\n\r", cnt++, i->data);
+
+	return 0;
+	}
+
+// other improvement: adding a string to the linked list
+	#include<stdlib.h>
+	#include<stdio.h>
+
+	struct ListItem {
+		int data;
+		char *name;
+		struct ListItem *next;
+	};
+
+	int main (int argc, char *argv[]){
+
+	// declaring linked list nodes and pupolate their variables
+	struct ListItem a;
+	a.data= 11;
+	a.name="Eric";
+	a.next= NULL; 	// mapping it to NULL to make sure there isn't any weird behavior!! 
+	struct ListItem b;
+	b.data = 22;
+	b.name= "Sarah";
+	b.next= NULL;
+	struct ListItem c;
+	c.data = 33;
+	c.name= "Luis";
+	c.next = NULL;
+	// mapping nodes together!!
+	a.next= &b;
+	b.next= &c;
+
+	// printing their content
+	int cnt=0;
+	struct ListItem *i;
+	for (i = &a; i != NULL; i= i->next)
+		printf("Item %d value is %d and the name is %s\n\r", cnt++, i->data, i->name);
+
+	return 0;
+	}
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc -Wall q4.c -o q4
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q4
+Item 0 value is 11 and the name is Eric
+Item 1 value is 22 and the name is Sarah
+Item 2 value is 33 and the name is Luis
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+// this I tried to make it more dynamic
+/*
+ * LinkedList That I tryied to shrink it down and short!!
+ */
+	#include<stdio.h>
+	#include<string.h>
+	#define NODE 10
+
+	struct ListItem {
+		//char *name;
+		int age;
+		struct ListItem *next;
+	};
+
+	// I tried removing the pointer, but I got an error!!
+	void define (struct ListItem *var, int age)
+	{
+		var->age = age;
+		var->next = NULL;
+	}
+
+
+	int main (int argc, char *argv[])
+	{
+		struct ListItem a[NODE];
+		int i_int;
+		for (i_int=0; i_int < NODE; i_int++){
+			// I tried to remove &a[] to a[], but I got an error
+			define(&a[i_int], i_int*11);
+			// note when i_int == 0, this won't work, so it is equivalent to (i_int > 0)
+			if(i_int) // that will just stop first node of using the below command
+				// starting from (i_int = 1) until (NODE - 1) b/c array!! 
+				a[i_int - 1].next= &a[i_int];
+		}
+
+		// output their values
+		struct ListItem *i;
+		for (i= &a[0]; i != NULL; i= i->next)
+			printf("Age: %d\n",  i->age);
+		return 0;
+	}
+
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gedit q5.c 
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make q5
+cc -g -O -Wall    q5.c   -o q5
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q5 
+Age: 0
+Age: 11
+Age: 22
+Age: 33
+Age: 44
+Age: 55
+Age: 66
+Age: 77
+Age: 88
+Age: 99
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+// for reversing a linked list
+	#include <stdio.h>
+
+	typedef struct Node {
+	  char data;
+	  struct Node* next;
+	} Node;
+
+	void print_list(Node* root) {
+	  while (root) {
+	    printf("%c ", root->data);
+	    root = root->next;
+	  }
+	  printf("\n");
+	}
+
+	Node* reverse(Node* root) {
+	  Node* new_root = 0;
+	  while (root) {
+	    Node* next = root->next;
+	    root->next = new_root;
+	    new_root = root;
+	    root = next;
+	  }
+	  return new_root;
+	}
+
+	int main() {
+	  // greate idea!!
+	  Node d = { 'd', 0 };
+	  Node c = { 'c', &d };
+	  Node b = { 'b', &c };
+	  Node a = { 'a', &b };
+
+	  Node* root = &a;
+	  print_list(root);
+	  root = reverse(root);
+	  print_list(root);
+
+	  return 0;
+	}
+	
+// mini coding for linkedlist
+// it is better to use node_t instead of item in studct declaration!!
+
+	#include<stdio.h>
+
+	typedef struct item {
+		int age;
+		struct item *next;
+	} item ;
+
+	int main (int argc, char argv[])
+	{
+		// three nodes declarations
+		item c= {33, NULL};
+		item b= {22, &c};
+		item a= {11, &b};
+		// output these three nodes from a linked-list
+		item *i;
+		for (i=&a; i!=NULL; i=i->next)
+			printf("%d\n", i->age);
+		return 0;
+	}
+	
+// mini code with push() and pop() function
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node{
+		int data;
+		struct node *next;
+	} node_t;
+
+	node_t *push (node_t *head, int data)
+	{
+		node_t *new= (node_t *) malloc(sizeof(node_t));
+		new->data=data;
+		new->next=NULL;
+		if(head!=NULL)
+			new->next=head;
+		head=new;
+		return head;
+	}
+
+	int pop(node_t *head)
+	{
+		node_t *remove= head;
+		head=head->next;		// head here is local value, so "head=head->next" will not go to the caller function -- bad!!
+		int data=remove->data;
+		free(remove);			// this a problem because 
+		return data;
+	}
+
+	int main()
+	{
+		node_t *head=NULL;
+		head= push(head, 11);
+		head= push(head, 22);
+		head= push(head, 33);
+	
+		node_t *i;
+		for(i=head; i!=NULL; i=i->next /* this really bad, because pop moves the pointer*/  )	
+			printf("%d\n", pop(i));
+		return 0;
+	}
+/*
+// output
+	alshamlan@alshamlan-K55A:/tmp/interview$ make q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-K55A:/tmp/interview$ ./q1
+	33
+	22
+	11
+	alshamlan@alshamlan-K55A:/tmp/interview$ 
+*/
+
+// --------------------------
+fixing the above code:
+
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node {
+		char c;
+		struct node *next;
+	} node_t ; 
+
+	node_t *remove_node (node_t *head)
+	{
+		node_t *remove=head;
+		char c = remove->c;
+		head=head->next;
+		free(remove);
+		printf("%c\n", c);
+		return head;
+	}
+
+	node_t *add_node (node_t *head, char c)
+	{
+		// new node
+		node_t *new = (node_t *) malloc (sizeof(node_t));
+		new->c=c;
+		new->next=head;
+		return new;
+	}
+
+	int main ()
+	{
+		char c;
+		node_t *head=NULL;
+		while((c = getchar()) != EOF )
+			head = add_node(head, c);
+	
+		// outputting the result
+		node_t *i, *remove;
+		for ( i = head; i != NULL ; /* build-in remove_node*/){
+			i = remove_node(i);
+		}
+		return 0;
+
+	}
+
+/*
+// result 
+	alshamlan@alshamlan-OptiPlex-980:/tmp/interview$ ./q3
+	this is a test!!!
+	!
+	t
+	s
+	e
+	t
+	 
+	a
+	 
+	s
+	i
+	 
+	s
+	i
+	h
+	t
+	alshamlan@alshamlan-OptiPlex-980:/tmp/interview$ 
+
+// from valgrind
+	... <edited>...
+
+	==19385== HEAP SUMMARY:
+	==19385==     in use at exit: 0 bytes in 0 blocks
+	==19385==   total heap usage: 17 allocs, 17 frees, 272 bytes allocated
+	==19385== 
+	==19385== All heap blocks were freed -- no leaks are possible
+	==19385== 
+	==19385== For counts of detected and suppressed errors, rerun with: -v
+	==19385== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+	alshamlan@alshamlan-OptiPlex-980:/tmp/interview$ 
+
+*/

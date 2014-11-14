@@ -1,0 +1,124 @@
+//
+
+Wed Nov 12, 2014
+------------------
+objectives:
+[1] the idea is to be less dependent in the internet, and use ubuntu manpage and package manager for help
+
+steps:
+[1] for manpage help 
+	// use apropos to search for mabpages
+	// Note, manpage section
+       The table below shows the section numbers of the manual followed by the types of pages  they
+       contain.
+
+       1   Executable programs or shell commands
+       2   System calls (functions provided by the kernel)
+       3   Library calls (functions within program libraries)
+       4   Special files (usually found in /dev)
+       5   File formats and conventions eg /etc/passwd
+       6   Games
+       7   Miscellaneous (including macro packages and conventions), e.g. man(7), groff(7)
+       8   System administration commands (usually only for root)
+       9   Kernel routines [Non standard]
+
+	// so, let search in section 3 for zlib
+	alshamlan@alshamlan-Precision-M6700:~$ apropos -s 3 zlib
+	Software::License::Zlib (3pm) - The zlib License
+	zlib (3)             - compression/decompression library
+	alshamlan@alshamlan-Precision-M6700:~$ 
+	
+	// you can read Software::License::Zlib as follows:
+	(bash) $ man 3pm Software::License::Zlib
+	// where $ man <section> <manpage>
+
+[2] getting example for a library such as zlib
+	// to see all install packages 
+	(bash) $ dpkg --list 
+	
+	// example for zlib
+	alshamlan@alshamlan-Precision-M6700:~$ dpkg --list | grep zlib
+	ii  zlib1g:amd64                                                1:1.2.8.dfsg-1ubuntu1                amd64        compression library - runtime
+	ii  zlib1g:i386                                                 1:1.2.8.dfsg-1ubuntu1                i386         compression library - runtime
+	ii  zlib1g-dev:amd64                                            1:1.2.8.dfsg-1ubuntu1                amd64        compression library - development
+	alshamlan@alshamlan-Precision-M6700:~$ 
+
+	// now, notice 'zlib1g-dev' is a develompent package, which means we have c headers installed!! such as 'zlib.h'
+	
+	// now, let us see the content of this deb package
+	// 1. install apt-file
+	(bash) $ sudo apt-get update
+	(bash) $ sudo apt-get install apt-file
+	// 2. update apt-file
+	(bash) $ sudo apt-file update
+	// 3. look at 'zlib1g-dev' content 
+	(bash) $ apt-file show zlib1g-dev
+	// example
+	alshamlan@alshamlan-Precision-M6700:/usr/share/doc/zlib1g-dev$ apt-file show zlib1g-dev
+	zlib1g-dev: /usr/include/x86_64-linux-gnu/zconf.h
+	zlib1g-dev: /usr/include/zlib.h
+	zlib1g-dev: /usr/lib/x86_64-linux-gnu/libz.a
+	zlib1g-dev: /usr/lib/x86_64-linux-gnu/libz.so
+	zlib1g-dev: /usr/lib/x86_64-linux-gnu/pkgconfig/zlib.pc
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/FAQ.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/README.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/algorithm.txt.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/changelog.Debian.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/copyright
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/README.examples
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/enough.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/example.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/fitblk.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/gun.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/gzappend.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/gzjoin.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/gzlog.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/gzlog.h.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/infcover.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/minigzip.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/zlib_how.html
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/zpipe.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/examples/zran.c.gz
+	zlib1g-dev: /usr/share/doc/zlib1g-dev/txtvsbin.txt.gz
+	zlib1g-dev: /usr/share/man/man3/zlib.3.gz
+	alshamlan@alshamlan-Precision-M6700:/usr/share/doc/zlib1g-dev$ 
+	
+	// that means it is stored in the common place for help "/usr/share/doc/"
+	
+	// it is better to do it in systematic ways than creative ways
+	
+[3] let say you want to see all avaliabe docs and examples in your system
+	(bash) $ ls -d /usr/share/doc/*dev*
+	
+	// example
+	alshamlan@alshamlan-Precision-M6700:/usr/share/doc$ ls -d /usr/share/doc/*dev*									( */ style)
+	/usr/share/doc/autotools-dev             /usr/share/doc/libfdt-dev                  /usr/share/doc/libqt4-dev-bin      /usr/share/doc/libxfixes-dev
+	/usr/share/doc/device-tree-compiler      /usr/share/doc/libffi-dev                  /usr/share/doc/libqt4-opengl-dev   /usr/share/doc/libxshmfence-dev
+	/usr/share/doc/devscripts                /usr/share/doc/libfl-dev                   /usr/share/doc/libqtwebkit-dev     /usr/share/doc/libxxf86vm-dev
+	/usr/share/doc/dpkg-dev                  /usr/share/doc/libgcc-4.7-dev-armel-cross  /usr/share/doc/libsdl1.2-dev       /usr/share/doc/linux-libc-dev
+	/usr/share/doc/gedit-developer-plugins   /usr/share/doc/libgcc-4.8-dev              /usr/share/doc/libslang2-dev       /usr/share/doc/linux-libc-dev-armel-cross
+	/usr/share/doc/gir1.2-gudev-1.0          /usr/share/doc/libgcc-4.9-dev              /usr/share/doc/libstdc++-4.8-dev   /usr/share/doc/makedev
+	/usr/share/doc/lib32gcc-4.8-dev          /usr/share/doc/libgettextpo-dev            /usr/share/doc/libstdc++-4.9-dev   /usr/share/doc/manpages-dev
+	/usr/share/doc/lib32gcc-4.9-dev          /usr/share/doc/libghc-ncurses-dev          /usr/share/doc/libstdc++6-4.4-dev  /usr/share/doc/manpages-posix-dev
+	/usr/share/doc/libasound2-dev            /usr/share/doc/libghc-text-dev             /usr/share/doc/libtinfo-dev        /usr/share/doc/mesa-common-dev
+	/usr/share/doc/libasprintf-dev           /usr/share/doc/libghc-transformers-dev     /usr/share/doc/libudev1            /usr/share/doc/python-dbus-dev
+	/usr/share/doc/libavahi-client-dev       /usr/share/doc/libgl1-mesa-dev             /usr/share/doc/libx11-dev          /usr/share/doc/qt4-dev-tools
+	/usr/share/doc/libavahi-common-dev       /usr/share/doc/libglib2.0-dev              /usr/share/doc/libx11-xcb-dev      /usr/share/doc/system-config-printer-udev
+	/usr/share/doc/libavdevice55             /usr/share/doc/libglu1-mesa-dev            /usr/share/doc/libx32gcc-4.8-dev   /usr/share/doc/udev
+	/usr/share/doc/libbison-dev              /usr/share/doc/libgmp-dev                  /usr/share/doc/libx32gcc-4.9-dev   /usr/share/doc/unity-scope-devhelp
+	/usr/share/doc/libbsd-dev                /usr/share/doc/libgudev-1.0-0              /usr/share/doc/libxau-dev          /usr/share/doc/x11proto-core-dev
+	/usr/share/doc/libc6-dev                 /usr/share/doc/libimobiledevice4           /usr/share/doc/libxcb1-dev         /usr/share/doc/x11proto-damage-dev
+	/usr/share/doc/libc6-dev-armel-cross     /usr/share/doc/libltdl-dev                 /usr/share/doc/libxcb-dri2-0-dev   /usr/share/doc/x11proto-dri2-dev
+	/usr/share/doc/libc6-dev-i386            /usr/share/doc/libmtdev1                   /usr/share/doc/libxcb-dri3-dev     /usr/share/doc/x11proto-fixes-dev
+	/usr/share/doc/libc6-dev-x32             /usr/share/doc/libncurses5-dev             /usr/share/doc/libxcb-glx0-dev     /usr/share/doc/x11proto-gl-dev
+	/usr/share/doc/libcaca-dev               /usr/share/doc/libncursesw5-dev            /usr/share/doc/libxcb-present-dev  /usr/share/doc/x11proto-input-dev
+	/usr/share/doc/libc-dev-bin              /usr/share/doc/libobjc-4.9-dev             /usr/share/doc/libxcb-randr0-dev   /usr/share/doc/x11proto-kb-dev
+	/usr/share/doc/libdbus-1-dev             /usr/share/doc/libpam0g-dev                /usr/share/doc/libxcb-render0-dev  /usr/share/doc/x11proto-xext-dev
+	/usr/share/doc/libdevmapper1.02.1        /usr/share/doc/libpcre3-dev                /usr/share/doc/libxcb-shape0-dev   /usr/share/doc/x11proto-xf86vidmode-dev
+	/usr/share/doc/libdevmapper-event1.02.1  /usr/share/doc/libpixman-1-dev             /usr/share/doc/libxcb-sync-dev     /usr/share/doc/xserver-xorg-input-evdev
+	/usr/share/doc/libdrm-dev                /usr/share/doc/libpng12-dev                /usr/share/doc/libxcb-xfixes0-dev  /usr/share/doc/xserver-xorg-video-fbdev
+	/usr/share/doc/libelfg0-dev              /usr/share/doc/libpthread-stubs0-dev       /usr/share/doc/libxdamage-dev      /usr/share/doc/xtrans-dev
+	/usr/share/doc/libevdev2                 /usr/share/doc/libpulse-dev                /usr/share/doc/libxdmcp-dev        /usr/share/doc/xutils-dev
+	/usr/share/doc/libexpat1-dev             /usr/share/doc/libqt4-dev                  /usr/share/doc/libxext-dev         /usr/share/doc/zlib1g-dev
+	alshamlan@alshamlan-Precision-M6700:/usr/share/doc$ 
+

@@ -1,0 +1,315 @@
+// 
+example of statck implementation on a linkedlist
+	/*
+	 * stack is: first in last out (FILO)
+	 */
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node{
+		int data;
+		struct node *next;
+	} node_t;
+
+	typedef struct stack{
+		node_t *top;
+	} stack_t;
+
+	void push (stack_t *s, int data)
+	{
+		node_t *new = (node_t *) malloc (sizeof(node_t));
+		new->data= data;
+		new->next= s->top;
+		s->top= new;
+	
+	}
+
+	int pop (stack_t *s)
+	{
+		node_t *remove;
+		remove = s->top;
+		int val = remove->data;
+		s->top = remove->next; // same as s->top=s->top->next;
+		free(remove);
+		return val;
+	}
+
+	int main()
+	{
+		stack_t *s = (stack_t *) malloc (sizeof(stack_t)); // <-- this part is importent!! if stack_t *s wouldn't work!!!
+		s->top = NULL; 
+		push(s,11);
+		push(s,22);
+		push(s,33);
+		printf("%d %d %d\n", pop(s), pop(s), pop(s));
+		free(s);
+		return 0;
+	}
+
+/*
+// output
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make -B q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	11 22 33
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+//--------------------
+creating a function that prints the stack contains so we can see the push() and pop() affect on the stack
+	/*
+	 * stack is: first in last out (FILO)
+	 */
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node{
+		int data;
+		struct node *next;
+	} node_t;
+
+	typedef struct stack{
+		node_t *top;
+	} stack_t;
+
+	void push (stack_t *s, int data)
+	{
+		node_t *new = (node_t *) malloc (sizeof(node_t));
+		new->data= data;
+		new->next= s->top;
+		s->top= new;
+	
+	}
+
+	int pop (stack_t *s)
+	{
+		node_t *remove;
+		remove = s->top;
+		int val = remove->data;
+		s->top = remove->next;
+		free(remove);
+		return val;
+	}
+
+	void print_stack (stack_t *s)
+	{
+		node_t *i;
+		printf("**************\n begin reading the statck\n**************\n");
+		for(i=s->top; i != NULL ; i=i->next)
+			printf("\t%d\n", i->data);
+		printf("**************\n finish reading the statck\n**************\n");
+	}
+
+	int main()
+	{
+		stack_t *s = (stack_t *) malloc (sizeof(stack_t));
+		s->top = NULL; 
+		print_stack(s);
+		push(s,11);
+		print_stack(s);
+		push(s,22);
+		print_stack(s);
+		push(s,33);
+		print_stack(s);
+		printf("%d %d %d\n", pop(s), pop(s), pop(s));
+		print_stack(s);
+		free(s);
+		return 0;
+	}
+/*
+// output
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make -B q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	**************
+	 begin reading the statck
+	**************
+	**************
+	 finish reading the statck
+	**************
+	**************
+	 begin reading the statck
+	**************
+		11
+	**************
+	 finish reading the statck
+	**************
+	**************
+	 begin reading the statck
+	**************
+		22
+		11
+	**************
+	 finish reading the statck
+	**************
+	**************
+	 begin reading the statck
+	**************
+		33
+		22
+		11
+	**************
+	 finish reading the statck
+	**************
+	11 22 33
+	**************
+	 begin reading the statck
+	**************
+	**************
+	 finish reading the statck
+	**************
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+
+//-------------------------------------
+
+	/*
+	 * combing stack code with K&R trick: 
+	 *	char c;
+	 *	while((c=getchar())!=EOF)
+	 *		<something>;
+	 */
+
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node {
+		int data;
+		struct node *next;
+	} node_t;
+
+	typedef struct stack {
+		node_t * top;
+	} stack_t;
+
+	void push (stack_t *head, char data)
+	{
+		// creating new
+		node_t *new= (node_t *) malloc (sizeof(node_t));
+		new->data= data;
+		// doing the mapping
+		new->next= head->top;
+		head->top= new;
+	}
+
+	char pop(stack_t *head)
+	{
+		node_t *remove;
+		remove=head->top;
+		int data = head->top->data;
+		head->top= head->top->next;
+		free(remove);
+		return data;
+	}
+
+	int main (int argc, char *argv[])
+	{
+		// I don't understand why I need malloc here!! Understand it
+		stack_t *head= (stack_t *) malloc (sizeof(stack_t));
+		head->top=NULL;
+		// pushing in the stack
+		char c;
+		while((c=getchar())!=EOF)
+			push(head, c);
+		// printing the LinkedList
+		stack_t *i;
+		for(i=head; i != NULL; )
+			printf("%c\n", pop(i));
+		// exiting
+		free(head);
+		return 0;
+	}
+/*
+// output
+	alshamlan@alshamlan-K55A:/tmp/interview$ make q2
+	cc     q2.c   -o q2
+	alshamlan@alshamlan-K55A:/tmp/interview$ ./q2
+	this
+	is 
+
+
+	 
+	s
+	i
+
+
+	s
+	i
+	h
+	t
+	Segmentation fault (core dumped)
+	alshamlan@alshamlan-K55A:/tmp/interview$ 
+*/
+
+	#include<stdio.h>
+	#include<stdlib.h>
+	#include<string.h>
+
+	typedef struct node {
+		char data;
+		struct node *next;
+	} node_t;
+
+	typedef struct stack {
+		node_t * top;
+	} stack_t;
+
+	// 
+	void push (stack_t *s, char c)
+	{
+		//
+		node_t *new= (node_t *) malloc (sizeof(node_t));
+		//
+		new->data=c;
+		//
+		new->next=s->top;
+		s->top=new;
+	}
+
+
+	char pop(stack_t *s)
+	{
+		node_t *remove=s->top;
+		char c=remove->data;
+		s->top=s->top->next;
+		free(remove);
+		return c;
+	}
+
+	int main(int argc, char *argv[])
+	{
+		//
+		stack_t *s = (stack_t *) malloc (sizeof(stack_t));
+		s->top=NULL;
+		//
+		char c;	
+		while((c=getchar()) != EOF)
+			push(s, c);
+	
+		stack_t *i;
+		for(i=s; i->top != NULL ; /*no need!! pop() does it*/)
+			putchar(pop(i));
+		//
+		free(s);
+		return !puts(" ");
+	}
+/*
+output
+
+alshamlan@alshamlan-K55A:/tmp/interview$ make q1
+cc -g -Wall     q1.c   -o q1
+alshamlan@alshamlan-K55A:/tmp/interview$ ./q1
+this is a 
+a testtset a
+ a si siht 
+alshamlan@alshamlan-K55A:/tmp/interview$ ./q1
+okay
+
+
+
+yako 
+alshamlan@alshamlan-K55A:/tmp/interview$ 
+
+
+*/

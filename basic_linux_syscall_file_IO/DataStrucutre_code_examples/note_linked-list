@@ -1,0 +1,139 @@
+//
+this code uses function to add a new node onto linkedlist
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node{
+		int data;
+		struct node *next;
+	} node_t;
+
+	node_t *create_node(int data)
+	{
+		node_t *temp = (node_t *) malloc(sizeof(node_t));
+		temp->data= data;
+		temp->next=NULL;
+		return temp;
+	}
+
+	node_t *link_node (node_t *head, node_t *new)
+	{
+		if(!new)	/*  this is just in case that new has issues	*/
+			return head;
+		new->next = head;
+		return new;
+	}
+
+	int main()
+	{
+		node_t *head= create_node(33);
+		head= link_node(head, create_node(22));
+		head= link_node(head, create_node(11));
+		head= link_node(head, create_node(00));
+
+		node_t *i;
+		for(i= head; i != NULL ; i= i->next)
+			printf("%d ", i->data);
+		puts(" ");
+		return 0;
+	}
+/*
+// output
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	0 11 22 33  
+*/
+
+//-------------------
+this time using void function to deal with adding the new linkedlist node. Note, the adding order isn't perfect!!
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	typedef struct node{
+		int data;
+		struct node *next;
+	} node_t;
+
+	node_t *create_node(int data)
+	{
+		node_t *temp = (node_t *) malloc(sizeof(node_t));
+		temp->data= data;
+		temp->next=NULL;
+		return temp;
+	}
+
+	void link_node (node_t *head, node_t *new)
+	{
+		new->next = head->next;
+		head->next = new;
+	}
+
+	int main()
+	{
+		node_t *head= create_node(33);
+		link_node(head, create_node(22));
+		link_node(head, create_node(11));
+		link_node(head, create_node(00));
+
+		node_t *i;
+		for(i= head; i != NULL ; i= i->next)
+			printf("%d ", i->data);
+		puts(" ");
+		return 0;
+	}
+/*
+// output
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make -B q1
+	cc -g -Wall    q1.c   -o q1
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+	33 0 11 22  
+	alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+
+Thu Oct 2, 2014
+----------------
+
+topic: using double pointer
+
+	#include<stdio.h>
+	#include<stdlib.h>
+
+	#define LIMIT 5
+
+	typedef struct node {
+		int data;
+		struct node *next;
+	} node_t;
+
+	void push(node_t **head, int data)
+	{
+		node_t *new=(node_t *) malloc (sizeof(node_t));
+		new->data=data;
+		new->next=*head;
+		*head=new;
+	}
+
+	int pop(node_t **head)
+	{
+		node_t *remove=*head;
+		int data=remove->data;
+		*head=(*head)->next;
+		free(remove);
+		return data;
+	}
+
+	int main(int argc, char *argv[])
+	{
+		// creating nodes
+		node_t *head=NULL;
+		int j;
+		for(j=0; j<LIMIT ; j++)
+			push(&head, j);
+		// prints
+		node_t *i;
+		for(i=head; i!=NULL; )
+			printf("%d\n", pop(&i));
+		return 0;
+	}

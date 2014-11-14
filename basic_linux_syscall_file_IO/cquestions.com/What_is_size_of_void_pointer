@@ -1,0 +1,26 @@
+/*
+ * What is size of void pointer?
+ */
+
+/*
+Explanation:
+Size of any type of pointer in c is independent of data type which is pointer is pointing i.e. size of all type of pointer (near) in c is two byte either it is char pointer, double pointer, function pointer or null pointer.  Void pointer is not exception of this rule and size of void pointer is also two byte.
+*/
+
+#include<stdio.h>
+
+int main()
+{
+	void *p=NULL;
+	double *pf=NULL;
+	printf("the size of double pinter is %zu\nThe pointer of void pointer is %zu\n", sizeof(pf), sizeof(p));
+	return 0;
+}
+
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ make -B q1
+cc -Wall -g    q1.c   -o q1
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q1
+the size of double pinter is 8
+The size of void   pointer is 8
+*/

@@ -1,0 +1,76 @@
+//
+
+//---------------------------------
+// title: Why is volatile needed in c?
+// source: http://stackoverflow.com/questions/246127/why-is-volatile-needed-in-c
+//-----------------------------------
+
+// question
+Why is volatile needed in C? What is it used for? What will it do?
+
+// asnwer 1
+Volatile tells the compiler not to optimize anything that has to do with the volatile variable.
+
+There is only one reason to use it: When you interface with hardware.
+
+Let's say you have a little piece of hardware that is mapped into RAM somewhere and that has two addresses: a command port and a data port:
+
+	typedef struct
+	{
+	  int command;
+	  int data;
+	  int isbusy;
+	} MyHardwareGadget;
+
+Now you want to send some command:
+
+	void SendCommand (MyHardwareGadget * gadget, int command, int data)
+	{
+		  // wait while the gadget is busy:
+		  while (gadget->isbusy) {
+			    // do nothing here.
+		  }
+		  // set data first:
+		  gadget->data    = data;
+		  // writing the command starts the action:
+		  gadget->command = command;
+	}
+
+Looks easy, but it can fail because the compiler is free to change the order in which data and commands are written. This would cause our little gadget to issue commands with the previous data-value. Also take a look at the wait while busy loop. That one will be optimized out. The compiler will try to be clever, read the value of isbusy just once and then go into an infinite loop. That's not what you want.
+
+The way to get around this is to declare the pointer gadget as volatile. This way the compiler is forced to do what you wrote. It can't remove the memory assignments, it can't cache variables in registers and it can't change the order of assignments either:
+
+This is the correct version:
+
+	void SendCommand (volatile MyHardwareGadget * gadget, int command, int data)
+	{
+	      // wait while the gadget is busy:
+	      while (gadget->isbusy)
+	      {
+		// do nothing here.
+	      }
+	      // set data first:
+	      gadget->data    = data;
+	      // writing the command starts the action:
+	      gadget->command = command;
+	}
+	
+// answer 2
+
+Another use for volatile is signal handlers. If you have code like this:
+
+	quit = 0;
+	while (!quit)
+	{
+	    /* very small loop which is completely visible to the compiler */
+	}
+
+The compiler is allowed to notice the loop body does not touch the quit variable and convert the loop to a while (true) loop. Even if the quit variable is set on the signal handler for SIGINT and SIGTERM; the compiler has no way to know that.
+
+However, if the quit variable is declared volatile, the compiler is forced to load it every time, because it can be modified elsewhere. This is exactly what you want in this situation.
+
+// answer 3
+volatile tells the compiler that your variable may be changed by other means, than the code that is accessing it. e.g., it may be a I/O-mapped memory location. If this is not specified in such cases, some variable accesses can be optimised, e.g., its contents can be held in a register, and the memory location not read back in again.
+
+// answer 4
+volatile in C actually came into existence for the purpose of not cacheing the values of the variable automatically. It will tell the machine not to cache the value of this variable. So it will take the value of the given volatile variable from the main memory every time it encounters it. This mechanism is used because at any time the value can be modified by the OS or any interrupt. So using volatile will help us accessing the value afresh every time.

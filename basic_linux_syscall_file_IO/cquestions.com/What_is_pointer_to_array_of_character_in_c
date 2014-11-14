@@ -1,0 +1,39 @@
+/*
+ * What is pointer to array of character in c?
+ */
+
+/*
+Explanation:
+A pointer to such an array which contents is character constants is known as pointer to array of character constant.
+What will be output if you will execute following code?
+*/
+#include<stdio.h>
+char display(char (*)[]);
+int main()
+{
+	char c;
+	char character[]={65,66,67,68};
+	char (*ptr)[]=&character;
+	c=display(ptr);
+	printf("%c",c);
+	return 0;
+}
+char display(char (*s)[])
+{
+	**s+=2;
+	return **s;
+}
+
+/*
+Output: C
+Explanation: Here function display is passing pointer to array of characters and returning char data type.
+**s+=2
+=>**s=**s+2
+=>**ptr=**ptr+2 //s=ptr
+=>**&character= **&character+2 //ptr=&character
+=>*character=*character+2 //from rule *&p =p
+=>character[0]=character[0]+2 //from rule *(p+i)=p[i]
+=>character [0] =67
+**s=character [0] =67
+Note: ASCII value of ‘C’ is 67
+*/

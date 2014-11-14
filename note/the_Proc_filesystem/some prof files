@@ -1,0 +1,90 @@
+//
+
+Thu Aug 21, 2014
+-----------------
+
+The file /proc/{pid}/cmdline contains the commandline parameter, arguments, and commands used to start this process. 
+ 
+The current working directory of the process is stored as a shortcut file - /proc/{pid}/cwd
+
+The link /proc/{pid}/exe is a shortcut to the command/process executed. For example, when playing the video game "0A.D.", the shortcut will link to /usr/games/0ad, unless the user installs the game somewhere else.
+
+/proc/{pid}/fd/ is a directory shortcuts to the files that the process currently has open. 
+
+/proc/{pid}/fdinfo/ is a directory that stores information of the files that the process currently has open.
+
+/proc/{pid}/limits stores the soft and hard limits of the process.
+
+/proc/{pid}/maps is a file that stores a memory map, permissions, and other data. 
+
+/proc/{pid}/mem stores information about the memory pages used by the process.
+
+/proc/{pid}/mountinfo contains mountpoint information. /proc/{pid}/mount lists the filesystems in the process's mount namespace. If a process is manipulating a file on a filesystem, then that filesystem will be listed here.
+
+/proc/{pid}/smaps stores a list of the process's memory usage. 
+
+/proc/{pid}/stat stores information about the process like the PID, parent process ID (PPID), session ID, controlling terminal, etc.
+
+/proc/{pid}/statm is a lot like /proc/{pid}/smaps, but instead stores information by page rather than in kilobytes.
+
+/proc/{pid}/status contains various information on a process. This is how the file can be viewed. Open a shell so we can view this information about your default shell. In shell scripting, "$$" is a variable that refers to the PID of the current shell's PID. So, we can type the code below in a shell to get information about our shell.
+
+Each thread a process owns will have a folder in /proc/{pid}/tasks/{tid}/. TID stands for Thread ID.
+
+/proc/bus/ contains files and folders for the different buses on the system. For instance, drivers for PC-cards will be found here - /proc/bus/pccard/drivers/.
+
+Any commandline parameters given to the kernel from the bootloader will be stored in this file - /proc/cmdline. So, if the Grub command-line is used to bootup a Linux kernel, then the command that was used will be seen in this file.
+
+Some kernels contain a file with the list of configured options used to configure the kernel in this file - /proc/config.gz. This can be very helpful when tweaking a kernel. For illustration, if a Linux user has a system that runs nearly very well, but the user wishes to make some minor adjustments to the kernel, then the user can get the file and give it to the kernel configuration tool. This provide all of the information used to configure the kernel. Then, the user can make the fine adjustments and have a new kernel that is nearly the same as the one before.
+
+The file /proc/cpuinfo provides information on the CPU used by the system. Users can view this file to get information about their CPU.
+
+The device numbers and groups are stored in this file /proc/devices.
+
+Input/Output (I/O) statistics are kept in this file - /proc/diskstats. Two lines from this file are listed below -
+
+The Direct Memory Access (DMA) channels are list here - /proc/dma. A line form this file looks like this "4: cascade". 
+
+Frame buffers are stored in /proc/fb.
+
+/proc/filesystems lists the filesystem support compiled into the kernel and filesystem modules currently loaded.
+
+The /proc/ide file contains information on the IDE devices like cache size, storage size, model, etc. This file can be used to ensure your system sees your device correctly. For example, assume you have an IDE device that is not working correctly. You could then view this file. If the file contains false information, then that mostly likely means the wrong driver has been loaded. Otherwise, correct information may mean the device itself is broken (the error could be something else. This is just a general example).
+
+/proc/interrupts keeps track of the number of interrupts that were executed/sent.
+
+/proc/iomem is the Input/Output memory map. All registered I/O port regions in use are listed in this file - /proc/ioports.
+
+This ELF file (/proc/kcore) represents the whole physical memory. ELG refers to the way the binary file is structured.
+
+Kernel messages can be read from this file - /proc/kmsg.
+
+Active file locks are listed in this file - /proc/locks. When a file is locked, a process is reading/writing a file and the lock prevents other processes and/or computers from trying to manipulate the file.
+
+Information about the memory and swap space are stored in this file - /proc/meminfo.
+
+Loaded modules are listed in this file - /proc/modules. This is helpful to know when diagnosing issues.
+
+Any data relating to networking will be found in this directory - /proc/net/. The TCP socket table is contained in /proc/net/tcp, and the UDP socket table is in /proc/net/udp. The file /proc/net/unix lists the current Unix domain sockets and some information pertaining to the sockets.
+
+/proc/partitions contains information about the partitions.
+
+/proc/self/ is a soft link to the PID folder of the process accessing the proc system.
+
+Various kernel information is stored in /proc/stat/. Some pieces of information include the number of processes and boot-time.
+
+/proc/swaps lists the swap spaces in use and various other information.
+
+/proc/sys/ is a folder containing the kernel variables. /proc/sys/dev/ holds device-specific information. Filesystem variables are stored in /proc/sys/fs. An example includes a file named "pipe-max-size" which sets the limit on the size of a pipe. /proc/sys/fs/dir-notify-enable is a file used to enable/disable dnotify. A zero disables this process and a one enables the process. dnotify watches the filesystem and reports events. /proc/sys/fs/file-max is another variable file; this one controls the maximum number of open files. There is even a variable file that allows users to set the max number of partitions that can be mounted (/proc/sys/fs/super-max). The hostname file is located here (/proc/sys/kernel/hostname). /proc/sys/kernel/pid_max sets the maximum number of PIDs. Each process must have an unique PID, so it is possible to reach a limit of the number of processes that can be run. However, it is very unlikely (or nearly impossible) to use up all of the PIDs. The computer will likely use up CPU and/or memory resources before then. The likelihood that the kernel will send data to the swap space can be changed using this file /proc/sys/vm/swappiness.
+
+/proc/uptime contains the amount of time the system has been on. 
+
+/proc/version contains the kernel's version number and information.
+
+Virtual memory statistics are kept in here - /proc/vmstat. 
+
+The /proc/zoneinfo file holds information on the various memory zones.
+
+Only the Root user can read all of the files and write to them. Regular users can read some, but cannot write to any. This security is needed to protect the system. If malware ever got Root privileges, then the malware could destroy the system. Obviously, the proc filesystem should only be changed and handled with Root privileges when it is necessary. Remember, if it is not broken, do not fix it. Otherwise, the chances of an accident are increased and the system could be ruined. However, it is perfectly safe to read proc files using user privileges because the kernel will not allow dangerous behaviors.
+
+As stated near the beginning of this article, ProcFS is a filesystem, so you may be wondering about formatting. All users (including Root) cannot make a storage unit use the procfs. Secondly, to reformat proc, restart the computer. Since procfs is stored on volatile memory, the data is deleted during every reboot and the filesystem is recreated during startup. Linux can manage this filesystem itself.

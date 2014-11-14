@@ -1,0 +1,299 @@
+//
+
+// reverse a sentence 
+
+	#include <stdio.h>
+	#define MAXLINE 100
+	static void reverse(char *str)
+	{
+		char word[MAXLINE];
+		char *w = word;
+		while (*str == ' ') 
+			++str;
+		if ( *str == '\0' ) 
+			return;
+		while (*str != '\0' && *str != ' ') *w++ = *str++;
+		*w = '\0';
+		reverse(str);
+		printf("%s ",word);
+	}
+	int main ( )
+	{
+		char str[MAXLINE];
+		printf("Enter a sentence:\n");
+		fflush(stdout);
+		gets(str);
+		reverse(str);
+		return 0;
+	}
+
+// output
+/*
+Enter a sentence:
+this is a sentence
+sentence a is this
+*/
+
+// or this one from command-line
+
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int main(int argc, char *argv[])
+	{
+		while(--argc)
+		        printf("%s ", argv[argc]);
+	printf("\n");
+	return 0;
+	}
+
+// from the terminal
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q4 hello world, my name is moh
+moh is name my world, hello 
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+
+// let have this sentence is hard-coded "Hello there, Eric is my name!!"
+	#include<stdio.h>
+	#include<string.h>
+
+	int rev (char *str[])
+	{
+		int i, len = strlen (*str);
+		printf("len= %d\n", len);
+		for (i=0; i<= len; i++)
+			printf("%s ", str[len - i]);
+		printf("\n");
+		return 0;
+	}
+
+	int main (){
+	char *str[]= {"Hello", "there,", "Eric", "is", "my", "name"};
+	//printf("%s \n", str);
+	rev(&str);
+	}
+
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ cat -n q4.c 
+     1	#include<stdio.h>
+     2	#include<string.h>
+     3	
+     4	int rev (char *str[])
+     5	{
+     6		int i, len = strlen (*str);
+     7		printf("len= %d\n", len);
+     8		for (i=0; i<= len; i++)
+     9			printf("%s ",str[len - i]);
+    10		printf("\n");
+    11		return 0;
+    12	}
+    13	
+    14	int main (){
+    15	char *str[]= {"Hello", "there,", "Eric", "is", "my", "name"};
+    16	//printf("%s \n", str);
+    17	rev(&str);
+    18	}
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc -Wall q4.c -o q4
+q4.c: In function ‘main’:
+q4.c:17:1: warning: passing argument 1 of ‘rev’ from incompatible pointer type [enabled by default]
+q4.c:4:5: note: expected ‘char **’ but argument is of type ‘char * (*)[6]’
+q4.c:18:1: warning: control reaches end of non-void function [-Wreturn-type]
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q4
+len= 5
+name my is Eric there, Hello 
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+// taking care of the error
+/*
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ cat -n q4.c 
+     1	#include<stdio.h>
+     2	#include<string.h>
+     3	
+     4	int rev (char *str[])
+     5	{
+     6		int i, len = strlen (*str);
+     7		printf("len= %d\n", len);
+     8		for (i=0; i<= len; i++)
+     9			printf("%s ",str[len - i]);
+    10		printf("\n");
+    11		return 0;
+    12	}
+    13	
+    14	int main (){
+    15	char *str[]= {"Hello", "there,", "Eric", "is", "my", "name"};
+    16	rev(str);	// note: &str gives error, but str doesn't!!!
+    17	return 0;
+    18	}
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ gcc -Wall q4.c -o q4
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ ./q4
+len= 5
+name my is Eric there, Hello 
+alshamlan@alshamlan-VGN-CR520E:/tmp/interview$ 
+*/
+
+//------------------------------------------------------------------------------------------
+/*
+ * reversing a string. the type of string is an array which has blank spaces and tabs. There is no libraries rather than stdio
+ * and the type of string allocation is toaugh!!
+ */
+
+	#include<stdio.h>
+
+	int main(int argc, char *argv[])
+	{
+		char str[]= "This   	is Eric     From      Philly";
+		// assuming!! max is 10 words which each the maximum has 10 letters!!
+		char rev[10][10];
+		int i, j=0, k=0;
+		// i'm not using string.h, so saying the char isn't null ('\0')
+		for (i=0; str[i] != '\0'; i++)
+			// copying each word in an array without any blank-space or tab
+			if ((str[i] != ' ') && (str[i] != '\t'))
+				rev[j][k++]= str[i];
+			// (i>0?str[i -1]:'a') equvialent to having a temparary varable
+			// seeing if previous varable is ' ' or '\t' and the cuurent is actual letter
+			else if (((i>0?str[i -1]:'a') != ' ' && (i>0?str[i -1]:'a') != '\t') && (str[i] == ' ') || (str[i] == '\t')){
+				// because when I break the long array, null isn't setup be defuailt, so I need to do it manually
+				rev[j][k]='\0';
+				j++;
+			}
+			else
+				k=0;
+		
+		// because when I break the long array, null isn't setup be defuailt, so I need to do it manually
+		rev[j][k]='\0';
+		// forward
+		//for (i=0; i <= j; i++){
+		for (i=j; i >= 0; i--){
+			for(k=0 ; rev[i][k] != '\0'; k++)
+				printf("%c", rev[i][k]);
+			printf(" ");
+		}
+		printf("\n");
+		return 0;
+	}
+	
+//-----------------
+using argv and argc
+
+	#include<stdio.h>
+	#include<string.h>
+	#define MAX 128
+	int main(int argc, char *argv[])
+	{
+		char buffer[MAX], temp[MAX]="\0";
+		int len= argc, i;
+		// i=1 because argv[0] is the program name!! and argv[len]=NULL
+		for(i=1; i<len ; i++){
+			sprintf(buffer, "%s %s", argv[i], temp);
+			strcpy(temp, buffer);
+		}
+		return !puts(buffer);
+	}
+
+or use argv and argc truely!!!
+                       
+
+        #include<stdio.h>
+        #include<string.h>
+        #define MAX 128
+        int main(int argc, char *argv[])
+        {
+                char buffer[MAX], temp[MAX]="\0";
+                while (--argc) {
+                        sprintf(buffer, "%s %s", *++argv, temp);
+                        strcpy(temp, buffer);
+                }
+                return !puts(buffer);
+        }
+
+
+
+	
+//--------------
+revser word order with given string, such as str[]="example, hello!!" 
+	/*
+	 * it can reverse the order of string words!!
+	 */
+
+	#include<stdio.h>
+	#include<string.h>
+
+	void strrev (char str[])
+	{
+		int i=0, len= (int) strlen(str);
+		// *p: because we want to use the common '\0' behavior, that printf() stops when it sees '\0' 
+		char *p;
+		// it should be less, but just in case if it was one big word!!
+		char temp[len +1];
+		temp[0]='\0'; 		/* this is importent move 	*/
+		char rev[len + 1];	/* the reverse string holder	*/
+		// repace every space to null-termeination in the given sting
+		while(i++ < len)
+			if (str[i]== '\t' || str[i]== ' ' || str[i]== '\n')
+				str[i]='\0';
+		// reverse the string		
+		for(i=0; i < len ; i++)
+			// notice that the condition is short, which is better than including ' ', '\t', and '\n'
+			if((i /* if i is non-zero */ && str[i]!= '\0' && str[i -1] == '\0') || (i==0)){ 
+				// point first letter after '\0'
+				p=&str[i];
+				sprintf(rev, "%s %s", p, temp);
+				strcpy(temp, rev);
+			}
+		strcpy(str, rev);		
+	}
+
+	int main()
+	{
+		char str[]= " 	Hello 			World!! \n \n This is me!!";
+		printf("%s\n", str);
+		strrev(str);
+		return !printf("%s\n", str);
+	}
+	
+// doing ii again!! with the use of isspace() function!!
+
+	#include<stdio.h>
+	#include<string.h>
+	#include<ctype.h>
+
+	void frev(char *str)
+	{
+		// declaring neeeded local variables
+		int len=(int) strlen(str), i;
+		char tmp[len +1], rev[len +1], *p; // [len + 1] adding a bit for '\0' if needed!!
+		// make any space to be null ('\0')!!
+		for(i=0; i<len; i++)
+			if(isspace(str[i]))
+			// equivalent to: if(str[i] == ' ' || str[i] == '\n' || str[i] == '\t')
+				str[i]='\0';
+		// set tmp variable before reversing!!
+		tmp[0]='\0';
+		// doing the reversing!!
+		for(i=0; i< len; i++)
+			if((i && str[i] != '\0' && str[i - 1] == '\0') || (i==0)){
+				p= &str[i];
+				sprintf(rev, "%s %s", p, tmp);
+				strcpy(tmp, rev);
+			}
+		strcpy(str, rev);
+	}
+
+	int main()
+	{
+		char str[]="this is a test!!";
+		puts(str);
+		frev(str);
+		return !puts(str);
+	}
+	
+/*
+// the output 
+	alshamlan@alshamlan-OptiPlex-980:/tmp/interview$ make q1
+	cc -Wall -g     q1.c   -o q1
+	alshamlan@alshamlan-OptiPlex-980:/tmp/interview$ ./q1
+	this is a test!!
+	test!! a is this 
+	alshamlan@alshamlan-OptiPlex-980:/tmp/interview$ 
+*/
