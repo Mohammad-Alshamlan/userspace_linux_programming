@@ -1,0 +1,79 @@
+//
+
+Thu Nov 13, 2014
+--------------
+objectives:
+[1] familiarize yourself with socket programming
+
+study:
+[1] for bind(), some of the process of getting your own IP address and/or port can be automated:
+	// choose an unused port at random
+	my_addr.sin_port = 0;
+	// use my IP address
+	my_addr.sin_addr.s_addr = INADDR_ANY;
+	
+to have better portanlity write it this way:
+	// choose an unused port at random
+	my_addr.sin_port = htons(0);
+	// use my IP address
+	my_addr.sin_addr.s_addr = htonl(INADDR_ANY);	
+	
+[2] writing and reading
+
+for tcp/ip:
+	send() and recv() are for communicating over stream sockets or connected datagram sockets
+	
+for udp/ip:
+	if you want to use regular unconnected datagram sockets (UDP), you need to use the sendto() and recvform()
+	
+for more general use:
+	the normal file system functions, write() and read()
+	Notes: 
+	for write
+	1. normally data is copied to a system buffer and write occurs asynchronously. 
+	2. if buffers are full, write can block
+	for read
+	1. if no data is available, the read blocks
+	2. if less than count bytes are available, read return what it can without blocking
+	3. for UDP, data is read in whole or partial datagrams. if you read part of a datagram, the rest is discarded 
+	
+[3] UDP server and client
+	1. a sample of the client socket call flow:
+
+	socket()
+	connect()
+	while(x) {
+		write()
+		read()
+	}
+	close()
+
+	2. a sample of the server socket call flow
+
+	socket()
+	bind()
+	listen()
+	// connect()	// not used!!
+	while(1){
+		accept()
+		while(x) {
+			// notice, they are different order than the client
+			read()
+			write()
+		}
+		close()
+	}
+	close()
+	
+[4] setting up hard-coded ip
+	// create struct sockaddr_in
+	struct sockaddr_in ina;
+	// setup the hard-coded ip
+	ina.sin_addr.s_addr = inet_addr("10.12.110.57");
+	
+	//better way, to use command-line arguements
+	ina.sin_addr.s_addr = inet_addr(argv[1]);
+	
+	note: 
+	[1] inet_addr() returns the address in Network Byte Order already so you don't have to call htonl()
+	[2] inet_addr() returns -1 on error, which corresponds to the IP address 255.255.255.255! That's the broadcase address!! Remember to do your error checking properly.
