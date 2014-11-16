@@ -105,31 +105,9 @@ void disconn(void);
 
 int main(int argc, char **argv)
 {
-	// why using extern when we just have a file!!
-	extern char *optarg;
-	extern int optind;
-	int c, err = 0; 
+	// setup the port
 	int port = SERVICE_PORT;
-	static char usage[] = "usage: %s [-d] [-p port]\n";
-
-	while ((c = getopt(argc, argv, "dp:")) != -1)
-		switch (c) {
-		case 'p':
-			port = atoi(optarg);
-			/* if (port < 1024 || port > 65535) { */
-			if (port < 0 || port > 65535) {
-				fprintf(stderr, "invalid port number: %s\n", optarg);
-				err = 1;
-			}
-			break;
-		case '?':
-			err = 1;
-			break;
-		}
-	if (err || (optind < argc)) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
-	}
+	// create the server
 	serve(port);
 	return 0;
 }

@@ -21,40 +21,36 @@ int fd;  /* fd is the file descriptor for the connected socket */
 /* return 0 on failure, non-zero on success */
 int conn(char *host, int port)
 {
-	struct hostent *hp;	/* host information */
-	unsigned int alen;	/* address length when we get the port number */
+	// host information for DNS name resolution
+	struct hostent *hp;
+	// address length when we get the port number 
+	unsigned int alen;
+	// create two sockets for server and client
 	struct sockaddr_in myaddr;	/* our address */
 	struct sockaddr_in servaddr;	/* server address */
-
-	printf("conn(host=\"%s\", port=\"%d\")\n", host, port);
-
 	/* get a tcp/ip socket */
 	/* We do this as we did it for the server */
 	/* request the Internet address protocol */
 	/* and a reliable 2-way byte stream */
-
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("cannot create socket");
 		return 0;
 	}
-
 	/* bind to an arbitrary return address */
 	/* because this is the client side, we don't care about the */
 	/* address since no application will connect here  --- */
 	/* INADDR_ANY is the IP address and 0 is the socket */
 	/* htonl converts a long integer (e.g. address) to a network */
 	/* representation (agreed-upon byte ordering */
-
 	memset((char *)&myaddr, 0, sizeof(myaddr));
 	myaddr.sin_family = AF_INET;
 	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	myaddr.sin_port = htons(0);
-
+	// bind() the socket to struct sockaddr_in myaddr information
 	if (bind(fd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
 		perror("bind failed");
 		return 0;
 	}
-
 	/* this part is for debugging only - get the port # that the operating */
 	/* system allocated for us. */
         alen = sizeof(myaddr);
@@ -98,37 +94,12 @@ void disconn(void)
 
 int main(int argc, char **argv)
 {
-	extern char *optarg;
-	extern int optind;
-	int c, err = 0; 
+	// setting up the host IP address and port to create the socket()
 	int port = SERVICE_PORT;	
 	char *host = "localhost";	/* default: this host */
-	static char usage[] = 
-	              "usage: %s [-d] [-h serverhost] [-p port]\n";
-
-	while ((c = getopt(argc, argv, "dh:p:")) != -1)
-		switch (c) {
-		case 'h':  /* hostname */
-			host = optarg;
-			break;
-		case 'p':  /* port number */
-			port = atoi(optarg);
-			if (port < 1024 || port > 65535) {
-				fprintf(stderr, "invalid port number: %s\n", optarg);
-				err = 1;
-			}
-			break;
-		case '?':
-			err = 1;
-			break;
-		}
-	if (err || (optind < argc)) {	/* error or extra arguments? */
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
-	}
-
+	// print the selected IP address and port before creating the socket()
 	printf("connecting to %s, port %d\n", host, port);
-
+	// create the socket()
 	if (!conn(host, port))    /* connect */
 		exit(1);   /* something went wrong */
 
