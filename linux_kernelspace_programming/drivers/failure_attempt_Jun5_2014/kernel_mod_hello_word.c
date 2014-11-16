@@ -1,8 +1,6 @@
 /*
  * source http://www.freesoftwaremagazine.com/articles/drivers_linux
  */
- 
-
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -10,13 +8,15 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-static int hello_init(void) {
-  printk("<1> Hello world!\n");
-  return 0;
+static int hello_init(void) 
+{
+	printk("<1> Hello world!\n");
+	return 0;
 }
 
-static void hello_exit(void) {
-  printk("<1> Bye, cruel world\n");
+static void hello_exit(void) 
+{
+	printk("<1> Bye, cruel world\n");
 }
 
 module_init(hello_init);

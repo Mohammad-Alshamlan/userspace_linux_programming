@@ -127,9 +127,9 @@ analysis:
 // creating a header file for both kernelspace and uerspace code to include
 alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/vendor/kernel_source/2.6.29/proprietary/spinor$ cat -n spinor_ioctl.h 
      1	/*****************************************
-     2	 Copyright (C) 2001-2009
-     3	 Sigma Designs, Inc. All Rights Reserved
-     4	 Proprietary and Confidential
+     2	 
+     3	 
+     4	 
      5	 *****************************************/
      6	                                                                                
      7	/*
@@ -194,9 +194,9 @@ alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/
 
 alshamlan@alshamlan-OptiPlex-980:~/Perforce/git_repo/depot/ipstb/diagnostics2.0/vendor/kernel_source/2.6.29/proprietary/spinor$ cat -n spinor_user.c 
      1	/*****************************************
-     2	 Copyright (C) 2001-2009
-     3	 Sigma Designs, Inc. All Rights Reserved
-     4	 Proprietary and Confidential
+     2	 
+     3	 
+     4	 
      5	 *****************************************/
      6	
      7	/* 
