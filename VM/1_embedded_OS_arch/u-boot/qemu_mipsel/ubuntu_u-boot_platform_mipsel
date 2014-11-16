@@ -1,0 +1,290 @@
+//
+
+Fri Jun 25, 2014
+----------------
+objective:
+[1] building u-boot for mipsel that runs onto qemu
+
+source:
+[1] http://balau82.wordpress.com/2010/03/10/u-boot-for-arm-on-qemu/
+
+steps:
+[1] install the needed packages
+	$ sudo apt-get install u-boot-tools
+
+// mipsel toolchian
+	$ sudo apt-get install gcc-4.7-base-mipsel-cross
+	
+// results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ mipsel-linux-gnu-
+	mipsel-linux-gnu-addr2line  mipsel-linux-gnu-elfedit    mipsel-linux-gnu-nm         mipsel-linux-gnu-readelf    
+	mipsel-linux-gnu-ar         mipsel-linux-gnu-gprof      mipsel-linux-gnu-objcopy    mipsel-linux-gnu-size       
+	mipsel-linux-gnu-as         mipsel-linux-gnu-ld         mipsel-linux-gnu-objdump    mipsel-linux-gnu-strings    
+	mipsel-linux-gnu-c++filt    mipsel-linux-gnu-ld.bfd     mipsel-linux-gnu-ranlib     mipsel-linux-gnu-strip      
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ mipsel-linux-gnu-
+
+	
+[2] cloning u-boot git repo
+	$ cd <where you want>
+	$ mkdir u-boot && cd u-boot
+	$ git clone git://git.denx.de/u-boot.git
+	// or behind the firewall
+	$ git clone http://git.denx.de/u-boot.git
+
+[3] building
+	// enter the git repo
+	$ cd u-boot
+	// clean just in case
+	$ make distclean
+	// configure u-boot for qemu mipsel
+	$ make qemu_mipsel_config ARCH=mips CROSS_COMPILE=mipsel-linux-gnu-
+// raw outcome
+alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mipsel ARCH=mipsel CROSS_COMPILE=mipsel-linux-gnu-
+Makefile:487: *** "System not configured - see README".  Stop.
+alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mipsel_config ARCH=mipsel CROSS_COMPILE=mipsel-linux-gnu-
+Failed: $ARCH=mipsel, should be 'mips' for qemu_mipsel
+make: *** [qemu_mipsel_config] Error 1
+alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mipsel_config ARCH=mips CROSS_COMPILE=mipsel-linux-gnu-
+Configuring for qemu_mipsel - Board: qemu-mips, Options: SYS_LITTLE_ENDIAN
+alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+	// build
+	$ make all ARCH=mips CROSS_COMPILE=mipsel-linux-gnu- 2>&1 | tee u-boot_qemu_mipsel.log
+		
+
+Thu Jul 24, 2014
+----------------
+objective:
+[1] using buildroot builds into u-boot image
+[2] then boot the u-boot image in qemu
+[3] all of that is done in ubuntu platform
+
+sources:
+[1] http://stackoverflow.com/questions/20763344/just-black-screen-after-running-qemu
+
+steps:
+[1] install the needed packages
+	$ sudo apt-get install u-boot-tools
+
+// arm toolchian
+	$ sudo apt-get install gcc-arm-linux-gnueabi 
+
+// results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-
+	arm-linux-gnueabi-addr2line       arm-linux-gnueabi-elfedit         arm-linux-gnueabi-gcov-4.7        arm-linux-gnueabi-objdump
+	arm-linux-gnueabi-ar              arm-linux-gnueabi-gcc             arm-linux-gnueabi-gprof           arm-linux-gnueabi-ranlib
+	arm-linux-gnueabi-as              arm-linux-gnueabi-gcc-4.7         arm-linux-gnueabi-ld              arm-linux-gnueabi-readelf
+	arm-linux-gnueabi-c++filt         arm-linux-gnueabi-gcc-ar-4.7      arm-linux-gnueabi-ld.bfd          arm-linux-gnueabi-size
+	arm-linux-gnueabi-cpp             arm-linux-gnueabi-gcc-nm-4.7      arm-linux-gnueabi-ld.gold         arm-linux-gnueabi-strings
+	arm-linux-gnueabi-cpp-4.7         arm-linux-gnueabi-gcc-ranlib-4.7  arm-linux-gnueabi-nm              arm-linux-gnueabi-strip
+	arm-linux-gnueabi-dwp             arm-linux-gnueabi-gcov            arm-linux-gnueabi-objcopy         
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$
+	
+[2] cloning u-boot git repo
+	$ cd <where you want>
+	$ mkdir u-boot && cd u-boot
+	$ git clone git://git.denx.de/u-boot.git
+	// or behind the firewall
+	$ git clone http://git.denx.de/u-boot.git
+
+[3] building u-boot image
+// first read the "README"!! for info
+	$  gedit README &
+
+// building from sandbox
+	// read the README
+	$ gedit board/sandbox/README.sandbox
+	// install the needed packages
+	$ sudo apt-get -y install libsdl1.2-dev device-tree-compiler
+	// clean the sandbox
+	$ make distclean
+	// build
+	$ make sandbox_config all
+	// test
+	./u-boot
+	
+
+// raw
+
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mips_config
+	Configuring for qemu_mips - Board: qemu-mips, Options: SYS_BIG_ENDIAN
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mipsel_config
+	Configuring for qemu_mipsel - Board: qemu-mips, Options: SYS_LITTLE_ENDIAN
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+
+
+extra:
+// building linux kernel and run it in qemu
+	$ make ARCH=arm distclean
+	$ make ARCH=arm versatile_defconfig
+
+	3)make ARCH=arm menuconfig
+
+	here you need to enable below feature.
+
+	Kernel Features ---> [*] Use the ARM EABI to compile the kernel. (enable this).
+
+	4)make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- uImage
+
+	5)qemu-system-arm -M versatilepb -m 128M -kernel arch/arm/boot/uImage -append "console=tty1"
+
+	Here you will get console saying that kernel panic. to avoid this pass your rootfs parameter.
+
+	I guess you built rootfs from busybox if so try below command to boot system completely
+
+	6)qemu-system-arm -M versatilepb -m 128M -kernel arch/arm/boot/uImage -initrd rootfs.img -append "root=/dev/ram mem=128M rdinit=/sbin/init" -serial stdio.
+
+// checking all the availabe cross-compile toolchain in ubuntu
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ sudo apt-get install gcc-
+	gcc-4.4                               gcc-4.7-multilib                      gcc-arm-linux-androideabi
+	gcc-4.4-base                          gcc-4.7-multilib-arm-linux-gnueabi    gcc-arm-linux-gnueabi
+	gcc-4.4-base-mipsel-cross             gcc-4.7-multilib-arm-linux-gnueabihf  gcc-arm-linux-gnueabihf
+	gcc-4.4-doc                           gcc-4.7-plugin-dev                    gcc-arm-none-eabi
+	gcc-4.4-locales                       gcc-4.7-source                        gcc-avr
+	gcc-4.4-mipsel-linux-gnu-base         gcc-4.8                               gcc-bfin-linux-gnu
+	gcc-4.4-multilib                      gcc-4.8-aarch64-linux-gnu             gcc-c6x-linux-gnu
+	gcc-4.4-source                        gcc-4.8-aarch64-linux-gnu-base        gcc-doc
+	gcc-4.6                               gcc-4.8-arm-linux-gnueabihf           gcc-h8300-hms
+	gcc-4.6-base                          gcc-4.8-arm-linux-gnueabihf-base      gcc-i686-linux-android
+	gcc-4.6-doc                           gcc-4.8-base                          gcc-m68hc1x
+	gcc-4.6-locales                       gcc-4.8-doc                           gcc-mingw-w64
+	gcc-4.6-multilib                      gcc-4.8-locales                       gcc-mingw-w64-base
+	gcc-4.6-plugin-dev                    gcc-4.8-multilib                      gcc-mingw-w64-i686
+	gcc-4.6-source                        gcc-4.8-multilib-arm-linux-gnueabihf  gcc-mingw-w64-x86-64
+	gcc-4.7                               gcc-4.8-multilib-powerpc-linux-gnu    gcc-msp430
+	gcc-4.7-arm-linux-gnueabi             gcc-4.8-plugin-dev                    gcc-multilib
+	gcc-4.7-arm-linux-gnueabi-base        gcc-4.8-powerpc64le-linux-gnu         gcc-opt
+	gcc-4.7-arm-linux-gnueabihf           gcc-4.8-powerpc64le-linux-gnu-base    gcc-powerpc64le-linux-gnu
+	gcc-4.7-arm-linux-gnueabihf-base      gcc-4.8-powerpc-linux-gnu             gcc-powerpc-linux-gnu
+	gcc-4.7-base                          gcc-4.8-powerpc-linux-gnu-base        gcc-snapshot
+	gcc-4.7-base-mipsel-cross             gcc-4.8-source                        gcc-tile-linux-gnu
+	gcc-4.7-doc                           gcc-4.9-base                          
+	gcc-4.7-locales                       gcc-aarch64-linux-gnu                 
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ sudo apt-get install gcc-
+	
+// avaliable config in buildroot
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ make help
+	Cleaning:
+	  clean                  - delete all files created by build
+	  distclean              - delete all non-source files (including .config)
+
+	Build:
+	  all                    - make world
+	  toolchain              - build toolchain
+	  <package>-rebuild      - force recompile <package>
+	  <package>-reconfigure  - force reconfigure <package>
+	  <package>-graph-depends    - generate graph of the dependency tree for package
+
+	Configuration:
+	  menuconfig             - interactive curses-based configurator
+	  nconfig                - interactive ncurses-based configurator
+	  xconfig                - interactive Qt-based configurator
+	  gconfig                - interactive GTK-based configurator
+	  oldconfig              - resolve any unresolved symbols in .config
+	  silentoldconfig        - Same as oldconfig, but quietly, additionally update deps
+	  olddefconfig           - Same as silentoldconfig but sets new symbols to their default value
+	  randconfig             - New config with random answer to all options
+	  defconfig              - New config with default answer to all options
+		                     BR2_DEFCONFIG, if set, is used as input
+	  savedefconfig          - Save current config as ./defconfig (minimal config)
+	  allyesconfig           - New config where all options are accepted with yes
+	  allnoconfig            - New config where all options are answered with no
+	  randpackageconfig      - New config with random answer to package options
+	  allyespackageconfig    - New config where pkg options are accepted with yes
+	  allnopackageconfig     - New config where package options are answered with no
+	  busybox-menuconfig     - Run BusyBox menuconfig
+	  linux-menuconfig       - Run Linux kernel menuconfig
+	  linux-savedefconfig    - Run Linux kernel savedefconfig
+	  uclibc-menuconfig      - Run uClibc menuconfig
+
+	Documentation:
+	  manual                 - build manual in all formats
+	  manual-html            - build manual in HTML
+	  manual-split-html      - build manual in split HTML
+	  manual-pdf             - build manual in PDF
+	  manual-text            - build manual in text
+	  manual-epub            - build manual in ePub
+	  graph-build            - generate graphs of the build times
+	  graph-depends          - generate graph of the dependency tree
+
+	Miscellaneous:
+	  source                 - download all sources needed for offline-build
+	  source-check           - check selected packages for valid download URLs
+	  external-deps          - list external packages used
+	  legal-info             - generate info about license compliance
+
+	  make V=0|1             - 0 => quiet build (default), 1 => verbose build
+	  make O=dir             - Locate all output files in "dir", including .config
+
+	Built-in configs:
+	  altera_sockit_defconfig             - Build for altera_sockit
+	  arm_foundationv8_defconfig          - Build for arm_foundationv8
+	  armadeus_apf27_defconfig            - Build for armadeus_apf27
+	  armadeus_apf28_defconfig            - Build for armadeus_apf28
+	  armadeus_apf51_defconfig            - Build for armadeus_apf51
+	  armadeus_apf9328_defconfig          - Build for armadeus_apf9328
+	  at91rm9200df_defconfig              - Build for at91rm9200df
+	  at91sam9260dfc_defconfig            - Build for at91sam9260dfc
+	  at91sam9260eknf_defconfig           - Build for at91sam9260eknf
+	  at91sam9261ek_defconfig             - Build for at91sam9261ek
+	  at91sam9263ek_defconfig             - Build for at91sam9263ek
+	  at91sam9g20dfc_defconfig            - Build for at91sam9g20dfc
+	  at91sam9g45m10ek_defconfig          - Build for at91sam9g45m10ek
+	  atmel_xplained_defconfig            - Build for atmel_xplained
+	  atngw100_defconfig                  - Build for atngw100
+	  atstk100x_defconfig                 - Build for atstk100x
+	  beaglebone_defconfig                - Build for beaglebone
+	  calao_qil_a9260_defconfig           - Build for calao_qil_a9260
+	  calao_snowball_defconfig            - Build for calao_snowball
+	  calao_tny_a9g20_lpw_defconfig       - Build for calao_tny_a9g20_lpw
+	  calao_usb_a9260_defconfig           - Build for calao_usb_a9260
+	  calao_usb_a9263_defconfig           - Build for calao_usb_a9263
+	  calao_usb_a9g20_lpw_defconfig       - Build for calao_usb_a9g20_lpw
+	  cubieboard2_defconfig               - Build for cubieboard2
+	  cubieboard_defconfig                - Build for cubieboard
+	  freescale_imx6sabresd_defconfig     - Build for freescale_imx6sabresd
+	  freescale_imx6sololiteevk_defconfig - Build for freescale_imx6sololiteevk
+	  freescale_mpc8315erdb_defconfig     - Build for freescale_mpc8315erdb
+	  freescale_p1010rdb_pa_defconfig     - Build for freescale_p1010rdb_pa
+	  gnublin_defconfig                   - Build for gnublin
+	  integrator926_defconfig             - Build for integrator926
+	  kb9202_defconfig                    - Build for kb9202
+	  lego_ev3_defconfig                  - Build for lego_ev3
+	  mini2440_defconfig                  - Build for mini2440
+	  minnowboard_defconfig               - Build for minnowboard
+	  mx53loco_defconfig                  - Build for mx53loco
+	  nitrogen6x_defconfig                - Build for nitrogen6x
+	  olimex_imx233_olinuxino_defconfig   - Build for olimex_imx233_olinuxino
+	  openblocks_a6_defconfig             - Build for openblocks_a6
+	  pandaboard_defconfig                - Build for pandaboard
+	  qemu_arm_nuri_defconfig             - Build for qemu_arm_nuri
+	  qemu_arm_versatile_defconfig        - Build for qemu_arm_versatile
+	  qemu_arm_vexpress_defconfig         - Build for qemu_arm_vexpress
+	  qemu_microblazebe_mmu_defconfig     - Build for qemu_microblazebe_mmu
+	  qemu_microblazeel_mmu_defconfig     - Build for qemu_microblazeel_mmu
+	  qemu_mips64_malta_defconfig         - Build for qemu_mips64_malta
+	  qemu_mips64el_malta_defconfig       - Build for qemu_mips64el_malta
+	  qemu_mips_malta_defconfig           - Build for qemu_mips_malta
+	  qemu_mipsel_malta_defconfig         - Build for qemu_mipsel_malta
+	  qemu_ppc_g3beige_defconfig          - Build for qemu_ppc_g3beige
+	  qemu_ppc_mpc8544ds_defconfig        - Build for qemu_ppc_mpc8544ds
+	  qemu_ppc_virtex_ml507_defconfig     - Build for qemu_ppc_virtex_ml507
+	  qemu_sh4_r2d_defconfig              - Build for qemu_sh4_r2d
+	  qemu_sparc_ss10_defconfig           - Build for qemu_sparc_ss10
+	  qemu_x86_64_defconfig               - Build for qemu_x86_64
+	  qemu_x86_defconfig                  - Build for qemu_x86
+	  qemu_xtensa_lx60_defconfig          - Build for qemu_xtensa_lx60
+	  qmx6_defconfig                      - Build for qmx6
+	  raspberrypi_defconfig               - Build for raspberrypi
+	  s6lx9_microboard_defconfig          - Build for s6lx9_microboard
+	  sheevaplug_defconfig                - Build for sheevaplug
+	  telit_evk_pro3_defconfig            - Build for telit_evk_pro3
+	  ts5x00_defconfig                    - Build for ts5x00
+	  wandboard_defconfig                 - Build for wandboard
+	  zedboard_defconfig                  - Build for zedboard
+
+	See docs/README, or generate the Buildroot manual for further details
+
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ 
+

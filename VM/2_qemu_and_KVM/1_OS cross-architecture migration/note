@@ -1,0 +1,18 @@
+//
+
+Wed Mar 5, 2014
+-----------------
+objective: 
+[1] pre-assessment to the needed prerequisites before starting!!
+
+to-do-list:
+1. convert the videos, pictures, and musics to more compressed forms
+2. delete the unneeded files
+3. compress the uncommon used files to zip or much more compressed forms
+4. shrink the partation 
+5. bring all the needed data to the same place, which is the partaion
+6. use qemu to create the image of the shrinked partaion 
+7. most likely the created image would not have boot sectore because we clone a paration and not dvice, so fix that
+8. most likely the cloned system has problems fix them after moving them to a VM such as KVM
+9. it is good idea to upgrade your OS to the latest OS, if there aren't any risks
+10. 

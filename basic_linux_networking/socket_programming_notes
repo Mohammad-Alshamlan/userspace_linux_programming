@@ -77,3 +77,13 @@ for more general use:
 	note: 
 	[1] inet_addr() returns the address in Network Byte Order already so you don't have to call htonl()
 	[2] inet_addr() returns -1 on error, which corresponds to the IP address 255.255.255.255! That's the broadcase address!! Remember to do your error checking properly.
+	
+[5]  portanlity with big endian vs littel endian
+	// defining
+	htons() for defining port such as "my_addr.sin_port = htons(0);"
+	htonl() for defining IP address such as "my_addr.sin_addr.s_addr = htonl(INADDR_ANY);"
+	
+	// reading
+	ntohs() for reading port value		"short port= ntohs(my_addr.sin_port)"
+	ntohl() for reading IP address such as	"long IP = ntohl(my_addr.sin_addr.s_addr)"
+	

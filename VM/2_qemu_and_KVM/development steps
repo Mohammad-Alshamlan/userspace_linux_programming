@@ -1,0 +1,87 @@
+// 
+
+// using preinstalled ubuntu
+qemu-system-x86_64 -m 1024 -smp 4 ubuntu-13.04-server-cloudimg-amd64-disk1.img
+
+//------------------------------------------------
+//	creating an inage in Sony Laptop is so slow, and that is why I'm not continue
+// -----------------------------------------------
+
+// creating an image with qcow2 formate
+qemu-img create -f qcow2 ubuntu_test1.qcow2 1G
+
+// Install Ubuntu on the disk image using the Ubuntu Server ISO image; didn't work because of bios
+qemu-system-x86_64 -L bios -cdrom ubuntu-12.04.2-desktop-amd64.iso -hda ubuntu_test1.qcow2 -boot d
+
+// Install Ubuntu on the disk image using the Ubuntu Server ISO image; worked was slow b/c no RAM
+qemu-system-x86_64 -cdrom ubuntu-12.04.2-desktop-amd64.iso -hda ubuntu_test1.qcow2 -boot d
+
+// Install Ubuntu on the disk image using the Ubuntu Server ISO image; worked because bios has been removed
+qemu-system-x86_64 -m 256 -cdrom ubuntu-12.04.2-desktop-amd64.iso -hda ubuntu_test1.qcow2 -boot d
+
+// Install Ubuntu on the disk image using the Ubuntu Server ISO image with 4 cores; worked
+qemu-system-x86_64 -m 1024 -smp 4 -cdrom ubuntu-12.04.2-desktop-amd64.iso -hda ubuntu_test1.qcow2 -boot d
+//Note: the image has login password that I don't know, so I can use this image further!!! 
+
+
+
+// -------------------------------------------
+//	How to use qemu
+//--------------------------------------------
+
+// to exit you need to hold <Alt> + <Ctrl> 
+<Alt> + <Ctrl>
+
+
+//----------------------------------------
+
+// download pre-intalled ubuntu image
+http://cloud-images.ubuntu.com/
+has many ubuntu images are ready to be used
+
+// Also you can use vmbuilder(refered here as ubuntu-vmbuilder) to quickly create Ubuntu images to KVM, VirtualBox, etc. 
+https://help.ubuntu.com/community/KVM/CreateGuests
+//or 
+http://askubuntu.com/questions/281763/is-there-any-prebuilt-qemu-ubuntu-image32bit-online
+
+//------------------------------------
+
+source: http://askubuntu.com/questions/281763/is-there-any-prebuilt-qemu-ubuntu-image32bit-online
+
+// Create a raw disk image using qemu-img:
+qemu-img create -f raw OpenMRS.img 3G
+
+//Install Ubuntu on the disk image using the Ubuntu Server ISO image
+qemu -L bios -cdrom ubuntu-7.04-server-i386.iso -hda OpenMRS.img -boot d
+
+// to boot into the partition 
+qemu -L bios -hda OpenMRS.img
+
+
+
+
+
+
+
+
+soruce: http://wiki.colar.net/creating_a_qemu_image_and_installing_debian_in_it
+
+// creating an image
+qemu-img create -f qcow debian.qcow 750M
+
+//Then start the Debian installation CD with QEMU and our new image as the HD.
+qemu -cdrom debian-40r3-i386-businesscard.iso -hda debian.img -boot d
+
+source: http://en.wikibooks.org/wiki/QEMU/Images
+
+// To set up your own guest OS image, you first need to create a blank disc image. 
+qemu-img create -f qcow2 winxp.img 3G
+
+// Here we'll boot off an ISO image of a properly licensed Windows XP boot disc. We'll also give it 256MB of RAM,  but we won't use the kqemu kernel module just yet because it causes problems during Windows XP installation.
+qemu -m 256 -hda winxp.img -cdrom winxpsp2.iso -boot d
+
+// Once the guest OS has installed successfully, you can shutdown the guest OS (e.g. in Windows XP, click on Start and then Shutdown). Once it has shutdown, start QEMU up with the kqemu kernel module to give it a little more speed.
+qemu -m 256 -hda winxp.img -cdrom winxpsp2.iso -kernel-kqemu
+
+// If you are running an x86-64 Linux (i.e. 64-bit), you will need to run the x86-64 version of QEMU to be able to utilise kqemu:
+qemu-system-x86_64 -m 256 -hda winxp.img -cdrom winxpsp2.iso -kernel-kqemu

@@ -1,0 +1,306 @@
+//
+
+// command list
+	/bin:
+	total 760
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 ash -> busybox
+	   760 -rwsr-xr-x    1 root     root      755.3K Jul 17 23:38 busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 cat -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 catv -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 chattr -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 chgrp -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 chmod -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 chown -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 cp -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 cpio -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 date -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 dd -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 df -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 dmesg -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 dnsdomainname -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 dumpkmap -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 echo -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 egrep -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 false -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 fdflush -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 fgrep -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 getopt -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 grep -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 gunzip -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 gzip -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 hostname -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 kill -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 linux32 -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 linux64 -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 ln -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 login -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 ls -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 lsattr -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mkdir -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mknod -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mktemp -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 more -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mount -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mountpoint -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mt -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 mv -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 netstat -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 nice -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 pidof -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 ping -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 pipe_progress -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 printenv -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 ps -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 pwd -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 rm -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 rmdir -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 run-parts -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 sed -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 setarch -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 setserial -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 sh -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 sleep -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 stty -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 su -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 sync -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 tar -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 touch -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 true -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 umount -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 uname -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 usleep -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 vi -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 watch -> busybox
+	     0 lrwxrwxrwx    1 root     root           7 Jul 17 23:31 zcat -> busybox
+
+	/sbin:
+	total 135
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 blkid -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 devmem -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 freeramdisk -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 fsck -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 fstrim -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 getty -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 halt -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 hdparm -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 hwclock -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 ifconfig -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 ifdown -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 ifup -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 init -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 insmod -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 ip -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 ipaddr -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 iplink -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 iproute -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 iprule -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 iptunnel -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 klogd -> ../bin/busybox
+	    17 -rwxr-xr-x    1 root     root       15.4K Jul 17 23:38 ldconfig
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 loadkmap -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 losetup -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 lsmod -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 makedevs -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 mdev -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 mkswap -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 modprobe -> ../bin/busybox
+	   115 -r-s--x--x    1 root     root      113.4K Jul 17 23:34 mount.nfs
+	     0 lrwxrwxrwx    1 root     root           9 Jul 17 23:34 mount.nfs4 -> mount.nfs
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 nameif -> ../bin/busybox
+	     3 -rwxr-xr-x    1 root     root        2.6K Jul 17 23:34 osd_login
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 pivot_root -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 poweroff -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 reboot -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 rmmod -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 route -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 runlevel -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 setconsole -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 start-stop-daemon -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 sulogin -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 swapoff -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 swapon -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 switch_root -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 sysctl -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 syslogd -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 udhcpc -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root           9 Jul 17 23:34 umount.nfs -> mount.nfs
+	     0 lrwxrwxrwx    1 root     root           9 Jul 17 23:34 umount.nfs4 -> mount.nfs
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 vconfig -> ../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          14 Jul 17 23:31 watchdog -> ../bin/busybox
+
+	/usr/bin:
+	total 940
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 [ -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 [[ -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 ar -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 awk -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 basename -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 bunzip2 -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 bzcat -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 chrt -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 chvt -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 cksum -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 clear -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 cmp -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 crontab -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 cut -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          16 Jul 17 23:31 dbclient -> ../sbin/dropbear
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 dc -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 deallocvt -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 diff -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 dirname -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 dos2unix -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          16 Jul 17 23:31 dropbearconvert -> ../sbin/dropbear
+	     0 lrwxrwxrwx    1 root     root          16 Jul 17 23:31 dropbearkey -> ../sbin/dropbear
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 du -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 eject -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 env -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 expr -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 find -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 fold -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 free -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 fuser -> ../../bin/busybox
+	    20 -rwxr-xr-x    1 root     root       18.2K Jul 17 23:38 getconf
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 head -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 hexdump -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 hostid -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 id -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 install -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 ipcrm -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 ipcs -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 killall -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 last -> ../../bin/busybox
+	    10 -rwxr-xr-x    1 root     root        9.9K Jul 17 23:38 ldd
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 less -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 logger -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 logname -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 lsof -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 lspci -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 lsusb -> ../../bin/busybox
+	   168 -rwxr-xr-x    1 root     root      166.4K Jul 17 23:38 ltrace
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 lzcat -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 lzma -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 md5sum -> ../../bin/busybox
+	    10 -rwxr-xr-x    1 root     root        9.3K Jul 17 23:38 memstat
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 mesg -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 microcom -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 mkfifo -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 nohup -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 nslookup -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 od -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 openvt -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 passwd -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 patch -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 printf -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 readlink -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 realpath -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 renice -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 reset -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 resize -> ../../bin/busybox
+	    97 -rwxr-xr-x    1 root     root       95.7K Jul 17 23:30 rpcgen
+	     0 lrwxrwxrwx    1 root     root          16 Jul 17 23:31 scp -> ../sbin/dropbear
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 seq -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 setkeycodes -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 setsid -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 sha1sum -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 sha256sum -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 sha3sum -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 sha512sum -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 sort -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          16 Jul 17 23:31 ssh -> ../sbin/dropbear
+	   397 -rwxr-xr-x    1 root     root      393.5K Jul 17 23:38 strace
+	     1 -rwxr-xr-x    1 root     root         944 Jul 17 23:34 strace-log-merge
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 strings -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 tail -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 tee -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 telnet -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 test -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 tftp -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 time -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 top -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 tr -> ../../bin/busybox
+	   237 -rwxr-xr-x    1 root     root      235.1K Jul 17 23:38 trace-cmd
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 traceroute -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 tty -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 uniq -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 unix2dos -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 unlzma -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 unxz -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 unzip -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 uptime -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 uudecode -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 uuencode -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 vlock -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 wc -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 wget -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 which -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 who -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 whoami -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 xargs -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 xz -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 xzcat -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 yes -> ../../bin/busybox
+
+	/usr/sbin:
+	total 836
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 addgroup -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 adduser -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 arping -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 chroot -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 crond -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 delgroup -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 deluser -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 dnsd -> ../../bin/busybox
+	   307 -rwxr-xr-x    1 root     root      303.7K Jul 17 23:38 dropbear
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 ether-wake -> ../../bin/busybox
+	    56 -rwxr-xr-x    1 root     root       54.6K Jul 17 23:38 exportfs
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 fbset -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 fdformat -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 inetd -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 killall5 -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 loadfont -> ../../bin/busybox
+	    25 -rwxr-xr-x    1 root     root       23.6K Jul 17 23:34 mountstats
+	    25 -rwxr-xr-x    1 root     root       23.9K Jul 17 23:38 nfsstat
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 rdate -> ../../bin/busybox
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 readprofile -> ../../bin/busybox
+	   253 -rwxr-xr-x    1 root     root      251.9K Jul 17 23:38 rpc.mountd
+	    17 -rwxr-xr-x    1 root     root       15.8K Jul 17 23:38 rpc.nfsd
+	    69 -rwxr-xr-x    1 root     root       67.6K Jul 17 23:38 rpc.statd
+	    19 -rwxr-xr-x    1 root     root       17.9K Jul 17 23:34 rpcdebug
+	     0 lrwxrwxrwx    1 root     root          17 Jul 17 23:31 setlogcons -> ../../bin/busybox
+	    17 -rwxr-xr-x    1 root     root       15.5K Jul 17 23:38 showmount
+	    47 -rwxr-xr-x    1 root     root       45.0K Jul 17 23:38 sm-notify
+	     1 -rwxr-xr-x    1 root     root         298 Jul 17 23:34 start-statd
+	     
+// used packages
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ ls -lsh dl/
+	total 202M
+	1.2M -rw-rw-r-- 1 alshamlan alshamlan 1.2M Apr 24  2012 autoconf-2.69.tar.xz
+	1.5M -rw-rw-r-- 1 alshamlan alshamlan 1.5M Dec 24  2013 automake-1.14.1.tar.xz
+	 20M -rw-rw-r-- 1 alshamlan alshamlan  20M Nov 21  2011 binutils-2.22.tar.bz2
+	2.2M -rw-rw-r-- 1 alshamlan alshamlan 2.2M Jan 19 21:52 busybox-1.22.1.tar.bz2
+	1.6M -rw-rw-r-- 1 alshamlan alshamlan 1.6M Feb 19 09:08 dropbear-2014.63.tar.bz2
+	5.9M -rw-rw-r-- 1 alshamlan alshamlan 5.9M May 18 23:21 e2fsprogs-1.42.10.tar.gz
+	300K -rw-rw-r-- 1 alshamlan alshamlan 297K Dec  1  2011 fakeroot_1.18.2.orig.tar.bz2
+	 83M -rw-rw-r-- 1 alshamlan alshamlan  83M May 22 07:22 gcc-4.8.3.tar.bz2
+	104K -rw-rw-r-- 1 alshamlan alshamlan 101K Apr 20  2007 genext2fs-1.4.1.tar.gz
+	1.9M -rw-rw-r-- 1 alshamlan alshamlan 1.9M Mar 25 12:15 gmp-6.0.0a.tar.xz
+	1.5M -rw-rw-r-- 1 alshamlan alshamlan 1.5M Jun 14 11:47 kmod-18.tar.xz
+	148K -rw-rw-r-- 1 alshamlan alshamlan 145K Jul  7  2009 libelf-0.8.12.tar.gz
+	448K -rw-rw-r-- 1 alshamlan alshamlan 448K Dec  9  2013 libtirpc-0.2.4.tar.bz2
+	852K -rw-rw-r-- 1 alshamlan alshamlan 849K Oct 18  2011 libtool-2.4.2.tar.xz
+	 74M -rw-rw-r-- 1 alshamlan alshamlan  74M Feb 22 17:03 linux-3.13.5.tar.xz
+	472K -rw-rw-r-- 1 alshamlan alshamlan 472K Sep 17  2013 ltrace-0.7.3.tar.bz2
+	572K -rw-rw-r-- 1 alshamlan alshamlan 570K Aug 12  2011 lzo-2.06.tar.gz
+	576K -rw-rw-r-- 1 alshamlan alshamlan 576K Jun 29 05:38 lzo-2.08.tar.gz
+	364K -rw-rw-r-- 1 alshamlan alshamlan 363K Nov  1  2010 lzop-1.03.tar.gz
+	1.1M -rw-rw-r-- 1 alshamlan alshamlan 1.1M Sep 22  2013 m4-1.4.17.tar.xz
+	 12K -rw-rw-r-- 1 alshamlan alshamlan 8.8K Jun  8  2009 memstat_0.8.tar.gz
+	620K -rw-rw-r-- 1 alshamlan alshamlan 619K Jan 15  2014 mpc-1.0.2.tar.gz
+	1.1M -rw-rw-r-- 1 alshamlan alshamlan 1.1M Mar 13  2013 mpfr-3.1.2.tar.xz
+	740K -rw-rw-r-- 1 alshamlan alshamlan 738K May 14  2012 nfs-utils-1.2.6.tar.bz2
+	 80K -rw-rw-r-- 1 alshamlan alshamlan  79K Sep 14  2012 pkgconf-0.8.9.tar.bz2
+	432K -rw-rw-r-- 1 alshamlan alshamlan 432K Jun  4  2013 strace-4.8.tar.xz
+	1.8M -rw-rw-r-- 1 alshamlan alshamlan 1.8M Jun  8 14:03 trace-cmd-trace-cmd-v2.3.2.tar.gz
+	2.2M -rw-rw-r-- 1 alshamlan alshamlan 2.2M May 15  2012 uClibc-0.9.33.2.tar.xz
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ 

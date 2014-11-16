@@ -1,0 +1,17 @@
+//
+
+Wed Jul 30, 2014
+----------------
+	// for help
+	(host) $ vmbuilder kvm ubuntu -h
+	// building the VM
+	(host) $ sudo time vmbuilder kvm ubuntu --suite trusty  --arch=amd64 --addpkg=linux-image-generic --addpkg=bash-completion --addpkg=openssh-server --user alshamlan --pass 288071100637 --rootpass=288071100637 2>&1 | tee vmbuilder.log
+	// rename the VM from random string to something is readable!!
+	(host) $ cp ubuntu-kvm/tmpsNpluA.qcow2 Jul30_ubuntu_x86_14.04.qcow2
+	// run the vm
+	(host) $ kvm -m 15G -cpu host -hda Jul30_ubuntu_x86_14.04.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	// accessing the VM through ssh
+	(host) $ ssh -p 2222 alshamlan@localhost 
+		// login onto the target
+		username:	alshamlan
+		passowrd:	288071100637

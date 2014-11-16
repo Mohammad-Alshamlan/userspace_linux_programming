@@ -1,0 +1,363 @@
+//
+
+qemu-system-mipsel -M malta -kernel output/images/vmlinux -serial stdio -hda output/images/rootfs.ext2 -append "root=/dev/hda" -redir tcp:5555::80 -redir tcp:5556::445
+
+Mon Jun 23, 2014
+----------------
+objective:
+[1] connecting MIPSEL buildroot to minerva through SSH
+
+steps:
+// build MIPSEL buildroot as shown below
+
+[1] run qemu with SSH config which is the same as the readme.txt for the selected board
+
+// example:
+
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ cat board/qemu/mips64el-malta/readme.txt 
+	Run the emulation with:
+
+	 qemu-system-mips64el -M malta -kernel output/images/vmlinux -serial stdio -hda output/images/rootfs.ext2 -append "root=/dev/hda"
+
+	The login prompt will appear in the terminal that started Qemu. The
+	graphical window is the framebuffer.
+
+	Tested with QEMU 1.7.0
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ 
+
+// run it
+
+	$ qemu-system-mips64el -M malta -kernel output/images/vmlinux -serial stdio -hda output/images/rootfs.ext2 -append "root=/dev/hda"
+
+
+[2] enable the network in qemu
+// enable the qemu connection
+	// run the following:
+	$ ifconfig eth0 up
+	$ udhcpc eth0
+
+Example:
+
+	# ifconfig eth0 up
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:192.168.10.2  Bcast:192.168.10.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# udhcpc eth0
+	udhcpc (v1.22.1) started
+	Sending discover...
+	Sending select for 10.0.2.15...
+	Lease of 10.0.2.15 obtained, lease time 86400
+	deleting routers
+	adding dns 10.0.2.3
+	# 
+
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:10.0.2.15  Bcast:10.0.2.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:2 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:2 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:1180 (1.1 KiB)  TX bytes:684 (684.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# 
+
+[3] login to different divice such as minerva STB.
+// note: from qemu to STB connected in the same network
+	$ dbclient root@10.10.139.34
+
+example:
+
+	# netstat 
+	Active Internet connections (w/o servers)
+	Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+	netstat: /proc/net/tcp6: No such file or directory
+	netstat: /proc/net/udp6: No such file or directory
+	netstat: /proc/net/raw6: No such file or directory
+	Active UNIX domain sockets (w/o servers)
+	Proto RefCnt Flags       Type       State         I-Node Path
+	unix  4      [ ]         DGRAM                       641 /dev/log
+	unix  2      [ ]         DGRAM                       645 
+	unix  2      [ ]         DGRAM                       650 
+	# dbclient root@10.10.139.34
+	root@10.10.139.34's password: 
+	tango3-paco[~]# uname -a
+	Linux tango3-paco 2.6.22.19-39-sigma #2 PREEMPT Fri Jun 13 14:54:49 EDT 2014 mips GNU/Linux
+	tango3-paco[~]# cat /etc/VERSION 
+	5.4.0.32s-5x
+	tango3-paco[~]# logout
+	# uname -a
+	Linux buildroot 3.13.5 #1 SMP Mon Jun 23 13:01:03 EDT 2014 mips64 GNU/Linux
+	# 
+
+
+
+to-do-list:
+1. build the run system for minerva
+2. start sharing such as nfs
+3. analyze the system further
+4. cross-compile code that runs on both of them
+
+
+Mon Jun 23, 2014
+----------------
+objective:
+[1] connecting MIPSEL buildroot to minerva through SSH
+
+steps:
+// build MIPSEL buildroot as shown below
+
+[1] run qemu with SSH config
+
+	$ qemu-system-mips64el -M malta -kernel output/images/vmlinux -serial stdio -hda output/images/rootfs.ext2 -append "root=/dev/hda ip=192.168.10.2 net nic -net user -redir tcp:8022::22 -redir tcp:8080::80"
+
+// note: this is mips64el, which is incorrect, but let test the ssh before we build the correct ISA for minerva
+
+// checking the connnection 
+
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:192.168.10.2  Bcast:192.168.10.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# netstat 
+	Active Internet connections (w/o servers)
+	Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+	netstat: /proc/net/tcp6: No such file or directory
+	netstat: /proc/net/udp6: No such file or directory
+	netstat: /proc/net/raw6: No such file or directory
+	Active UNIX domain sockets (w/o servers)
+	Proto RefCnt Flags       Type       State         I-Node Path
+	unix  4      [ ]         DGRAM                       641 /dev/log
+	unix  2      [ ]         DGRAM                       650 
+	unix  2      [ ]         DGRAM                       645 
+	# 
+
+// enable the qemu connection
+	// run the following:
+	$ ifconfig eth0 up
+	$ udhcpc eth0
+Example:
+
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:192.168.10.2  Bcast:192.168.10.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# ifconfig eth0 up
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:192.168.10.2  Bcast:192.168.10.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# udhcpc eth0
+	udhcpc (v1.22.1) started
+	Sending discover...
+	Sending select for 10.0.2.15...
+	Lease of 10.0.2.15 obtained, lease time 86400
+	deleting routers
+	adding dns 10.0.2.3
+	# 
+
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:10.0.2.15  Bcast:10.0.2.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:2 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:2 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:1180 (1.1 KiB)  TX bytes:684 (684.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# 
+
+// start the init secript again
+
+// ping my host system
+
+	"the host"
+	-----------
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 00:14:d1:1d:0c:e2  
+		  inet addr:192.168.1.32  Bcast:192.168.1.255  Mask:255.255.255.0
+		  inet6 addr: fe80::214:d1ff:fe1d:ce2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:35412 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:6199997 (6.1 MB)
+
+	eth1      Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  inet addr:136.170.210.169  Bcast:136.170.210.255  Mask:255.255.255.0
+		  inet6 addr: fe80::7a2b:cbff:fe9a:1af2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:19521502 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:6956754 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:17196255551 (17.1 GB)  TX bytes:2123894090 (2.1 GB)
+		  Interrupt:21 Memory:f7fe0000-f8000000 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  inet6 addr: ::1/128 Scope:Host
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:822687 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:822687 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:97004918 (97.0 MB)  TX bytes:97004918 (97.0 MB)
+
+	virbr0    Link encap:Ethernet  HWaddr fe:e1:11:f7:ff:2a  
+		  inet addr:192.168.122.1  Bcast:192.168.122.255  Mask:255.255.255.0
+		  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ 
+
+	// notes
+	[1] eth0 is the private DHCP server, so I should not be able to see it
+	[2] eth1 is my private internet ip, which I should see it
+	
+	"qemu"
+
+//ssh is enable
+
+Mon Jun 9, 2014
+------------------
+look: http://www.gabrielgonzalezgarcia.com/2011/02/21/embedded-system-development-qemu-buildroot-linux-arm/
+
+Thu May 29, 2014
+-------------------
+objective:
+[1] to build another system, and able to talk to real system through ssh
+
+
+steps:
+// note: we will use minerva to be the real system, so we want to build connection between buildroot+qemu to mineriva
+[1] build buildroot+qemu for mipsl 
+
+	$ git clone git://git.buildroot.net/buildroot
+	$ cd buildroot/
+// note: for help use the following command
+	$ make help
+// setting up the config file
+	$ make qemu_mipsel_malta_defconfig
+	
+[2] add the needed packages by using "make menuconfig"
+	$ make menuconfig
+// add dropbear and more packages are optional, then build
+	$ make
+
+[3] run qemu
+
+// knowing supported system for  qemu-system-mipsel 
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ qemu-system-mipsel -M ?
+	Supported machines are:
+	pica61               Acer Pica 61
+	malta                MIPS Malta Core LV (default)
+	none                 empty machine
+	mips                 mips r4k platform
+	magnum               MIPS Magnum
+	mipssim              MIPS MIPSsim platform
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$
+
+// supported nic mode
+	qemu-system-mipsel -M malta  -kernel output/images/vmlinux -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio  -net user -net nic,model=?
+
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ qemu-system-mipsel -M malta  -kernel output/images/vmlinux -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio  -net user -net nic,model=?
+	qemu: Supported NIC models: ne2k_pci,i82551,i82557b,i82559er,rtl8139,e1000,pcnet,virtio
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ 
+
+// didn't woek out!!!!!!!
+
+// run qemu
+qemu-system-mipsel -M malta -kernel  output/images/vmlinux  -hda output/images/rootfs.ext2 -append "root=/dev/hda console=ttyS0"
+
+
+qemu-system-mipsel -M malta -kernel  output/images/vmlinux  -hda output/images/rootfs.ext2 -append "root=/dev/sda console=ttyS0" -nographic 
+
+
+qemu-system-mipsel -M malta  -kernel output/images/vmlinux -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio 
+
+
+	$qemu-system-mipsel -M malta  -kernel output/images/vmlinux -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio  -net user
+
+
+qemu-mipsn32el -kernel output/images/vmlinux -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio -net nic,model=smc91c111 -net user
+
+qemu-system-mipsel -M malta  -kernel output/images/vmlinux -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio  -net user
+
+qemu-system-arm -M versatilepb -kernel output/images/zImage -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio -net nic,model=smc91c111 -net user

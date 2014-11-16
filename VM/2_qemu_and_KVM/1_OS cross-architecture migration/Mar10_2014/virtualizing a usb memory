@@ -1,0 +1,120 @@
+//
+
+Tue Mar 11, 2014
+-----------------
+objective:
+[1] creating a full system on a USB
+[2] using KVM to virtualize the USB system
+[3] the system is a clone from a different device (just the partation without the swap partation and the boot table) and is not new installation 
+
+steps:
+[1] I have created a full bootable image, which is "ubuntu_13_10_x64_bootable.qcow2", I will just clone the system partaion from it without the sawp partation nor the partation lookup table
+
+sudo modprobe nbd max_part=8
+sudo kvm-nbd --disconnect /dev/nbd0 
+sudo kvm-nbd --connect=/dev/nbd0 ubuntu_13_10_x64_bootable.qcow2
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo fdisk -l /dev/nbd0 
+
+	Disk /dev/nbd0: 64.4 GB, 64424509440 bytes
+	255 heads, 63 sectors/track, 7832 cylinders, total 125829120 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000a8aaa
+
+	     Device Boot      Start         End      Blocks   Id  System
+	/dev/nbd0p1            2048     5859327     2928640   82  Linux swap / Solaris
+	/dev/nbd0p2   *     5859328    20969471     7555072   83  Linux
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// note: we want to clone /dev/nbd0p2
+
+[2] cloning a partation without sawp nor the partation lookup table
+
+sudo qemu-img convert -O qcow2  /dev/nbd0p2 clone.qcow2
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ time sudo qemu-img convert -O qcow2  /dev/nbd0p2 clone.qcow2
+
+	real	1m16.785s
+	user	0m0.927s
+	sys	0m11.018s
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ ls -lsh | grep clone.qcow2 
+	4.3G -rw-r--r-- 1 root      root      4.3G Mar 11 14:51 clone.qcow2
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// note: now I have a cloned partation which is clone.qcow2. Usually, here were usually I can the image to use
+
+[3] copy the clone to a partation in the USB
+// create a partation that with the right size. I used gparted, but this is optional
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo fdisk -l  /dev/sdc 
+
+	Disk /dev/sdc: 16.0 GB, 16018046976 bytes
+	255 heads, 63 sectors/track, 1947 cylinders, total 31285248 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x2f457b0f
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdc1            2048    20482047    10240000   83  Linux
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$
+
+// note, the target is /dev/sdc1
+//clone the image "clone.qcow2" to /dev/sdc1
+time sudo qemu-img convert -O raw clone.qcow2 /dev/sdc1
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ time sudo qemu-img convert -O raw clone.qcow2 /dev/sdc1
+
+	real	20m9.687s
+	user	0m0.162s
+	sys	0m11.611s
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+	
+[4] boot the USB, which is /dev/sdc, with a liveCD, to fix the following:
+	1. adding a swap partation
+	2. adding a boot tablle
+
+// note, the order matters: swap, then fixing grub
+
+// worked!! make the bootable image
+sudo  kvm -m 11G -boot d -cdrom ubuntu-13.10-desktop-amd64.iso -hda /dev/sdc
+
+// add the swap from gparted
+
+// to fix the boot, in the livedCD
+sudo mount /dev/sda1 /mnt
+
+sudo mount --bind /dev /mnt/dev && sudo mount --bind /dev/pts /mnt/dev/pts && sudo mount --bind /proc /mnt/proc && sudo mount --bind /sys /mnt/sys
+
+sudo chroot /mnt
+
+grub-install /dev/sdX
+
+grub-install --recheck /dev/sdX
+
+update-grub
+
+exit && sudo umount /mnt/dev && sudo umount /mnt/dev/pts && sudo umount /mnt/proc && sudo umount /mnt/sys && sudo umount /mnt
+
+sudo inti 0
+
+[5] reboot without the LiveCD 
+
+sudo  kvm -m 11G  -hda /dev/sdc
+
+
+// testing, worked. However, it so slow!!
+
+// changing the wallpaper, then reboot to make sure the change is saved!! worked!!
+
+[6] speeding up KVM
+sudo kvm -m 11G  /dev/sdc
+sudo kvm -m 11G --num 4 /dev/sdc
+
+// usuing "virt-manager"
+sudo apt-get -y install virt-manager
+sudo virt-manager
+

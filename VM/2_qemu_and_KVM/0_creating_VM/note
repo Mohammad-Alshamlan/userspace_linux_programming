@@ -1,0 +1,8 @@
+//
+
+Tue Oct 7, 2014
+----------------
+
+"ubuntu-vm-builder" is an old method, the new way is "uvtool". Both are for just ubuntu VM
+
+"virt-builder" creates ubuntu VM, and other distro

@@ -1,0 +1,58 @@
+//
+
+Thu Apr 17, 2014
+---------------------
+objectives:
+[1] create ubuntu system for oanda forex 
+[2] try to encreypt the VM
+[3] using kvm
+
+sources:
+[1] http://www.havetheknowhow.com/Configure-the-server/Configure-KVM.html
+[2] http://xmodulo.com/2014/02/use-kvm-command-line-debian-ubuntu.html
+[3] https://help.ubuntu.com/community/KVM/Installation
+
+steps:
+[1] sudo apt-get install qemu-kvm libvirt-bin bridge-utils virt-manager
+[2] follow this http://www.howtogeek.com/117635/how-to-install-kvm-and-create-virtual-machines-on-ubuntu/
+[3] this is gui orinted!!
+
+//-----------------------------
+//	old method
+// ------------------------------
+[1] As a first step, verify that the host CPU is equipped with hardware virtualization extensions (e.g., Intel VT or AMD-V), which are required for KVM. The following command will do.
+	$ kvm-ok 
+	
+	
+	alshamlan@alshamlan-K55A:~$ kvm-ok 
+	INFO: /dev/kvm exists
+	KVM acceleration can be used
+	alshamlan@alshamlan-K55A:~$ 
+
+
+// older method
+
+
+	$ egrep '(vmx|svm)' --color /proc/cpuinfo
+	
+	alshamlan@alshamlan-K55A:~$ egrep '(vmx|svm)' --color /proc/cpuinfo
+	flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm ida arat epb xsaveopt pln pts dtherm tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+	flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm ida arat epb xsaveopt pln pts dtherm tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+	flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm ida arat epb xsaveopt pln pts dtherm tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+	flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm ida arat epb xsaveopt pln pts dtherm tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+	alshamlan@alshamlan-K55A:~$ 
+
+// note: If the output does not contain vmx or svm flag, it means the host CPU does not have hardware virtualization support. Thus you cannot use KVM on the host. After verifying that the host CPU comes with vmx or svm, proceed to install KVM next.
+
+[2] Install KVM
+Using apt-get, install KVM and related user-space tools.
+	$ sudo apt-get install qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils
+
+// note
+	1. libvirt-bin provides libvirtd which you need to administer qemu and kvm instances using libvirt
+	2. qemu-kvm (kvm in Karmic and earlier) is the backend
+	3. ubuntu-vm-builder powerful command line tool for building virtual machines
+	4. bridge-utils provides a bridge from your network to the virtual machines
+	5. You might also want to install virt-viewer, for viewing instances.
+	
+

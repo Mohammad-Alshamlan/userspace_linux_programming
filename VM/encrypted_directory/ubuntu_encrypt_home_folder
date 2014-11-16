@@ -1,0 +1,120 @@
+// 
+
+Fri Jun 6, 2014
+-----------------
+objective:
+[1] ubuntu encrypt home folder
+[2] Enable disk encryption after installation
+
+source:
+[1] http://askubuntu.com/questions/37/when-installing-im-given-the-option-of-encrypting-my-home-folder-what-does-t
+[2] http://www.howtogeek.com/116032/how-to-encrypt-your-home-folder-after-installing-ubuntu/
+
+for adding new user in the command-line
+[] http://askubuntu.com/questions/410244/a-command-to-list-all-users
+
+background:
+
+When installing I'm given the option of encrypting my home folder — what does this do?
+
+    >> Does encrypting my home folder make my computer more secure?
+    >> Do I have to enter my password more if my home folder is encrypted?
+    >> What else should I know about encrypting my home folder?
+
+answer:
+
+1. Simply:
+
+    Encrypting your home folder doesn't actually make your computer more secure - it simply makes all the files and folders in your home folder more secure from unauthorized viewing.
+        Your computer is still "vulnerable" in a security standpoint - but it becomes very difficult for your content to be stolen (unless the attacker has your password).
+    You won't need to actually enter your password any more than you normally do - when you log in to your computer your files are seamlessly decrypted for just your session.
+    There is a possibility (depending on your computers hardware) that this will affect the performance on your machine. If you're worried about performance more than security (and you're on an older machine) you may wish to disable this feature.
+
+2. Technically:
+
+Ubuntu uses "eCryptfs" which stores all the data in a directory (this case the home folders) as encrypted data. When a user is logged in that encrypted folder is mounted with second decryption mount (this is a temporary mount that works similar to tmpfs - it's created and run in RAM so the files are never stored in a decrypted state on the HD). The idea is - if your hard drive is stolen and the contents read those items aren't able to be read since Linux needs to be running with your authentication to create the successful mount and decryption ( The keys are SHA-512 encrypted data based of several user aspects - the keys are then stored in your encrypted key ring ). The end result is technically secure data (as long as your password isn't cracked or leaked).
+
+You will not have to enter your password any more than usual. There is a slight increase of Disk I/O and CPU which (depending on your computer specs) may hinder performance - though it's quite seamless on most modern PCs
+
+
+steps:
+[1] 
+
+Ubuntu offers to encrypt your home folder during installation. If you decline the encryption and change your mind later, you don’t have to reinstall Ubuntu. You can activate the encryption with a few terminal commands.
+
+Ubuntu uses eCryptfs for encryption. When you log in, your home directory is automatically decrypted with your password. While there is a performance penalty to encryption, it can keep private data confidential, particularly on laptops that may be stolen.
+
+// Getting Started
+
+Before doing any of this, you should ensure you have a backup of your home directory and important files. The migration command will create a backup on your computer, but it’s important to have an additional backup – just in case.
+
+First, install the encryption utilities:
+
+	$ sudo apt-get install ecryptfs-utils cryptsetup
+	
+[2] creating temp user
+
+You’ll have to encrypt your home directory while you’re not logged in. This means that you’ll need another user account with administrator (sudo) privileges – you can create one from Ubuntu’s User Accounts window. To open it, click your name on the panel and select User Accounts.
+
+To add a user. NOTE: do not use the useradd command. 
+
+	$ sudo adduser pace
+	
+Here is a useful example of the useradd command. Why use useradd? It gives a few more options for special cases. To add a user, give her a standard home directory in the /home folder and specify the shell she accesses by default do this: 
+
+	$ sudo useradd pace -m -s /bin/bash 
+	$ sudo passwd pace 
+
+// groups
+
+You might also wish to create a new group for your users. 
+
+	# sudo addgroup <groupname>
+	
+To add a new user to a existing group you would do this:
+
+	# sudo adduser <username> audio
+
+To add an existing user to an existing group you can use the same command:
+
+	# sudo adduser <username> <groupname>
+
+or
+
+	# sudo usermod -aG <groupname> <username>
+
+
+// the commands that I used:
+	$ id				// to know my account info 
+	$ cut -d: -f1 /etc/passwd	// to list all user in the system
+	$ sudo useradd pace -m -s /bin/bash 	// add new user 
+	$ sudo passwd pace 
+	$ sudo adduser <username> <groupname> //  in my group
+	
+alshamlan@alshamlan-OptiPlex-980:~$ id
+uid=1000(alshamlan) gid=1000(alshamlan) groups=1000(alshamlan),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),104(fuse),112(lpadmin),124(sambashare),129(libvirtd)
+alshamlan@alshamlan-OptiPlex-980:~$ sudo useradd pace -m -s /bin/bash alshamlan
+
+[3] Migrating Your Home Folder
+
+Select your new, temporary user account on the login screen and log in with it.
+
+Run the following command to encrypt your home directory, replacing user with the name of your user account:
+
+	$ sudo ecryptfs-migrate-home -u alshamlan
+	
+You’ll have to provide your user account’s password. After you do, your home directory will be encrypted and you’ll be presented with some important notes. In summary, the notes say:
+
+
+    1. You must log in as the other user account immediately – before a reboot!
+    2. A copy of your original home directory was made. You can restore the backup directory if you lose access to your files.
+    3. You should generate and record a recovery phrase.
+    4. You should encrypt your swap partition, too.
+
+// didn't work 
+pace@alshamlan-OptiPlex-980:~$ sudo ecryptfs-migrate-home -u alshamlan
+INFO:  Checking disk space, this may take a few moments.  Please be patient.
+INFO:  2.5x the size your current home directory is required to perform a migration.
+INFO:  Once the migration succeeds, you may recover most of this space by deleting the cleartext directory.
+ERROR:  Not enough free disk space.
+pace@alshamlan-OptiPlex-980:~$ 

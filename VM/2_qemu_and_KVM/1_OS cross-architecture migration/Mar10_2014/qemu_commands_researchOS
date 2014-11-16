@@ -1,0 +1,136 @@
+//
+
+
+
+
+
+//---------------------------------
+//	topic: booting linaor in arm system
+//	source: https://bugs.launchpad.net/ubuntu/+source/qemu-linaro/+bug/832219
+//------------------------------------ 
+
+// download this tar file, form this url:
+ http://releases.linaro.org/images/linaro-n/alip/11.07/beagle-alip.img.gz
+
+// use this command
+qemu-system-arm -M beaglexm -drive file=./beagle-alip.img,if=sd,cache=writeback -clock unix --nographic
+
+//---------------------------------
+//	topic: booting a clone from reseach partition that has gem5 
+//	source: https://wiki.archlinux.org/index.php/QEMU
+//------------------------------------ 
+
+// booting, didn't work. its note is "No booting device"
+qemu-system-x86_64 -hda ResearchPartition.img -m 2048
+
+// including the kernel, it didn't work!!
+qemu-system-x86_64 -kernel vmlinuz-2.6.38-8-generic -initrd ResearchPartition.img -append -m 2048 
+
+// mounting the image
+sudo mount ResearchPartition.img -o loop /media/research
+
+// going to /media/research and then chroot, worked but I couldn't do update-grub!!
+cd /media/research
+chroot .
+
+// resize the ubuntu_11_04_x64_86.qcow2 to fit 106,182 items, totalling 32.0 GB which is my home directory
+source:	https://wiki.archlinux.org/index.php/KVM#Resizing_the_image
+qemu-img resize ubuntu_11_04_x64_86.qcow2 +40G
+
+// booting into the system to make sure, yes there are free 40G, so I need to emerge it with the system!!!
+qemu-system-x86_64 -hda ubuntu_11_04_x64_86.qcow2 -m 2048
+
+// sharing a directry with the host and the vrual machine, I didn't get it!!
+qemu-system-x86_64 -hda ubuntu_11_04_x64_86.qcow2 -net nic -net user,smb=/home
+
+// Let say the try to boot other image in the system. I mean the image has ubuntu in it, but I also what to dual-boot other ubuntu!!
+qemu-system-x86_64 -cdrom ubuntu-11.04-desktop-amd64.iso -boot d ubuntu_11_04_x64_86.qcow2
+
+//---------------------------------
+//	topic: creating windows 7
+//	source: from below chapter "creating ubuntu x64_86 image"
+//------------------------------------
+// creating an empty inage from qemu emulator
+qemu-img create -f qcow2 windows7_x64_86.qcow2 30G
+
+// note[1]:
+	immediatlly windows7_x64_86.qcow2 size is 192.5 KB for 10G
+	immediatlly windows7_x64_86.qcow2 size is 192.5 KB for 30G, same as 10GB!!
+
+// installing windows 7 to the created image, was slow!!
+qemu-system-x86_64 -cdrom Windows_7_Ultimate.iso -boot d windows7_x64_86.qcow2
+
+// installing windows 7 to the created image with 2G Ram , was slow!!
+qemu-system-x86_64 -cdrom Windows_7_Ultimate.iso -boot d windows7_x64_86.qcow2 -m 2048
+
+// running the image, didn't work!!
+qemu-system-x86_64 -hda  windows7_x64_86.qcow2 -m 2048
+
+// didn't work out, but this source is more updated 
+source: http://www.reddit.com/r/archlinux/comments/1fg3y9/guide_to_running_windows_7_in_qemu/
+
+
+
+//---------------------------------
+//	topic: creating ubuntu x64_86 image
+//	source: https://wiki.archlinux.org/index.php/QEMU
+//------------------------------------
+
+// creating an empty inage from qemu emulator
+qemu-img create -f qcow2 ubuntu_11_04_x64_86.qcow2 10G
+
+// note[1]:
+	used size is 10G, but the actually used in host size is 192.5 KB that because of the file format type which is qcow2
+// note[2]:
+	You may use -f raw to create a raw disk instead, although you can also do so simply by creating a file of the needed size using dd or fallocate.
+// note[3]:
+	it is better to install the OS in the new created image from .ios file type rather than from CD, but if you cave the OS in CD, then convert it into .iso file as shown below:
+	$ dd if=/dev/cdrom of=mycdimg.iso
+// note[4]:
+	One thing to keep in mind: when you click inside the QEMU window, the mouse pointer is grabbed. To release it press Ctrl+Alt.
+//note[5]:
+	Warning: QEMU should never be run as root. If you must launch it in a script as root, you should use the -runas option to make QEMU drop root privileges.
+// note[6]:
+	On i386 systems, to install from a bootable ISO file as CD-ROM, run QEMU with:
+		$ qemu-i386 -cdrom <iso_image> -boot d <qemu_image>
+	On x86_64 systems: 
+		$ qemu-system-x86_64 -cdrom <iso_image> -boot d <qemu_image>
+//note[7]:
+	See the parameters in qemu --help for loading other media types such as floppy or disk images, or physical drives.
+// note[8]:
+	After the operating system has finished installing, the QEMU image can be booted directly, for example on i386:
+	$ qemu <qemu_image>
+// note[9]:
+	Tip: By default only 128MB of memory is assigned to the machine, the amount of memory can be adjusted with the -m switch, for example -m 512.
+
+// installing ubuntu 11.04 x64_84 to the created image 
+qemu-system-x86_64 -cdrom ubuntu-11.04-desktop-amd64.iso -boot d ubuntu_11_04_x64_86.qcow2
+
+// boot the created OS image after finshing the installiation, it is so slow!! I didn't wait until the full bootup thing!!
+qemu ubuntu_11_04_x64_86.qcow2
+
+// i increaed the ram to 1G, the boot menu worked immediatlly!! but it took time to boot the system up!!
+qemu ubuntu_11_04_x64_86.qcow2 -m 1024
+
+// increase the ram to 2G, it has the same problem for 1G ram which is daying "booting from hard-disk"!!
+qemu ubuntu_11_04_x64_86.qcow2 -m 2048
+
+// including the hard-disk flag
+qemu -hda ubuntu_11_04_x64_86.qcow2 -m 2048
+
+// opps, I was using qemu intead of qemu-system-x86_64, worked!! 
+qemu-system-x86_64 -hda ubuntu_11_04_x64_86.qcow2 -m 2048
+
+// note[10]:
+	the system has these ISA's:
+		qemu-system-arm         qemu-system-mips64      qemu-system-sh4
+		qemu-system-cris        qemu-system-mips64el    qemu-system-sh4eb
+		qemu-system-i386        qemu-system-mipsel      qemu-system-sparc
+		qemu-system-m68k        qemu-system-ppc         qemu-system-sparc64
+		qemu-system-microblaze  qemu-system-ppc64       qemu-system-x86_64
+		qemu-system-mips        qemu-system-ppcemb   
+
+// note[11]:
+	 the image that I was working with when I created it was less than 200MB but after I have installed the OS it gets to be 2.6GB, but the creation size was 10GB, so it safes the system size!!
+	However, the image inside information about the size is:
+

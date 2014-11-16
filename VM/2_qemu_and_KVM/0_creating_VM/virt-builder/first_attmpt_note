@@ -1,0 +1,208 @@
+//
+
+Tue Oct 7, 2014		"incomplete"
+----------------
+objective:
+[1] explorative unguided approach
+
+analysis:
+[1] install the package
+
+	alshamlan@alshamlan-Precision-M6700:~$ sudo apt-file search virt-builder
+	libguestfs-tools: /usr/bin/virt-builder
+	libguestfs-tools: /usr/share/bash-completion/completions/virt-builder
+	libguestfs-tools: /usr/share/man/ja/man1/virt-builder.1.gz
+	libguestfs-tools: /usr/share/man/man1/virt-builder.1.gz
+	libguestfs-tools: /usr/share/man/uk/man1/virt-builder.1.gz
+	alshamlan@alshamlan-Precision-M6700:~$ sudo apt-get install libguestfs-tools
+	Reading package lists... Done
+	Building dependency tree       
+	Reading state information... Done
+	The following extra packages will be installed:
+	  jfsutils ldmtool libconfig9 libguestfs-perl libguestfs0 libhivex0
+	  libldm-1.0-0 libstring-shellquote-perl libsys-virt-perl libwin-hivex-perl
+	  lvm2 reiserfsprogs scrub supermin watershed xfsprogs zerofree zfs-fuse
+	Suggested packages:
+	  thin-provisioning-tools xfsdump quota
+	The following NEW packages will be installed:
+	  jfsutils ldmtool libconfig9 libguestfs-perl libguestfs-tools libguestfs0
+	  libhivex0 libldm-1.0-0 libstring-shellquote-perl libsys-virt-perl
+	  libwin-hivex-perl lvm2 reiserfsprogs scrub supermin watershed xfsprogs
+	  zerofree zfs-fuse
+	0 upgraded, 19 newly installed, 0 to remove and 9 not upgraded.
+	Need to get 7,105 kB of archives.
+	After this operation, 26.5 MB of additional disk space will be used.
+	Do you want to continue? [Y/n] y
+
+[2] looking into the command help options
+
+	alshamlan@alshamlan-Precision-M6700:~$ virt-builder -h
+	virt-builder: unknown option `-h'.
+	virt-builder: build virtual machine images quickly
+
+	 virt-builder OS-VERSION
+	 virt-builder -l
+	 virt-builder --notes OS-VERSION
+	 virt-builder --print-cache
+	 virt-builder --cache-all-templates
+	 virt-builder --delete-cache
+	 virt-builder --get-kernel IMAGE
+
+	A short summary of the options is given below.  For detailed help please
+	read the man page virt-builder(1).
+
+	  --attach iso                        Attach data disk/ISO during install
+	  --attach-format format              Set attach disk format
+	  --cache dir                         Set template cache dir
+	  --no-cache                          Disable template cache
+	  --cache-all-templates               Download all templates to the cache
+	  --check-signature                   Check digital signatures
+	  --check-signatures                  -"-
+	  --no-check-signature                Disable digital signatures
+	  --no-check-signatures               -"-
+	  --curl curl                         Set curl binary/command
+	  --delete name                       Delete a file or dir
+	  --delete-cache                      Delete the template cache
+	  --edit file:expr                    Edit file with Perl expr
+	  --fingerprint AAAA..                Fingerprint of valid signing key
+	  --firstboot script                  Run script at first guest boot
+	  --firstboot-command cmd+args        Run command at first guest boot
+	  --firstboot-install pkg,pkg         Add package(s) to install at firstboot
+	  --format raw|qcow2                  Output format (default: raw)
+	  --get-kernel image                  Get kernel from image
+	  --gpg gpg                           Set GPG binary/command
+	  --hostname hostname                 Set the hostname
+	  --install pkg,pkg                   Add package(s) to install
+	  -l                                  List available templates
+	  --list                              -"-
+	  --long                              -"-
+	  --no-logfile                        Scrub build log file
+	  --long-options                      List long options
+	  --network                           Enable appliance network (default)
+	  --no-network                        Disable appliance network
+	  --notes                             Display installation notes
+	  -o file                             Set output filename
+	  --output file                       -"-
+	  --password-crypto md5|sha256|sha512 Set password crypto
+	  --print-cache                       Print info about template cache
+	  --quiet                             No progress messages
+	  --root-password ...                 Set root password
+	  --run script                        Run script in disk image
+	  --run-command cmd+args              Run command in disk image
+	  --scrub name                        Scrub a file
+	  --size size                         Set output disk size
+	  --source URL                        Set source URL
+	  --upload file:dest                  Upload file to dest
+	  -v                                  Enable debugging messages
+	  --verbose                           -"-
+	  -V                                  Display version and exit
+	  --version                           -"-
+	  -help                               Display this list of options
+	  --help                              Display this list of options
+	alshamlan@alshamlan-Precision-M6700:~$ 
+	
+	// using '-l' option
+	alshamlan@alshamlan-Precision-M6700:~$ virt-builder -l
+	centos-6                 CentOS 6.5
+	centos-7.0               CentOS 7.0
+	cirros-0.3.1             CirrOS 0.3.1
+	debian-6                 Debian 6 (Squeeze)
+	debian-7                 Debian 7 (Wheezy)
+	fedora-18                Fedora® 18
+	fedora-19                Fedora® 19
+	fedora-20                Fedora® 20
+	rhel-7rc                 Red Hat Enterprise Linux® 7 Release Candidate
+	scientificlinux-6        Scientific Linux 6.5
+	ubuntu-10.04             Ubuntu 10.04 (Lucid)
+	ubuntu-12.04             Ubuntu 12.04 (Precise)
+	ubuntu-14.04             Ubuntu 14.04 (Trusty)
+	alshamlan@alshamlan-Precision-M6700:~$ 
+	
+	// using '--note' option
+	alshamlan@alshamlan-Precision-M6700:~$ virt-builder --notes debian-7
+	Debian 7 (Wheezy).
+	 
+	 This is a default Debian install.
+	 
+	 The preseed and virt-install scripts that produced this image
+	 can be found in the libguestfs source tree:
+	 
+	 builder/website/debian.preseed
+	 builder/website/debian.sh
+	 
+	 This image is so very minimal that it only includes an ssh
+	 server and no virtual consoles.  To enable virtual consoles
+	 use this virt-builder option:
+	 
+	 virt-builder debian-7 \
+	     --edit '/etc/inittab: s,^#([1-9].*respawn.*/sbin/getty.*),$1,'
+	 
+	 This image does not contain SSH host keys.  To regenerate them use:
+	 
+	 --firstboot-command "dpkg-reconfigure openssh-server"
+	alshamlan@alshamlan-Precision-M6700:~$ 
+
+
+	// printing VM cache
+	alshamlan@alshamlan-Precision-M6700:~$ virt-builder  --print-cache
+	cache directory: /home/alshamlan/.cache/virt-builder
+	centos-6                 no
+	centos-7.0               no
+	cirros-0.3.1             no
+	debian-6                 no
+	debian-7                 no
+	fedora-18                no
+	fedora-19                no
+	fedora-20                no
+	rhel-7rc                 no
+	scientificlinux-6        no
+	ubuntu-10.04             no
+	ubuntu-12.04             no
+	ubuntu-14.04             no
+	alshamlan@alshamlan-Precision-M6700:~$ 
+	
+	
+[2] trying to create a VM
+	// notes
+	  --format raw|qcow2                  Output format (default: raw)
+  --hostname hostname                 Set the hostname
+  --install pkg,pkg                   Add package(s) to install
+  --root-password ...                 Set root password
+
+	// about the image
+	alshamlan@alshamlan-Precision-M6700:~$ virt-builder --notes ubuntu-14.04
+	Ubuntu 14.04 (Trusty).
+	 
+	 This is a minimal Ubuntu 14.04 (Trusty) install.
+	 
+	 Only the openssh-server package is selected in tasksel.
+	 The preseed and virt-install scripts that produced this image
+	 can be found in the libguestfs source tree:
+	 
+	 builder/website/ubuntu.preseed
+	 builder/website/ubuntu.sh
+	 
+	 This image does not contain SSH host keys.  To regenerate them use:
+	 
+	 --firstboot-command "dpkg-reconfigure openssh-server"
+	 
+	 IMPORTANT NOTE: It seems to be impossible to create an Ubuntu >= 14.04
+	 image using preseed without creating a user account.  Therefore this
+	 image contains a user account 'builder'.  I have disabled it, so that
+	 people who don't read release notes don't get caught out, but you might
+	 still wish to delete it completely.
+	alshamlan@alshamlan-Precision-M6700:~$ 
+	
+	// create the VM 
+	// note the below steps were modified many times until I got them correct, so there weren't a hit from the first time
+	// according to the manpage (virt-builder), this is the way of setting a passwprd
+	$ echo -e "288071100637" > /tmp/rootpw
+	$ virt-builder ubuntu-14.04 --hostname "alshamlan" --root-password file:/tmp/rootpw  --install linux-image-generic,bash-completion,openssh-server,git,build-essential,libncurses5-dev --firstboot-command "dpkg-reconfigure openssh-server" -v 
+	
+	
+	// didn't work!!
+	$ virt-builder ubuntu-14.04 --format qcow2 --hostname "alshamlan" --root-password file:/tmp/rootpw  --install linux-image-generic,bash-completion,openssh-server,git,build-essential,libncurses5-dev --firstboot-command "dpkg-reconfigure openssh-server" --size 20G
+	
+	// raw result
+	
+

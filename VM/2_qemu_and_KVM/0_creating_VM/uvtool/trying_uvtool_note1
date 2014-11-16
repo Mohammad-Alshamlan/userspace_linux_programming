@@ -1,0 +1,138 @@
+//
+
+Mon Oct 13, 2014
+-----------------
+objectve:
+[1] create ubuntu 12.04 (precise) VM for building PHD
+
+
+steps:
+[1] the way to use uvt-kvm is the following:
+	uvt-kvm create [options] name [filter...]
+
+	// the used command is the following
+	$ uvt-kvm create --password=ubuntu --memory=11G --cpu=4 --disk=30G PHD_buildsystem release=precise arch=amd64
+
+uvt-kvm create firsttest release=trusty
+
+Thu Sep 25, 2014
+-----------------
+objectives:
+[1] using this tool and familirize myself with it
+[2] it seems that "uvtool" is a replacement to "vmbuilder"
+
+steps:
+[1] create ssh key
+	$ ssh-keygen
+
+[2] get info from uvt-kvm
+	$ uvt-kvm -h
+	$ uvt-kvm create -h
+	
+	// raw results
+	alshamlan@alshamlan-Precision-M6700:~/development$ uvt-kvm create -h
+	usage: uvt-kvm create [-h] [--developer] [--template TEMPLATE]
+		              [--memory MEMORY] [--cpu CPU] [--disk DISK]
+		              [--bridge BRIDGE] [--unsafe-caching]
+		              [--user-data USER_DATA] [--meta-data META_DATA]
+		              [--password PASSWORD] [--log-console-output]
+		              [--backing-image-file BACKING_IMAGE_FILE]
+		              [--run-script-once RUN_SCRIPT_ONCE]
+		              [--ssh-public-key-file SSH_PUBLIC_KEY_FILE]
+		              [--packages PACKAGES]
+		              hostname [filter [filter ...]]
+
+	positional arguments:
+	  hostname
+	  filter
+
+	optional arguments:
+	  -h, --help            show this help message and exit
+	  --developer, -d
+	  --template TEMPLATE
+	  --memory MEMORY
+	  --cpu CPU
+	  --disk DISK
+	  --bridge BRIDGE
+	  --unsafe-caching
+	  --user-data USER_DATA
+	  --meta-data META_DATA
+	  --password PASSWORD
+	  --log-console-output
+	  --backing-image-file BACKING_IMAGE_FILE
+	  --run-script-once RUN_SCRIPT_ONCE
+	  --ssh-public-key-file SSH_PUBLIC_KEY_FILE
+	  --packages PACKAGES
+	alshamlan@alshamlan-Precision-M6700:~/development$ 
+
+
+[2] create a vm
+	$ uvt-kvm create firsttest
+	// or 
+	$ uvt-kvm create firsttest release=trusty
+	
+	// raw example
+	alshamlan@alshamlan-Precision-M6700:~/development$ uvt-kvm create firsttest release=trusty
+	alshamlan@alshamlan-Precision-M6700:~/development$ ls
+	mounting_point  mounting_point2  ubuntu_1404_86.qcow2
+	alshamlan@alshamlan-Precision-M6700:~/development$ uvt-kvm list
+	firsttest
+	PHD_server
+	testtask
+	alshamlan@alshamlan-Precision-M6700:~/development$ 
+
+[3] running the VM
+	$ uvt-kvm ssh firsttest --insecure
+	
+	// or using ip
+	$ uvt-kvm ip firsttest
+	$ ssh -i ~/.ssh/id_rsa ubuntu@<IP>
+	
+	
+// -------------------
+// using uvt-simplestreams-libvirt  
+//---------------------
+[1] install uvtool
+	(ubuntu) $ sudo apt-get install uvtool
+	// this will install uvtool's main commands:
+		$ uvt-simplestreams-libvirt
+		$ uvt-kvm
+
+[2] downloading ubuntu images
+	// downloading
+	(ubuntu) $ uvt-simplestreams-libvirt sync arch=amd64
+	// checking what has been downloaded 
+	(ubuntu) $ uvt-simplestreams-libvirt query
+
+	// raw exampls	
+	alshamlan@alshamlan-Precision-M6700:~/development$ uvt-simplestreams-libvirt sync arch=amd64
+	alshamlan@alshamlan-Precision-M6700:~/development$ uvt-simplestreams-libvirt 
+	mounting_point/       mounting_point2/      ubuntu_1404_86.qcow2  
+	alshamlan@alshamlan-Precision-M6700:~/development$ uvt-simplestreams-libvirt query
+	release=oneiric arch=amd64 label=release (20130509)
+	release=precise arch=amd64 label=release (20140924.4)
+	release=quantal arch=amd64 label=release (20140409)
+	release=raring arch=amd64 label=release (20140111)
+	release=saucy arch=amd64 label=release (20140709)
+	release=trusty arch=amd64 label=release (20140924)
+	release=utopic arch=amd64 label=beta1 (20140826)
+	alshamlan@alshamlan-Precision-M6700:~/development$ 
+
+[3] 
+
+
+Wed Jul 30, 2014
+----------------
+	// for help
+	(host) $ vmbuilder kvm ubuntu -h
+	// building the VM
+	(host) $ sudo time vmbuilder kvm ubuntu --suite trusty  --arch=amd64 --addpkg=linux-image-generic --addpkg=bash-completion --addpkg=openssh-server --user alshamlan --pass 288071100637 --rootpass=288071100637 2>&1 | tee vmbuilder.log
+	// rename the VM from random string to something is readable!!
+	(host) $ cp ubuntu-kvm/tmpsNpluA.qcow2 Jul30_ubuntu_x86_14.04.qcow2
+	// run the vm
+	(host) $ kvm -m 15G -cpu host -hda Jul30_ubuntu_x86_14.04.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	// accessing the VM through ssh
+	(host) $ ssh -p 2222 alshamlan@localhost 
+		// login onto the target
+		username:	alshamlan
+		passowrd:	288071100637

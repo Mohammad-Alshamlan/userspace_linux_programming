@@ -1,0 +1,182 @@
+//
+
+Mon Jul 28, 2014
+-----------------
+objective:
+[1] compile a linux kernel and run it onto qemu regradless to the ISA
+
+sources:
+[1] http://nostillsearching.wordpress.com/2012/09/22/compiling-linux-kernel-and-running-it-using-qemu/
+
+steps:
+[1] clone stable linux kernet git repo behind the firewall
+	$ git clone http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git 
+	// or upgrade it
+	$ git reset --hard && git clean -dfx
+	$ git pull
+
+[2] configure the kernel
+// The next step is to configure the kernel. To configure the kernel , the .config file is needed to be generated. A simple method to generate the .config file is to copy the configure file of the working Linux operating system.. For Ubuntu, it will be in the /boot/ directory. Copy this file to ~/linux/linux-2.6.32.59. An another method is to use make to generate a default config file using the command
+	$ make defconfig
+
+//  After generating the .config file, it has to be configured according to the setting we need on the compiled kernel. To make kernel with no windows, without any GUI, we can use menuconfig. Run the following command and a blue screen will appear. Select the settings you need on the kernel and unmark the things which are not required.Then save the config file
+	$ make menuconfig
+
+[3] compile the kernel
+// The next is to make the kernel, it will take several minutes to complete. Use the following commands
+	$ time make all 2>&1 | tee x86_kernel_make_all.log
+	$ time make modules 2>&1 | tee x86_kernel_make_modules.log
+// when it is finised , a file bzImage will be created in linux-2.6.32.59/arch/i386/boot/ if you are using the i386 architecure. This file is the binary image of the compiled kernel and it is used to run the kernel.
+
+[4] Create the initial file system
+// Even though the file sytems will be compiled alone the kernel, an initial file sytem has to be created which will be present in the RAM to run the kernel. To make this inital ram filesystem, mkinitrd is used. In ubuntu mkinitramfs is used instead of that
+
+	$ cd arch/x86/boot/
+	$ mkinitramfs -o initrd.img
+
+[5] Run the kernel in QEMU
+// QEMU which stands for ‘Quick EMUlater’ is an excellent emulator. It can emulate different processer architecture with high speed on the PC itself. To run the kerenl use the following command,-kernel denotes the kernel image which is going to execute, -initrd reprresents the initial ram filesystem and -m shows how much memory in RAM is allocated for running qemu.
+
+	// works, but you can't copy and paste 
+	$ qemu-system-x86_64 -kernel bzImage -initrd initrd.img -m 512M 
+
+	// doesn't work!!
+	$ qemu-system-x86_64 -nographic -kernel bzImage -initrd initrd.img -m 512M 
+	 
+	// better because you simply able to copy and paste
+	$ qemu-system-x86_64 -curses  -kernel bzImage -initrd initrd.img -m 512M
+	
+	// didn't work
+	qemu-system-x86_64 -kernel bzImage -initrd initrd.img -m 512M -display none
+
+	// didn't work
+	qemu-system-x86_64 -kernel bzImage -initrd initrd.img -m 512M -display  gtk
+	
+	// didn't work
+	qemu-system-x86_64 -kernel bzImage -initrd initrd.img -m 512M -display  -vnc 0.0.0.0:1 -k en-us
+
+	// works, but you can't copy and paste 
+	qemu-system-x86_64 -kernel bzImage -initrd initrd.img -m 512M -sdl
+	
+	// Worked!!
+	$ qemu-system-x86_64 -kernel bzImage -initrd initrd.img -m 512M  -append "console=ttyS0" -nographic
+
+system analysis:
+[1] kernel version
+	(initramfs) uname -a
+	Linux (none) 3.16.0-rc7 #1 SMP Mon Jul 28 10:31:09 EDT 2014 x86_64 GNU/Linux
+	(initramfs) 
+
+[2] the env
+
+	(initramfs) env
+	ROOTFSTYPE=
+	HOME=/
+	DPKG_ARCH=amd64
+	init=
+	PS1=(initramfs) 
+	ROOTFLAGS=
+	recovery=
+	debug=
+	REASON=No init found. Try passing init= bootarg.
+	ROOTDELAY=
+	panic=
+	TERM=linux
+	break=
+	UBIMTD=
+	quiet=n
+	PATH=/sbin:/usr/sbin:/bin:/usr/bin
+	resume=UUID=adc2435d-cd73-4826-855a-f37e853bca2f
+	BOOTIF=
+	blacklist=
+	resume_offset=
+	MODPROBE_OPTIONS=-qb
+	PWD=/
+	IP=
+	readonly=y
+	ROOT=
+	rootmnt=/root
+	BOOT=local
+	(initramfs) 
+
+[3] all availabe commands
+
+	(initramfs) ls -ls `echo  ${PATH} | tr ':' '\n' `
+	ls: /usr/sbin: No such file or directory
+	ls: /usr/bin: No such file or directory
+	/bin:
+	     4 -rwxr-xr-x    1      2784 resume
+	   244 -rwxr-xr-x    1    248040 udevadm
+	     4 -rwxr-xr-x    1      1088 reboot
+	   296 -rwxr-xr-x    1    303080 busybox
+	    12 -rwxr-xr-x    1     10480 kbd_mode
+	     8 -rwxr-xr-x    1      5168 cpio
+	     0 lrwxrwxrwx    1         7 mount -> busybox
+	    40 -rwxr-xr-x    1     39896 setfont
+	    36 -rwxr-xr-x    1     35448 plymouth
+	     8 -rwxr-xr-x    1      4872 run-init
+	   112 -rwxr-xr-x    1    111432 loadkeys
+	     4 -rwxr-xr-x    1       976 dmesg
+	     4 -rwxr-xr-x    1      1088 halt
+	   152 -rwxr-xr-x    1    154616 kmod
+	     4 -rwxr-xr-x    1      1088 poweroff
+	     8 -rwxr-xr-x    1      4864 losetup
+	     4 -rwxr-xr-x    1      1600 insmod
+	     8 -rwxr-xr-x    1      4304 fstype
+	    16 -rwxr-xr-x    1     13528 ipconfig
+	    64 -rwxr-xr-x    1     64256 date
+	     4 -rwxr-xr-x    1      3904 dd
+	     4 -rwxr-xr-x    1       800 pivot_root
+	    60 -rwxr-xr-x    1     59848 ntfs-3g
+	     8 -rwxr-xr-x    1      7128 nfsmount
+	     0 lrwxrwxrwx    1         7 sleep -> busybox
+	     0 lrwxrwxrwx    1         7 sh -> busybox
+
+	/sbin:
+	     0 lrwxrwxrwx    1         9 modprobe -> /bin/kmod
+	     0 lrwxrwxrwx    1        12 udevadm -> /bin/udevadm
+	    72 -rwxr-xr-x    1     71592 dmsetup
+	     0 lrwxrwxrwx    1        12 mount.ntfs -> /bin/ntfs-3g
+	   152 -rwxr-xr-x    1    154752 btrfs-zero-log
+	    80 -rwxr-xr-x    1     81632 plymouthd
+	    32 -rwxr-xr-x    1     31544 blkid
+	    24 -rwxr-xr-x    1     23072 dumpe2fs
+	    12 -rwxr-xr-x    1     10240 mount.fuse
+	     4 -rwxr-xr-x    1       450 fsck.btrfs
+	    36 -rwxr-xr-x    1     35384 hwclock
+	     0 lrwxrwxrwx    1        12 mount.ntfs-3g -> /bin/ntfs-3g
+	     4 -rwxr-xr-x    1      1416 brltty-setup
+	   348 -rwxr-xr-x    1    353424 btrfs
+	     0 lrwxrwxrwx    1         9 rmmod -> /bin/kmod
+	    12 -rwxr-xr-x    1     10576 wait-for-root
+	(initramfs) 
+	
+[4] checking busybox becuase busybox misses its soft links
+	(initramfs) busybox 
+	BusyBox v1.21.1 (Ubuntu 1:1.21.0-1ubuntu1) multi-call binary.
+	BusyBox is copyrighted by many authors between 1998-2012.
+	Licensed under GPLv2. See source distribution for detailed
+	copyright notices.
+
+	Usage: busybox [function [arguments]...]
+	   or: busybox --list
+	   or: function [arguments]...
+
+		BusyBox is a multi-call binary that combines many common Unix
+		utilities into a single executable.  Most people will create a
+		link to busybox for each function they wish to use and BusyBox
+		will act like whatever it was invoked as.
+
+	Currently defined functions:
+		[, [[, ash, awk, basename, blockdev, cat, chmod, chroot, chvt, clear,
+		cmp, cp, cut, deallocvt, df, dnsdomainname, du, dumpkmap, echo, egrep,
+		env, expr, false, fbset, fdflush, fgrep, find, grep, gunzip, gzip,
+		hostname, ifconfig, ip, kill, ln, loadfont, loadkmap, ls, mkdir,
+		mkfifo, mknod, mkswap, mktemp, modinfo, more, mount, mv, openvt, pidof,
+		printf, ps, pwd, readlink, reset, rm, rmdir, sed, seq, setkeycodes, sh,
+		sleep, sort, stat, static-sh, stty, switch_root, sync, tail, tee, test,
+		touch, tr, true, tty, umount, uname, uniq, wc, wget, which, yes, zcat
+
+	(initramfs) 
+
+

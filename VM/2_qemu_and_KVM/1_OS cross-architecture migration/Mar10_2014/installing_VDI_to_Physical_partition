@@ -1,0 +1,840 @@
+//
+
+Tue Mar 11, 2014
+----------------
+objective: Using a real hard disk to enhace the clone!! 
+
+advice:
+[1] use raw file system instead of qcow2
+
+steps:
+
+[1] create the clone
+	alshamlan@alshamlan-VGN-CR520E:~$ sudo parted -l
+	[sudo] password for alshamlan: 
+	Model: ATA FUJITSU MHZ2320B (scsi)
+	Disk /dev/sda: 320GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: msdos
+
+	Number  Start   End     Size    Type     File system     Flags
+	 2      1049kB  21.0GB  21.0GB  primary  ext4
+	 1      21.0GB  85.8GB  64.9GB  primary  ntfs            boot
+	 3      85.8GB  139GB   52.8GB  primary  ext3
+	 4      317GB   320GB   2723MB  primary  linux-swap(v1)
+
+
+	Model: WD My Passport 0730 (scsi)
+	Disk /dev/sdb: 1000GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: msdos
+
+	Number  Start   End     Size    Type     File system  Flags
+	 1      1049kB  1000GB  1000GB  primary  ntfs
+
+
+	alshamlan@alshamlan-VGN-CR520E:~$ 
+
+	alshamlan@alshamlan-VGN-CR520E:~$ sudo time qemu-img convert -O qcow2  /dev/sda3 /media/alshamlan/My\ Passport/OS_migration/OS_Mar10_2014.qcow2
+	15.21user 292.32system 35:39.03elapsed 14%CPU (0avgtext+0avgdata 8684maxresident)k
+	103096168inputs+0outputs (8major+2299minor)pagefaults 0swaps
+	alshamlan@alshamlan-VGN-CR520E:~$ 
+
+[2] create a partation in /dev/sda for copying the clone onto the devoplpment disk
+
+	alshamlan@alshamlan-OptiPlex-980:~$ sudo parted -l
+	Model: ATA ST3500418AS (scsi)
+	Disk /dev/sda: 500GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: gpt
+
+	Number  Start   End     Size    File system  Name  Flags
+	 1      1049kB  62.9GB  62.9GB  ext3
+
+
+	Model: ATA WDC WD1001FAES-7 (scsi)
+	Disk /dev/sdb: 1000GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: msdos
+
+	Number  Start   End     Size    Type      File system     Flags
+	 1      1049kB  983GB   983GB   primary   ext4            boot
+	 2      983GB   1000GB  17.1GB  extended
+	 5      983GB   1000GB  17.1GB  logical   linux-swap(v1)
+
+
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+[3] clone the image "OS_Mar10_2014_backup.qcow2" to /dev/sda1
+sudo qemu-img convert -O raw OS_Mar10_2014_backup.qcow2 /dev/sda1
+
+
+[4] fix the bootloader 
+sudo update-grub2
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo update-grub2 
+	Generating grub.cfg ...
+	Found linux image: /boot/vmlinuz-3.11.0-17-generic
+	Found initrd image: /boot/initrd.img-3.11.0-17-generic
+	Found linux image: /boot/vmlinuz-3.11.0-12-generic
+	Found initrd image: /boot/initrd.img-3.11.0-12-generic
+	Found memtest86+ image: /boot/memtest86+.bin
+	Found Ubuntu 12.04.3 LTS (12.04) on /dev/sda1
+	done
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// notice: "Found Ubuntu 12.04.3 LTS (12.04) on /dev/sda1"
+
+[5] reboot and login to the clone
+reboot 
+
+// note, it is successful
+
+
+Mon Mar 10, 2014
+----------------
+objective: 
+[1] migrate the primary OS partation to KVM 
+[2] I need another image for booting, and 
+[3] I would like to enhance the primary OS with the use of snapshot before installing it to the target 
+[4] Installing the OS to the target laptop
+[5] resize the partation, fix the boot menu, fix other unknown problems
+
+steps:
+[1] 
+	alshamlan@alshamlan-VGN-CR520E:~$ sudo parted -l
+	[sudo] password for alshamlan: 
+	Model: ATA FUJITSU MHZ2320B (scsi)
+	Disk /dev/sda: 320GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: msdos
+
+	Number  Start   End     Size    Type     File system     Flags
+	 2      1049kB  21.0GB  21.0GB  primary  ext4
+	 1      21.0GB  85.8GB  64.9GB  primary  ntfs            boot
+	 3      85.8GB  139GB   52.8GB  primary  ext3
+	 4      317GB   320GB   2723MB  primary  linux-swap(v1)
+
+
+	Model: WD My Passport 0730 (scsi)
+	Disk /dev/sdb: 1000GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: msdos
+
+	Number  Start   End     Size    Type     File system  Flags
+	 1      1049kB  1000GB  1000GB  primary  ntfs
+
+
+	alshamlan@alshamlan-VGN-CR520E:~$ 
+
+	alshamlan@alshamlan-VGN-CR520E:~$ sudo time qemu-img convert -O qcow2  /dev/sda3 /media/alshamlan/My\ Passport/OS_migration/OS_Mar10_2014.qcow2
+	15.21user 292.32system 35:39.03elapsed 14%CPU (0avgtext+0avgdata 8684maxresident)k
+	103096168inputs+0outputs (8major+2299minor)pagefaults 0swaps
+	alshamlan@alshamlan-VGN-CR520E:~$ 
+
+[2] creating VM for the primary OS
+qemu-img create -f raw VM.raw 50G
+// using gparted to install partation table
+sudo kpartx -av ./VM.raw
+
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo kpartx -av ./VM.raw
+	add map loop1p1 (252:2): 0 6144000 linear /dev/loop1 2048
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo dmsetup ls | grep loop
+	loop0p2	(252:1)
+	loop0p1	(252:0)
+	loop1p1	(252:2)
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+sudo gparted  /dev/loop1
+
+
+
+	[2] creating VM to the primary OS
+
+sudo gparted  /dev/loop1
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo fdisk -l /dev/loop1
+
+	Disk /dev/loop1: 53.7 GB, 53687091200 bytes
+	255 heads, 63 sectors/track, 6527 cylinders, total 104857600 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x0007890f
+
+	      Device Boot      Start         End      Blocks   Id  System
+	/dev/loop1p1            2048   104857599    52427776   83  Linux
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+sudo qemu-img convert -O raw ubuntu_13_10_x64_bootable.qcow2 /dev/loop1p1
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo qemu-img convert -O raw ubuntu_13_10_x64_bootable.qcow2 /dev/loop1p1
+	qemu-img: /dev/loop1p1: error while converting raw: No space left on device
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// DELETING ALL THE PARTATIONS!!
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo fdisk -l /dev/loop1
+Disk /dev/loop1: 53.7 GB, 53687091200 bytes
+255 heads, 63 sectors/track, 6527 cylinders, total 104857600 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x0007890f
+
+      Device Boot      Start         End      Blocks   Id  System
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo qemu-img convert -O raw ubuntu_13_10_x64_bootable.qcow2 /dev/loop1
+qemu-img: /dev/loop1: error while converting raw: No space left on device
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+
+
+
+// kpartx -av ./
+sudo kpartx -av ./ubuntu_13_10_x64_bootable.raw
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo kpartx -av ./ubuntu_13_10_x64_bootable.raw
+	add map loop0p1 (252:0): 0 5857280 linear /dev/loop0 2048
+	add map loop0p2 (252:1): 0 15110144 linear /dev/loop0 5859328
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+dmsetup ls | grep loop
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo dmsetup ls | grep loop
+	loop0p2	(252:1)
+	loop0p1	(252:0)
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// kpartx creates loop devices in /dev/mapper/loop*, but we whant them to be in /dev/loop*
+ls -lsh /dev/mapper/loop0p*
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ ls -lsh /dev/mapper/loop0p*
+	0 brw-r--r-- 1 root root 252, 0 Mar 11 12:24 /dev/mapper/loop0p1
+	0 brw-r--r-- 1 root root 252, 1 Mar 11 12:24 /dev/mapper/loop0p2
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+
+// note: I used this  "sudo gparted  /dev/loop0" and it worked!!
+
+sudo umount /dev/loop0
+
+// using /dev/loop
+losetup /dev/loop0 ubuntu_13_10_x64_bootable.qcow2
+sudo losetup -d /dev/loop0
+
+
+qemu-img resize ubuntu_13_10_x64_bootable.qcow2 +50G 
+sudo kvm-nbd --disconnect /dev/nbd0 
+sudo kvm-nbd --connect=/dev/nbd0 ubuntu_13_10_x64_bootable.qcow2
+
+// after using gpart and creating 
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo fdisk -l /dev/nbd0 
+
+	Disk /dev/nbd0: 64.4 GB, 64424509440 bytes
+	255 heads, 63 sectors/track, 7832 cylinders, total 125829120 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000a8aaa
+
+	     Device Boot      Start         End      Blocks   Id  System
+	/dev/nbd0p1            2048     5859327     2928640   82  Linux swap / Solaris
+	/dev/nbd0p2   *     5859328    20969471     7555072   83  Linux
+	/dev/nbd0p3        20969472   125829119    52429824   83  Linux
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// now, using qemu-img to install the prime OS to /dev/nbd0p3
+sudo mkfs -t ext3 /dev/nbd0p3
+sudo qemu-img convert -O raw ubuntu_13_10_x64_bootable.qcow2 /dev/nbd0p3
+
+[2] create swap partation 
+// creating an empty inage from qemu emulator
+qemu-img create -f raw swap.raw 5G
+
+sudo gparted swap.raw
+
+sudo gparted /dev/nbd0 
+
+
+
+// converting from qcow2 image to raw image
+
+sudo time qemu-img convert -O raw ubuntu_13_10_x64_bootable.qcow2  ubuntu_13_10_x64_bootable.raw
+
+[3] clone the primary OS to this target
+
+
+
+[2] mount the qcow2 partation /dev/nbd0p3
+
+
+
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo modprobe nbd max_part=8
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo kvm-nbd --connect=/dev/nbd0 OS_Mar10_2014.qcow2
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo fdisk -l /dev/nbd0
+
+Disk /dev/nbd0: 52.8 GB, 52784267264 bytes
+255 heads, 63 sectors/track, 6417 cylinders, total 103094272 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00000000
+
+Disk /dev/nbd0 doesn't contain a valid partition table
+alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+sudo mkdir /mnt/vm 
+sudo mount /dev/nbd0 /mnt/vm
+
+modprobe nbd max_part=8
+
+kvm-nbd --connect=/dev/nbd0 OS_Mar10_2014.qcow2
+	
+
+
+//-----------------------------------------
+
+[2] I need to create a new image that can boot the image that I just created
+
+// creating an empty inage from qemu emulator
+qemu-img create -f qcow2 ubuntu_13_10_x64_bootable.qcow2 10G
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ qemu-img create -f qcow2 ubuntu_13_10_x64_bootable.qcow2 10G
+	Formatting 'ubuntu_13_10_x64_bootable.qcow2', fmt=qcow2 size=10737418240 encryption=off cluster_size=65536 lazy_refcounts=off 
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+
+//------------------------------------------
+
+[3] converting qcow2 format to raw!! 
+ sudo time qemu-img convert -O raw OS_Mar10_2014.qcow2  OS_Mar10_2014.raw
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$  sudo time qemu-img convert -O raw OS_Mar10_2014.qcow2  OS_Mar10_2014.raw
+	4.43user 93.32system 15:11.07elapsed 10%CPU (0avgtext+0avgdata 7872maxresident)k
+	101601968inputs+101148768outputs (5major+2209minor)pagefaults 0swaps
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// adding swap partation 
+
+// let reduce the image from 500G device to 20G device
+qemu-img resize OS_Mar10_2014.raw +4G 
+
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ ls -lsh
+	total 107G
+	 20K -rw------- 1 alshamlan alshamlan  18K Mar 10 11:45 installing_VDI_to_Physical_partition~
+	 49G -rw------- 1 alshamlan alshamlan  49G Mar 10 15:29 OS_Mar10_2014.qcow2
+	 49G -rw-r--r-- 1 root      root       50G Mar 10 15:54 OS_Mar10_2014.raw
+	8.0K -rw------- 1 alshamlan alshamlan 4.7K Jun 30  2013 OS_migration~
+	699M -rw------- 1 alshamlan alshamlan 699M Feb 11  2013 ubuntu-11.04-desktop-amd64.iso
+	696M -rw------- 1 alshamlan alshamlan 695M Apr 25  2013 ubuntu-12.04.2-desktop-amd64.iso
+	786M -rw------- 1 alshamlan alshamlan 785M Jun 25  2013 ubuntu-13.04-desktop-amd64.iso
+	884M -rw-r--r-- 1 alshamlan alshamlan 883M Mar 10 14:01 ubuntu-13.10-desktop-amd64.iso
+	7.1G -rw-r--r-- 1 alshamlan alshamlan 7.1G Mar 10 15:35 ubuntu_13_10_x64_bootable.qcow2
+	1.2M -rw------- 1 alshamlan alshamlan 1.2M Apr 24  2013 Virtual-Disk-Operations.pdf
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo gparted OS_Mar10_2014.raw 
+	======================
+	libparted : 2.3
+	======================
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ sudo qemu-img resize OS_Mar10_2014.raw +4G 
+	Image resized.
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ ls -lsh
+	total 107G
+	 20K -rw------- 1 alshamlan alshamlan  18K Mar 10 11:45 installing_VDI_to_Physical_partition~
+	 49G -rw------- 1 alshamlan alshamlan  49G Mar 10 15:29 OS_Mar10_2014.qcow2
+	 49G -rw-r--r-- 1 root      root       54G Mar 10 16:15 OS_Mar10_2014.raw
+	8.0K -rw------- 1 alshamlan alshamlan 4.7K Jun 30  2013 OS_migration~
+	699M -rw------- 1 alshamlan alshamlan 699M Feb 11  2013 ubuntu-11.04-desktop-amd64.iso
+	696M -rw------- 1 alshamlan alshamlan 695M Apr 25  2013 ubuntu-12.04.2-desktop-amd64.iso
+	786M -rw------- 1 alshamlan alshamlan 785M Jun 25  2013 ubuntu-13.04-desktop-amd64.iso
+	884M -rw-r--r-- 1 alshamlan alshamlan 883M Mar 10 14:01 ubuntu-13.10-desktop-amd64.iso
+	7.1G -rw-r--r-- 1 alshamlan alshamlan 7.1G Mar 10 15:35 ubuntu_13_10_x64_bootable.qcow2
+	1.2M -rw------- 1 alshamlan alshamlan 1.2M Apr 24  2013 Virtual-Disk-Operations.pdf
+	alshamlan@alshamlan-OptiPlex-980:~/Desktop/Pace_skillset/7_ qemu virtualbox kvm/OS_migration$ 
+
+// using gparted to create swap partation
+
+
+//-----------------------
+
+[3] installing ubuntu image with the present of the clone iamge
+// about boot order from the "man kvm"
+       -boot [order=drives][,once=drives][,menu=on|off][,splash=sp_name][,splash-time=sp_time][,reboot-timeout=rb_timeout][,strict=on|off]
+           Specify boot order drives as a string of drive letters. Valid drive letters depend on the target achitecture. The x86 PC uses: a, b
+           (floppy 1 and 2), c (first hard disk), d (first CD-ROM), n-p (Etherboot from network adapter 1-4), hard disk boot is the default. To
+           apply a particular boot order only on the first startup, specify it via once.
+
+           Interactive boot menus/prompts can be enabled via menu=on as far as firmware/BIOS supports them. The default is non-interactive boot.
+
+           A splash picture could be passed to bios, enabling user to show it as logo, when option splash=sp_name is given and menu=on, If
+           firmware/BIOS supports them. Currently Seabios for X86 system support it.  limitation: The splash file could be a jpeg file or a BMP file
+           in 24 BPP format(true color). The resolution should be supported by the SVGA mode, so the recommended is 320x240, 640x480, 800x640.
+
+           A timeout could be passed to bios, guest will pause for rb_timeout ms when boot failed, then reboot. If rb_timeout is '-1', guest will
+           not reboot, qemu passes '-1' to bios by default. Currently Seabios for X86 system support it.
+
+           Do strict boot via strict=on as far as firmware/BIOS supports it. This only effects when boot priority is changed by bootindex options.
+           The default is non-strict boot.
+
+                   # try to boot from network first, then from hard disk
+                   qemu-system-i386 -boot order=nc
+                   # boot from CD-ROM first, switch back to default order after reboot
+                   qemu-system-i386 -boot once=d
+                   # boot with a splash picture for 5 seconds.
+                   qemu-system-i386 -boot menu=on,splash=/root/boot.bmp,splash-time=5000
+
+           Note: The legacy format '-boot drives' is still supported but its use is discouraged as it may be removed from future versions.
+
+// the supported devices 
+       -hda file
+       -hdb file
+       -hdc file
+       -hdd file
+           Use file as hard disk 0, 1, 2 or 3 image.
+
+       -cdrom file
+           Use file as CD-ROM image (you cannot use -hdc and -cdrom at the same time). You can use the host CD-ROM by using /dev/cdrom as filename.
+
+
+// the used commad, didn't work!!
+sudo nice -19 kvm -m 11G -boot d -cdrom ubuntu-13.10-desktop-amd64.iso -hda ubuntu_13_10_x64_bootable.qcow2 -hdb OS_Mar10_2014.qcow2
+
+// worked!! make the bootable image
+sudo  kvm -m 11G -boot d -cdrom ubuntu-13.10-desktop-amd64.iso -hda ubuntu_13_10_x64_bootable.qcow2
+
+// now, boot the bootable image with the clone image, then fix the grub boot menu
+sudo nice -19 kvm -m 11G  -hda ubuntu_13_10_x64_bootable.qcow2 -hdb OS_Mar10_2014.qcow2
+
+
+
+// installing ubuntu 12.04 x64_84 to the created image, it's really slow!! maybe because the imagr size!!
+nice -20 qemu-system-x86_64 -cdrom ubuntu-12.04.2-desktop-amd64.iso -boot d ubuntu_1204_x64.qcow2 -m 2042
+
+nice -20 qemu-system-x86_64 -cdrom ubuntu-13.04-desktop-amd64.iso -boot d ubuntu_1204_x64.qcow2 -m 2042
+
+
+qemu-img convert -O qcow2  /dev/sda3 
+
+alshamlan@alshamlan-VGN-CR520E:~$ sudo qemu-img convert -O qcow2  /dev/sda3 /media/alshamlan/My\ Passport/OS_migration/OS_Mar10_2014.qcow2
+
+from the manpage:
+       convert [-c] [-p] [-q] [-f fmt] [-t cache] [-O output_fmt] [-o options] [-s snapshot_name] [-S sparse_size] filename [filename2
+       [...]] output_filename
+       
+// I just need /dev/sda1, /dev/sda2, and /dev/sda3, let try qemu-img again
+qemu-img convert -O raw  /dev/sda1 /dev/sda2 /dev/sda3 /mnt/Pace_Fedora16_x64_networksetup.raw
+
+
+
+//---------------------
+//	topic: what I did in the research PC
+//---------------------
+
+// objective to clone my reseach partition to my ASUS laptop. 
+
+// note[0]
+	it is better to delete what you don't need in the potantional clone partition
+// note[1]
+	it is good after removing the files that is not needed to be in the clone image. Use gparted or any application that can resize the hard-disk!! 
+// note[2]
+	if you resized the partition or any partition. It is better to do update-grup to make sure the system will boot. Usually, resizing may make the system unbootable where you would need to fix it througn liveCD. This topic will be desuciessed shortly after the cloning is doing becuase qemu cannot boot the clone image due to many hard-disk things are broken!!
+
+// convering full partition into .img file
+source: http://askubuntu.com/questions/19901/how-to-make-a-disk-image-and-restore-from-it-later
+// note[3] use gparted for the device name, or use fdisk and cfdisk
+// note[4]: the command looks like this
+	sudo dd if=<disk partition identifier> of=./<name of disk image>
+// command, slow!!
+dd if=/dev/sde4 of=/media/qemu/research_jun2013.img
+
+// speeding it up with nice!!
+nice -18 dd if=/dev/sde4 of=/media/qemu/research_jun2013.img
+
+
+// note[5]
+	after finshing I got this output
+	--------------------------
+	103075840+0 records in
+	103075840+0 records out
+	52774830080 bytes (53 GB) copied, 1661.48 s, 31.8 MB/s
+
+
+from the manpage:
+       convert [-c] [-p] [-q] [-f fmt] [-t cache] [-O output_fmt] [-o options] [-s snapshot_name] [-S sparse_size] filename [filename2
+       [...]] output_filename
+       
+// I just need /dev/sda1, /dev/sda2, and /dev/sda3, let try qemu-img again
+qemu-img convert -O raw  /dev/sda1 /dev/sda2 /dev/sda3 /mnt/Pace_Fedora16_x64_networksetup.raw
+
+
+Wed Feb 5, 2014
+----------------
+// virstulizing a physical device rather than an image
+	root@alshamlan-OptiPlex-980:~# kvm /dev/sda
+	W: kvm binary is deprecated, please use qemu-system-x86_64 instead
+	root@alshamlan-OptiPlex-980:~# 
+
+// note: works
+
+to-do-list:
+[1] make sure fedora does not use NIS account
+[2] 
+
+Tue Feb 4, 2014
+-----------------
+I added a new hard disk into the PC, so now:
+// fdisk
+	root@alshamlan-OptiPlex-980:~# fdisk -l
+
+	Disk /dev/sda: 500.1 GB, 500107862016 bytes
+	255 heads, 63 sectors/track, 60801 cylinders, total 976773168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0xc71f5b0d
+
+	   Device Boot      Start         End      Blocks   Id  System
+
+	Disk /dev/sdb: 1000.2 GB, 1000204886016 bytes
+	255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000b93a2
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdb1   *        2048   288020479   144009216   83  Linux
+	/dev/sdb2      1920122878  1953523711    16700417    5  Extended
+	/dev/sdb5      1920122880  1953523711    16700416   82  Linux swap / Solaris
+	root@alshamlan-OptiPlex-980:~# 
+// so, we are using sda for qemu-img
+	qemu-img convert -O raw /home/alshamlan/VirtualBox\ VMs/Pace_Fedora16_x64_fresh_installation/Pace_Fedora16_x64.vdi /dev/sda
+
+// now, let check fdisk
+	root@alshamlan-OptiPlex-980:~# fdisk -l
+
+	WARNING: GPT (GUID Partition Table) detected on '/dev/sda'! The util fdisk doesn't support GPT. Use GNU Parted.
+
+
+	Disk /dev/sda: 500.1 GB, 500107862016 bytes
+	255 heads, 63 sectors/track, 60801 cylinders, total 976773168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1               1   976773167   488386583+  ee  GPT
+
+	Disk /dev/sdb: 1000.2 GB, 1000204886016 bytes
+	255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000b93a2
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdb1   *        2048   288020479   144009216   83  Linux
+	/dev/sdb2      1920122878  1953523711    16700417    5  Extended
+	/dev/sdb5      1920122880  1953523711    16700416   82  Linux swap / Solaris
+	root@alshamlan-OptiPlex-980:~# 
+// also, I verified it through gparted, and it seems verything is okay, so let me reboot, and see what will happen
+
+// worked, also I modified the Pace's fedora to include all the newtwork setups: DHCP, NFS, and TFTP. Therefore, it is time to clone the system into an image. 
+
+the command should be as follows: qemu-img convert -O qcow2  /dev/sda /home/alshamlan/VirtualBox\ VMs/Pace_Fedora16_x64_fresh_installation/Pace_Fedora16_x64_networksetup.qcow2
+
+	root@alshamlan-OptiPlex-980:~# qemu-img convert -O qcow2  /dev/sda /home/alshamlan/VirtualBox\ VMs/Pace_Fedora16_x64_fresh_installation/Pace_Fedora16_x64_networksetup.qcow2
+	qemu-img: error while writing sector 259973120: No space left on device
+	root@alshamlan-OptiPlex-980:~# rm /home/alshamlan/VirtualBox\ VMs/Pace_Fedora16_x64_fresh_installation
+	Pace_Fedora16_x64_fresh_installation/
+	Pace_Fedora16_x64_fresh_installation.zip
+	root@alshamlan-OptiPlex-980:~# rm /home/alshamlan/VirtualBox\ VMs/Pace_Fedora16_x64_fresh_installation/Pace_Fedora16_x64_networksetup.qcow2 
+	root@alshamlan-OptiPlex-980:~# 
+
+// problem because the hard disk has been fulled before the qemu-img finishes!! 
+
+// solution [1]: create a new partation that is bigger than /deb/sda
+	root@alshamlan-OptiPlex-980:~# fdisk -l
+
+	WARNING: GPT (GUID Partition Table) detected on '/dev/sda'! The util fdisk doesn't support GPT. Use GNU Parted.
+
+
+	Disk /dev/sda: 500.1 GB, 500107862016 bytes
+	255 heads, 63 sectors/track, 60801 cylinders, total 976773168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1               1   976773167   488386583+  ee  GPT
+
+	Disk /dev/sdb: 1000.2 GB, 1000204886016 bytes
+	255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000b93a2
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdb1   *        2048   288020479   144009216   83  Linux
+	/dev/sdb2      1920122878  1953523711    16700417    5  Extended
+	/dev/sdb3       288020480  1920120831   816050176   83  Linux
+	/dev/sdb5      1920122880  1953523711    16700416   82  Linux swap / Solaris
+
+	Partition table entries are not in disk order
+	root@alshamlan-OptiPlex-980:~# 
+
+// note: /dev/sdb3 is more than 700GB and /dev/sda is less than 600GB. 
+
+// mounting /dev/sdb3
+	root@alshamlan-OptiPlex-980:~# mount /dev/sdb3 /mnt/
+	root@alshamlan-OptiPlex-980:~# df -h /mnt/ 
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sdb3       766G   69M  727G   1% /mnt
+	root@alshamlan-OptiPlex-980:~# 
+
+// now, re-do the qemu-img: qemu-img convert -O qcow2  /dev/sda /mnt/Pace_Fedora16_x64_networksetup.qcow2
+	root@alshamlan-OptiPlex-980:~# qemu-img convert -O qcow2  /dev/sda /mnt/Pace_Fedora16_x64_networksetup.qcow2
+	root@alshamlan-OptiPlex-980:~# df -h /mnt/ 
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sdb3       766G  337G  391G  47% /mnt
+	root@alshamlan-OptiPlex-980:~# ls -l -s -h /mnt/
+	total 337G
+	 16K drwx------ 2 root root  16K Feb  4 16:40 lost+found
+	337G -rw-r--r-- 1 root root 337G Feb  4 18:11 Pace_Fedora16_x64_networksetup.qcow2
+	root@alshamlan-OptiPlex-980:~# 
+
+// it seems that Disk /dev/sda: 500.1 GB has been clone and compreesed in Pace_Fedora16_x64_networksetup.qcow2: 337G 
+
+// before doing anything further, when need to virtualize the image to make sure that everything is correct
+	root@alshamlan-OptiPlex-980:~# kvm /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+	W: kvm binary is deprecated, please use qemu-system-x86_64 instead
+// the image has been booted correctly. Howevre, the NIS account doesn't login!!
+// also, it was slow!! changing the command
+qemu-system-x86_64 --m 8388  -smp cores=2,threads=1,sockets=1 /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+
+// it is so slow!! modifying the command
+qemu-system-x86_64 --m 12G   /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+
+// still slow
+qemu-system-x86_64    /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+
+// this is good!!
+kvm -m 11G /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+
+// now, let check the partation in the image
+<I can't copy and paust!!!>
+However, the device is 500G
+
+// check the N drive
+the /mnt/alshamm1/mountp can't be accessed!!
+
+// let reduce the image from 500G device to 20G device
+qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.qcow2 -480G 
+
+	root@alshamlan-OptiPlex-980:~# qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.qcow2 -480G 
+	qemu-img: New image size must be positive
+	root@alshamlan-OptiPlex-980:~# ls -l -h -s /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+	337G -rw-r--r-- 1 root root 337G Feb  5 10:14 /mnt/Pace_Fedora16_x64_networksetup.qcow2
+	root@alshamlan-OptiPlex-980:~# qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.qcow2 -480G 
+// maybe the size that qemu-img uses is 337G and not 500G to point to 500G device, so let remove 300G
+qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.qcow2 -300G 
+
+	root@alshamlan-OptiPlex-980:~# qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.qcow2 -300G 
+	qemu-img: qcow2 doesn't support shrinking images yet
+	qemu-img: This image does not support resize
+	root@alshamlan-OptiPlex-980:~# 
+
+// convert qcow2 to raw
+	root@alshamlan-OptiPlex-980:~# df -h /mnt/
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sdb3       766G  337G  391G  47% /mnt
+	root@alshamlan-OptiPlex-980:~# 
+
+because the partation is 766G, qcow2 is 337G, and raw presummably is 500G. The partation will not fit!! So, delete the qcow2, and create other raw image
+
+	root@alshamlan-OptiPlex-980:~# rm /mnt/Pace_Fedora16_x64_networksetup.qcow2 
+	root@alshamlan-OptiPlex-980:~# df -h /mnt/
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sdb3       766G   69M  727G   1% /mnt
+	root@alshamlan-OptiPlex-980:~# qemu-img convert -O raw  /dev/sda /mnt/Pace_Fedora16_x64_networksetup.raw
+	root@alshamlan-OptiPlex-980:~# df -h /mnt/
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sdb3       766G  333G  395G  46% /mnt
+	root@alshamlan-OptiPlex-980:~# 
+
+// booting just in case
+kvm -m 11G /mnt/Pace_Fedora16_x64_networksetup.raw
+
+	root@alshamlan-OptiPlex-980:~# kvm -m 11G /mnt/Pace_Fedora16_x64_networksetup.raw
+	W: kvm binary is deprecated, please use qemu-system-x86_64 instead
+	root@alshamlan-OptiPlex-980:~# 
+
+// note: worked with good speed
+
+// shrinking the image
+	root@alshamlan-OptiPlex-980:~# ls -l -h -s /mnt/
+	total 333G
+	 16K drwx------ 2 root root  16K Feb  4 16:40 lost+found
+	333G -rw-r--r-- 1 root root 466G Feb  5 12:56 Pace_Fedora16_x64_networksetup.raw
+// so we want from 466G to 20G. However, we do need to do it in one step, so let do it in several steps and each step we will check the image
+qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.raw -300G 
+
+	root@alshamlan-OptiPlex-980:~# qemu-img resize /mnt/Pace_Fedora16_x64_networksetup.raw -300G 
+	Image resized.
+	root@alshamlan-OptiPlex-980:~# df -h /mnt/
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sdb3       766G  152G  576G  21% /mnt
+	root@alshamlan-OptiPlex-980:~# ls -l -h -s /mnt/
+	total 152G
+	 16K drwx------ 2 root root  16K Feb  4 16:40 lost+found
+	152G -rw-r--r-- 1 root root 166G Feb  5 13:03 Pace_Fedora16_x64_networksetup.raw
+	root@alshamlan-OptiPlex-980:~# 
+
+// checking the image
+	root@alshamlan-OptiPlex-980:~# kvm -m 11G /mnt/Pace_Fedora16_x64_networksetup.raw
+	W: kvm binary is deprecated, please use qemu-system-x86_64 instead
+// note: the image didn't boot correctly!!
+
+// deleting the image
+	root@alshamlan-OptiPlex-980:~# rm /mnt/Pace_Fedora16_x64_networksetup.raw 
+
+// checking the real hard disk again to have a new plan
+	root@alshamlan-OptiPlex-980:~# parted -l
+	Model: ATA ST3500418AS (scsi)
+	Disk /dev/sda: 500GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: gpt
+
+	Number  Start   End     Size    File system  Name  Flags
+	 1      1049kB  525MB   524MB   ext4         ext4  boot
+	 2      525MB   527MB   2097kB                     bios_grub
+	 3      527MB   16.1GB  15.6GB                     lvm
+
+
+	Model: ATA WDC WD1001FAES-7 (scsi)
+	Disk /dev/sdb: 1000GB
+	Sector size (logical/physical): 512B/512B
+	Partition Table: msdos
+
+	Number  Start   End     Size    Type      File system     Flags
+	 1      1049kB  147GB   147GB   primary   ext4            boot
+	 3      147GB   983GB   836GB   primary   ext4
+	 2      983GB   1000GB  17.1GB  extended
+	 5      983GB   1000GB  17.1GB  logical   linux-swap(v1)
+
+
+	root@alshamlan-OptiPlex-980:~# fdisk -l
+
+	WARNING: GPT (GUID Partition Table) detected on '/dev/sda'! The util fdisk doesn't support GPT. Use GNU Parted.
+
+
+	Disk /dev/sda: 500.1 GB, 500107862016 bytes
+	255 heads, 63 sectors/track, 60801 cylinders, total 976773168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1               1   976773167   488386583+  ee  GPT
+
+	Disk /dev/sdb: 1000.2 GB, 1000204886016 bytes
+	255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000b93a2
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdb1   *        2048   288020479   144009216   83  Linux
+	/dev/sdb2      1920122878  1953523711    16700417    5  Extended
+	/dev/sdb3       288020480  1920120831   816050176   83  Linux
+	/dev/sdb5      1920122880  1953523711    16700416   82  Linux swap / Solaris
+
+	Partition table entries are not in disk order
+	root@alshamlan-OptiPlex-980:~# 
+// I just need /dev/sda1, /dev/sda2, and /dev/sda3, let try qemu-img again
+qemu-img convert -O raw  /dev/sda1 /dev/sda2 /dev/sda3 /mnt/Pace_Fedora16_x64_networksetup.raw
+
+	root@alshamlan-OptiPlex-980:~# qemu-img convert -O raw  /dev/sda1 /dev/sda2 /dev/sda3 /mnt/Pace_Fedora16_x64_networksetup.raw
+	root@alshamlan-OptiPlex-980:~# ls -l -s -h /mnt/
+	total 9.2G
+	 16K drwx------ 2 root root 16K Feb  4 16:40 lost+found
+	9.2G -rw-r--r-- 1 root root 15G Feb  5 13:20 Pace_Fedora16_x64_networksetup.raw
+	root@alshamlan-OptiPlex-980:~# du -h /mnt/
+	16K	/mnt/lost+found
+	9.2G	/mnt/
+	root@alshamlan-OptiPlex-980:~# 
+// note: it was extermally fast!! that's a good thing, and the size is reasonable
+
+// testing it
+kvm -m 11G /mnt/Pace_Fedora16_x64_networksetup.raw
+
+	root@alshamlan-OptiPlex-980:~# kvm -m 11G /mnt/Pace_Fedora16_x64_networksetup.raw
+	W: kvm binary is deprecated, please use qemu-system-x86_64 instead
+	root@alshamlan-OptiPlex-980:~# 
+// note: no boot dvice
+
+
+
+
+Mon Feb 3, 2014
+----------------
+objective: using ubuntu to control Pace's fedora distro
+
+// fdisk
+	root@alshamlan-OptiPlex-980:~# fdisk -l
+
+	Disk /dev/sda: 1000.2 GB, 1000204886016 bytes
+	255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000b93a2
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1   *        2048   288020479   144009216   83  Linux
+	/dev/sda2      1920122878  1953523711    16700417    5  Extended
+	/dev/sda5      1920122880  1953523711    16700416   82  Linux swap / Solaris
+
+	Disk /dev/sdb: 15.6 GB, 15610576896 bytes
+	119 heads, 55 sectors/track, 4658 cylinders, total 30489408 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0xc3072e18
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdb1   *        8064    30489407    15240672    c  W95 FAT32 (LBA)
+	root@alshamlan-OptiPlex-980:~# 
+
+// i can't see what the name of the empty device!! So, I created a new partition in gparted
+
+// again using fdisk
+	root@alshamlan-OptiPlex-980:~# fdisk -l
+
+	Disk /dev/sda: 1000.2 GB, 1000204886016 bytes
+	255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x000b93a2
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1   *        2048   288020479   144009216   83  Linux
+	/dev/sda2      1920122878  1953523711    16700417    5  Extended
+	/dev/sda3       288020480  1920120831   816050176   83  Linux
+	/dev/sda5      1920122880  1953523711    16700416   82  Linux swap / Solaris
+
+	Partition table entries are not in disk order
+	root@alshamlan-OptiPlex-980:~# 
+
+//note:  /dev/sda3 is the empty drive
+
+// now, using qemu-img to install the vdi to /dev/sda3
+qemu-img convert -O raw /home/alshamlan/VirtualBox\ VMs/Pace_Fedora16_x64_fresh_installation/Pace_Fedora16_x64.vdi /dev/sda3
+
+
+

@@ -1,0 +1,30 @@
+//
+
+Fri Aug 29, 2014
+-----------------
+objective:
+[1] I have given a VMware image, but I want to use KVM as my virtualizor. So, I need to convert the vmware image to KVM image
+
+sources:
+
+
+steps:
+// 
+
+
+$ vmware-vdiskmanager -r my-vm-disk.vmdk -t 0 my-vm-disk-new.vmdk
+
+$ vmware-vdiskmanager -r my-vm-disk.vmdk -t 0 my-vm-disk-new.vmdk
+
+[1] install the needed dependences
+	$ sudo apt-get install virt-goodies
+
+[2] converting vmware image to kvm
+	// creating the xml (???)
+	$ vmware2libvirt -f Pace\ Diag\ Server.vmx > PHD_server.xml
+	// 
+	$ virsh -c qemu:///system define PHD_server.xml
+	
+	
+$ vmware2libvirt -f ./file.vmx > file.xml
+$ virsh -c qemu:///system define file.xml

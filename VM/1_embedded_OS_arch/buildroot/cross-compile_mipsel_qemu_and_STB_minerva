@@ -1,0 +1,505 @@
+//
+
+Tue Jun 24, 2014
+-----------------
+
+objective:
+[1] cross-compile a code from Sigma MIPSEL toolchan, and then see if I'm able to run onto qemu+buildroot+mipsel
+
+source:
+[1] http://www.thegeekstuff.com/2009/03/ifconfig-7-examples-to-configure-network-interface/
+
+background:
+[1] Ifconfig: 7 Examples To Configure Network Interface
+	1. View Network Settings of an Ethernet Adapter
+	$ ifconfig eth0
+
+	2. Display Details of All interfaces Including Disabled Interfaces
+	$ ifconfig -a
+
+	3. Disable an Interface
+	# ifconfig eth0 down
+
+	4. Enable an Interface
+	# ifconfig eth0 up
+
+	5. Assign ip-address to an Interface
+	// Assign 192.168.2.2 as the IP address for the interface eth0.
+	# ifconfig eth0 192.168.2.2
+
+	// Change Subnet mask of the interface eth0.
+	# ifconfig eth0 netmask 255.255.255.0
+
+	// Change Broadcast address of the interface eth0.
+	# ifconfig eth0 broadcast 192.168.2.255
+
+	// Assign ip-address, netmask and broadcast at the same time to interface eht0.
+	# ifconfig eth0 192.168.2.2 netmask 255.255.255.0 broadcast 192.168.2.255
+
+	6. Change MTU
+
+	This will change the Maximum transmission unit (MTU) to XX. MTU is the maximum number of octets the interface is able to handle in one transaction. For Ethernet the Maximum transmission unit by default is 1500.
+
+	# ifconfig eth0 mtu XX
+
+	7. Promiscuous mode
+	By default when a network card receives a packet, it checks whether the packet belongs to itself. If not, the interface card normally drops the packet. But in promiscuous mode, the card doesn’t drop the packet. Instead, it will accept all the packets which flows through the network card.
+
+	Superuser privilege is required to set an interface in promiscuous mode. Most network monitor tools use the promiscuous mode to capture the packets and to analyze the network traffic.
+
+	Following will put the interface in promiscuous mode.
+	# ifconfig eth0 promisc
+
+
+	Following will put the interface in normal mode.
+	# ifconfig eth0 -promisc
+
+steps:
+[1] use c code such as bubble_sort, as follows:
+
+	/*
+	 *  bubble sort
+	 */
+	 #include<stdio.h>
+	 #include<stdlib.h>
+
+	void bubble (int *list, int n)
+	{
+		int c,d,t;
+		for(c=0; c<(n-1); c++) {
+			for (d=0; d< (n - c-1) ; d++) {
+				if( list[d] > list[d+1]){
+					t=list[d];
+					list[d]= list[d+1];
+					list[d+1]=t;
+				} 
+			}
+		}
+	}
+
+	int main(int argc, char *argv[])
+	 {
+	 	int list[]={2,4,6,8,0,9,7,5,3,1};
+	 	int i, len= (int) sizeof(list)/ sizeof(list[0]) ;
+	 	bubble(list, (len) );
+	 	for(i=0;i<len;i++)
+	 		printf("%d ", list[i]);
+	 	return !puts(" ");
+	 }
+
+[2] cross-compile it with sigma (minerva) toolchian
+
+// go to 
+	
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ pwd
+	/home/alshamlan/vtilt_git/minerva-5.x/mips-4.3/bin
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$
+	
+// put the file in same toolcian directory 
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ ls
+	bubble_sort.c             mips-linux-gnu-gcc        mips-linux-gnu-objcopy
+	mips-linux-gnu-addr2line  mips-linux-gnu-gcc-4.3.3  mips-linux-gnu-objdump
+	mips-linux-gnu-ar         mips-linux-gnu-gcov       mips-linux-gnu-ranlib
+	mips-linux-gnu-as         mips-linux-gnu-gdb        mips-linux-gnu-readelf
+	mips-linux-gnu-c++        mips-linux-gnu-gdbtui     mips-linux-gnu-size
+	mips-linux-gnu-c++filt    mips-linux-gnu-gprof      mips-linux-gnu-strings
+	mips-linux-gnu-cpp        mips-linux-gnu-ld         mips-linux-gnu-strip
+	mips-linux-gnu-g++        mips-linux-gnu-nm
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+	
+// the file is "bubble_sort.c", compile as follows:
+
+	$ ./mips-linux-gnu-gcc -P -DEM86XX_CHIP=EM86XX_CHIPID_TANGO3 -DEM86XX_REVISION=3 -DEM86XX_MODE=EM86XX_MODEID_STANDALONE -DRMCHIP_ID=RMCHIP_ID_SMP8652 -DRMCHIP_REVISION=3  -mips32r2 -EL -Wall -O2 -DRMPLATFORM=RMPLATFORMID_TANGO3 -g -mno-abicalls -fno-pic -mabi=32 -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -ffreestanding -Wa,--trap -fomit-frame-pointer -fno-stack-protector -Wno-pointer-sign -Wall -Wchar-subscripts -Wmissing-prototypes -Wsign-compare -Wuninitialized  bubble_sort.c  -o bubble_sort.o
+	
+Example:
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ ./mips-linux-gnu-gcc -P -DEM86XX_CHIP=EM86XX_CHIPID_TANGO3 -DEM86XX_REVISION=3 -DEM86XX_MODE=EM86XX_MODEID_STANDALONE -DRMCHIP_ID=RMCHIP_ID_SMP8652 -DRMCHIP_REVISION=3  -mips32r2 -EL -Wall -O2 -DRMPLATFORM=RMPLATFORMID_TANGO3 -g -mno-abicalls -fno-pic -mabi=32 -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -ffreestanding -Wa,--trap -fomit-frame-pointer -fno-stack-protector -Wno-pointer-sign -Wall -Wchar-subscripts -Wmissing-prototypes -Wsign-compare -Wuninitialized  bubble_sort.c  -o bubble_sort.o
+	bubble_sort.c:7: warning: no previous prototype for 'bubble'
+	/home/alshamlan/vtilt_git/minerva-5.x/mips-4.3/bin/../lib/gcc/mips-linux-gnu/4.3.3/../../../../mips-linux-gnu/bin/ld: /tmp/cceGQO3Q.o: warning: linking abicalls files with non-abicalls files
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+
+// check the binary elf type
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ file bubble_sort.o 
+	bubble_sort.o: ELF 32-bit LSB  executable, MIPS, MIPS32 rel2 version 1, dynamically linked (uses shared libs), for GNU/Linux 2.6.12, not stripped
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+
+[3] move to the STB
+	$ scp bubble_sort.o root@10.10.139.34:/tmp/
+	
+Example: 
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ scp bubble_sort.o root@10.10.139.34:/tmp/
+	root@10.10.139.34's password: 
+	bubble_sort.o                                 100% 9083     8.9KB/s   00:00    
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+
+[4] run it in the target, login onto the target
+	$ ssh root@10.10.139.34
+
+// run it
+
+tango3-paco[tmp]# cd /tmp
+tango3-paco[tmp]# ls          
+RebootLog.txt*                            ext3_fsck.log                             nohup.out.0
+alshamlan*                                flash@                                    nohup.out.last
+bubble_sort.o*                            fontstore@                                pace_minerva_tmp_approotfs_squash.YZcFjc
+cm/                                       fw_upgrade_env                            pkg/
+cmdb=                                     hotplug2.pid                              pkgd=
+cwmd=                                     ifstate                                   qt.conf
+dhcp_think_tmp                            ipfltr                                    qtembedded-0/
+dhcpcd/                                   klogd.pid                                 ram/
+dhcpcd-eth0.pid                           ledd_socket=                              random-seed
+dhcpcd_vendor_options                     log=                                      syslogd.pid
+disk-model                                lrro.xenv                                 utmp
+disk-parts                                mifd=                                     watchdog.pid
+disk-size                                 minerva.log                               xenv.bin
+diskinfo.conf                             mlog/                                     youtube_patch.txt
+dropbear.pid                              net_cable_result
+enable_pvr                                nohup.out
+tango3-paco[tmp]# ./bubble_sort.o 
+0 1 2 3 4 5 6 7 8 9  
+tango3-paco[tmp]# 
+
+
+" I'm still facing problem with emu connection!! I can access from qemu to the host (or STB), but I can access from the host (or STB) to qemu. I tried ssh and nfs without secusses"
+
+//-----------------------------------
+// below steps didn't work!!
+//----------------------------------
+
+[5] move the corss-compiled binary from the STB to qemu system
+
+// creat qemu system and then enable the ssh
+// 1. create the system
+	$ qemu-system-mipsel -M malta -kernel output/images/vmlinux -serial stdio -hda output/images/rootfs.ext2 -append "root=/dev/hda" -net nic,model=pcnet -net user
+
+// 2. login by just typing "root"
+
+// 3. enable  network connection
+	
+	// to check the ports and interfaces in the system
+	$ ip addr
+	$ cat /proc/net/dev
+	$ ifconfig -a // Display Details of All interfaces Including Disabled Interfaces
+	// check connection
+	$ netstat -l
+	$ netstat -rn
+	
+	
+	// enable connection 
+	$ ifconfig eth0 up
+	$ udhcpc eth0
+	
+Example:
+	buildroot login: root
+	# ifconfig eth0 up
+	pcnet32 0000:00:0b.0 eth0: link up
+	# udhcpc eth0
+	udhcpc (v1.22.1) started
+	Sending discover...
+	Sending select for 10.0.2.15...
+	Lease of 10.0.2.15 obtained, lease time 86400
+	deleting routers
+	adding dns 10.0.2.3
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:10.0.2.15  Bcast:10.0.2.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:2 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:2 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:1180 (1.1 KiB)  TX bytes:684 (684.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# 
+
+// configuring eth0 in /etc/network/interfaces
+	$ ifconfig eth0 192.168.2.2 netmask 255.255.255.0 broadcast 192.168.2.255
+
+// before doing the changes
+# ifup eth0
+ifup: ignoring unknown interface eth0
+# cat /etc/network/interfaces 
+# Configure Loopback
+auto lo
+iface lo inet loopback
+
+# 
+
+// after doing the changes
+
+
+// summarizing the IPs
+	1. STB ip: 10.10.139.34
+	2. qemu ip: 10.0.2.15
+
+// summarizing the kernel info -- using "uname -a":
+	1. STB:  Linux tango3-paco 2.6.22.19-39-sigma #2 PREEMPT Fri Jun 13 14:54:49 EDT 2014 mips GNU/Linux
+	2. qemu: Linux buildroot 3.13.5 #1 SMP Mon Jun 23 15:48:25 EDT 2014 mips GNU/Linux	
+
+// using scp from STB to qemu
+	$ scp bubble_sort.o root@10.0.2.15:/tmp
+
+
+
+
+
+
+
+Mon Jun 23, 2014
+----------------
+objective:
+[1] cross-compile a code from Sigma MIPSEL toolchan, and then see if I'm able to run onto qemu+buildroot+mipsel
+
+source:
+[1] http://www.thegeekstuff.com/2009/03/ifconfig-7-examples-to-configure-network-interface/
+
+background:
+[1] Ifconfig: 7 Examples To Configure Network Interface
+	1. View Network Settings of an Ethernet Adapter
+	$ ifconfig eth0
+
+	2. Display Details of All interfaces Including Disabled Interfaces
+	$ ifconfig -a
+
+	3. Disable an Interface
+	# ifconfig eth0 down
+
+	4. Enable an Interface
+	# ifconfig eth0 up
+
+	5. Assign ip-address to an Interface
+	// Assign 192.168.2.2 as the IP address for the interface eth0.
+	# ifconfig eth0 192.168.2.2
+
+	// Change Subnet mask of the interface eth0.
+	# ifconfig eth0 netmask 255.255.255.0
+
+	// Change Broadcast address of the interface eth0.
+	# ifconfig eth0 broadcast 192.168.2.255
+
+	// Assign ip-address, netmask and broadcast at the same time to interface eht0.
+	# ifconfig eth0 192.168.2.2 netmask 255.255.255.0 broadcast 192.168.2.255
+
+	6. Change MTU
+
+	This will change the Maximum transmission unit (MTU) to XX. MTU is the maximum number of octets the interface is able to handle in one transaction. For Ethernet the Maximum transmission unit by default is 1500.
+
+	# ifconfig eth0 mtu XX
+
+	7. Promiscuous mode
+	By default when a network card receives a packet, it checks whether the packet belongs to itself. If not, the interface card normally drops the packet. But in promiscuous mode, the card doesn’t drop the packet. Instead, it will accept all the packets which flows through the network card.
+
+	Superuser privilege is required to set an interface in promiscuous mode. Most network monitor tools use the promiscuous mode to capture the packets and to analyze the network traffic.
+
+	Following will put the interface in promiscuous mode.
+	# ifconfig eth0 promisc
+
+
+	Following will put the interface in normal mode.
+	# ifconfig eth0 -promisc
+
+steps:
+[1] use c code such as bubble_sort, as follows:
+
+	/*
+	 *  bubble sort
+	 */
+	 #include<stdio.h>
+	 #include<stdlib.h>
+
+	void bubble (int *list, int n)
+	{
+		int c,d,t;
+		for(c=0; c<(n-1); c++) {
+			for (d=0; d< (n - c-1) ; d++) {
+				if( list[d] > list[d+1]){
+					t=list[d];
+					list[d]= list[d+1];
+					list[d+1]=t;
+				} 
+			}
+		}
+	}
+
+	int main(int argc, char *argv[])
+	 {
+	 	int list[]={2,4,6,8,0,9,7,5,3,1};
+	 	int i, len= (int) sizeof(list)/ sizeof(list[0]) ;
+	 	bubble(list, (len) );
+	 	for(i=0;i<len;i++)
+	 		printf("%d ", list[i]);
+	 	return !puts(" ");
+	 }
+
+[2] cross-compile it with sigma (minerva) toolchian
+
+// go to 
+	
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ pwd
+	/home/alshamlan/vtilt_git/minerva-5.x/mips-4.3/bin
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$
+	
+// put the file in same toolcian directory 
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ ls
+	bubble_sort.c             mips-linux-gnu-gcc        mips-linux-gnu-objcopy
+	mips-linux-gnu-addr2line  mips-linux-gnu-gcc-4.3.3  mips-linux-gnu-objdump
+	mips-linux-gnu-ar         mips-linux-gnu-gcov       mips-linux-gnu-ranlib
+	mips-linux-gnu-as         mips-linux-gnu-gdb        mips-linux-gnu-readelf
+	mips-linux-gnu-c++        mips-linux-gnu-gdbtui     mips-linux-gnu-size
+	mips-linux-gnu-c++filt    mips-linux-gnu-gprof      mips-linux-gnu-strings
+	mips-linux-gnu-cpp        mips-linux-gnu-ld         mips-linux-gnu-strip
+	mips-linux-gnu-g++        mips-linux-gnu-nm
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+	
+// the file is "bubble_sort.c", compile as follows:
+
+	$ ./mips-linux-gnu-gcc -P -DEM86XX_CHIP=EM86XX_CHIPID_TANGO3 -DEM86XX_REVISION=3 -DEM86XX_MODE=EM86XX_MODEID_STANDALONE -DRMCHIP_ID=RMCHIP_ID_SMP8652 -DRMCHIP_REVISION=3  -mips32r2 -EL -Wall -O2 -DRMPLATFORM=RMPLATFORMID_TANGO3 -g -mno-abicalls -fno-pic -mabi=32 -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -ffreestanding -Wa,--trap -fomit-frame-pointer -fno-stack-protector -Wno-pointer-sign -Wall -Wchar-subscripts -Wmissing-prototypes -Wsign-compare -Wuninitialized  bubble_sort.c  -o bubble_sort.o
+	
+Example:
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ ./mips-linux-gnu-gcc -P -DEM86XX_CHIP=EM86XX_CHIPID_TANGO3 -DEM86XX_REVISION=3 -DEM86XX_MODE=EM86XX_MODEID_STANDALONE -DRMCHIP_ID=RMCHIP_ID_SMP8652 -DRMCHIP_REVISION=3  -mips32r2 -EL -Wall -O2 -DRMPLATFORM=RMPLATFORMID_TANGO3 -g -mno-abicalls -fno-pic -mabi=32 -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -ffreestanding -Wa,--trap -fomit-frame-pointer -fno-stack-protector -Wno-pointer-sign -Wall -Wchar-subscripts -Wmissing-prototypes -Wsign-compare -Wuninitialized  bubble_sort.c  -o bubble_sort.o
+	bubble_sort.c:7: warning: no previous prototype for 'bubble'
+	/home/alshamlan/vtilt_git/minerva-5.x/mips-4.3/bin/../lib/gcc/mips-linux-gnu/4.3.3/../../../../mips-linux-gnu/bin/ld: /tmp/cceGQO3Q.o: warning: linking abicalls files with non-abicalls files
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+
+// check the binary elf type
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ file bubble_sort.o 
+	bubble_sort.o: ELF 32-bit LSB  executable, MIPS, MIPS32 rel2 version 1, dynamically linked (uses shared libs), for GNU/Linux 2.6.12, not stripped
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+
+[3] move to the STB
+	$ scp bubble_sort.o root@10.10.139.34:/tmp/
+	
+Example: 
+
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ scp bubble_sort.o root@10.10.139.34:/tmp/
+	root@10.10.139.34's password: 
+	bubble_sort.o                                 100% 9083     8.9KB/s   00:00    
+	alshamlan@alshamlan-OptiPlex-980:~/vtilt_git/minerva-5.x/mips-4.3/bin$ 
+
+[4] run it in the target, login onto the target
+	$ ssh root@10.10.139.34
+
+// run it
+
+tango3-paco[tmp]# cd /tmp
+tango3-paco[tmp]# ls          
+RebootLog.txt*                            ext3_fsck.log                             nohup.out.0
+alshamlan*                                flash@                                    nohup.out.last
+bubble_sort.o*                            fontstore@                                pace_minerva_tmp_approotfs_squash.YZcFjc
+cm/                                       fw_upgrade_env                            pkg/
+cmdb=                                     hotplug2.pid                              pkgd=
+cwmd=                                     ifstate                                   qt.conf
+dhcp_think_tmp                            ipfltr                                    qtembedded-0/
+dhcpcd/                                   klogd.pid                                 ram/
+dhcpcd-eth0.pid                           ledd_socket=                              random-seed
+dhcpcd_vendor_options                     log=                                      syslogd.pid
+disk-model                                lrro.xenv                                 utmp
+disk-parts                                mifd=                                     watchdog.pid
+disk-size                                 minerva.log                               xenv.bin
+diskinfo.conf                             mlog/                                     youtube_patch.txt
+dropbear.pid                              net_cable_result
+enable_pvr                                nohup.out
+tango3-paco[tmp]# ./bubble_sort.o 
+0 1 2 3 4 5 6 7 8 9  
+tango3-paco[tmp]# 
+
+
+[5] move the corss-compiled binary from the STB to qemu system
+
+// creat qemu system and then enable the ssh
+// 1. create the system
+	$ qemu-system-mipsel -M malta -kernel output/images/vmlinux -serial stdio -hda output/images/rootfs.ext2 -append "root=/dev/hda" -net nic,model=pcnet -net user
+
+// 2. login by just typing "root"
+
+// 3. enable  network connection
+	
+	// to check the ports and interfaces in the system
+	$ ip addr
+	$ cat /proc/net/dev
+	$ ifconfig -a // Display Details of All interfaces Including Disabled Interfaces
+	// check connection
+	$ netstat -l
+	$ netstat -rn
+	
+	
+	// enable connection 
+	$ ifconfig eth0 up
+	$ udhcpc eth0
+	
+Example:
+	buildroot login: root
+	# ifconfig eth0 up
+	pcnet32 0000:00:0b.0 eth0: link up
+	# udhcpc eth0
+	udhcpc (v1.22.1) started
+	Sending discover...
+	Sending select for 10.0.2.15...
+	Lease of 10.0.2.15 obtained, lease time 86400
+	deleting routers
+	adding dns 10.0.2.3
+	# ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 52:54:00:12:34:56  
+		  inet addr:10.0.2.15  Bcast:10.0.2.255  Mask:255.255.255.0
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:2 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:2 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:1180 (1.1 KiB)  TX bytes:684 (684.0 B)
+		  Interrupt:10 Base address:0x2020 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	# 
+
+// configuring eth0 in /etc/network/interfaces
+	$ ifconfig eth0 192.168.2.2 netmask 255.255.255.0 broadcast 192.168.2.255
+
+// before doing the changes
+# ifup eth0
+ifup: ignoring unknown interface eth0
+# cat /etc/network/interfaces 
+# Configure Loopback
+auto lo
+iface lo inet loopback
+
+# 
+
+// after doing the changes
+
+
+// summarizing the IPs
+	1. STB ip: 10.10.139.34
+	2. qemu ip: 10.0.2.15
+
+// summarizing the kernel info -- using "uname -a":
+	1. STB:  Linux tango3-paco 2.6.22.19-39-sigma #2 PREEMPT Fri Jun 13 14:54:49 EDT 2014 mips GNU/Linux
+	2. qemu: Linux buildroot 3.13.5 #1 SMP Mon Jun 23 15:48:25 EDT 2014 mips GNU/Linux	
+
+// using scp from STB to qemu
+	$ scp bubble_sort.o root@10.0.2.15:/tmp
+
+
+
+
+

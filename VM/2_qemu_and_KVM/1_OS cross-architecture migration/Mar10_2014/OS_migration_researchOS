@@ -1,0 +1,119 @@
+//
+
+
+// in my laptop, it didn't work!!
+nice -n -20 qemu-system-x86_64 -cdrom ubuntu-12.04.2-desktop-amd64.iso -boot d full_system_v2.qcow2 -m 4000
+
+// booting two images 
+nice -n -20 qemu-system-x86_64 -hda ubuntu_11_04_x64_86.qcow2 -hdb full_system_v2.qcow2 -m 3000
+
+// to fix grub
+sudo mount /dev/sdXY /mnt
+sudo grub-install --root-directory=/mnt /dev/sdX
+
+// booting the reseach image alone, worked!!
+nice -n -20 qemu-system-x86_64 -hda full_system_v2.qcow2 -m 3000
+
+// to-do-list
+[1] size shrinking
+[2] checking gem5 if it works
+
+//---------------------
+//	topic: continuing the process in Asus laptop
+//---------------------
+
+// creating an empty inage from qemu emulator
+qemu-img create -f qcow2 ubuntu_1204_x64.qcow2 100G
+
+// installing ubuntu 12.04 x64_84 to the created image, it's really slow!! maybe because the imagr size!!
+nice -20 qemu-system-x86_64 -cdrom ubuntu-12.04.2-desktop-amd64.iso -boot d ubuntu_1204_x64.qcow2 -m 2042
+
+nice -20 qemu-system-x86_64 -cdrom ubuntu-13.04-desktop-amd64.iso -boot d ubuntu_1204_x64.qcow2 -m 2042
+
+// redo the image
+rm qcow2 ubuntu_1204_x64.qcow2
+qemu-img create -f qcow2 ubuntu_1204_x64.qcow2 5G
+
+// using qemu instead of qemu-system-x86_64, gave an error b/c qemi is i386 where the image is x64  
+nice -20 qemu -cdrom ubuntu-13.04-desktop-amd64.iso -boot d ubuntu_1204_x64.qcow2 -m 2042
+
+// correcting nice flag, but it's still slow!!
+nice -n -20 qemu-system-x86_64 -cdrom ubuntu-11.04-desktop-amd64.iso -boot d ubuntu_1204_x64.qcow2 -m 2042
+
+//---------------------
+//	topic: what I did in the research PC
+//---------------------
+
+// objective to clone my reseach partition to my ASUS laptop. 
+
+// note[0]
+	it is better to delete what you don't need in the potantional clone partition
+// note[1]
+	it is good after removing the files that is not needed to be in the clone image. Use gparted or any application that can resize the hard-disk!! 
+// note[2]
+	if you resized the partition or any partition. It is better to do update-grup to make sure the system will boot. Usually, resizing may make the system unbootable where you would need to fix it througn liveCD. This topic will be desuciessed shortly after the cloning is doing becuase qemu cannot boot the clone image due to many hard-disk things are broken!!
+
+// convering full partition into .img file
+source: http://askubuntu.com/questions/19901/how-to-make-a-disk-image-and-restore-from-it-later
+// note[3] use gparted for the device name, or use fdisk and cfdisk
+// note[4]: the command looks like this
+	sudo dd if=<disk partition identifier> of=./<name of disk image>
+// command, slow!!
+dd if=/dev/sde4 of=/media/qemu/research_jun2013.img
+
+// speeding it up with nice!!
+nice -18 dd if=/dev/sde4 of=/media/qemu/research_jun2013.img
+
+// note[5]
+	after finshing I got this output
+	--------------------------
+	103075840+0 records in
+	103075840+0 records out
+	52774830080 bytes (53 GB) copied, 1661.48 s, 31.8 MB/s
+
+// coverting .img to qcow2 
+source: http://en.wikibooks.org/wiki/QEMU/Images
+source: http://serverfault.com/questions/145834/how-to-convert-a-raw-disk-image-to-a-copy-on-write-image-based-on-another-image
+// converted the raw image to a qcow2 image:
+nice -19 qemu-img convert -O qcow2 /media/qemu/research_jun2013.img /media/raw/research_jun2013.qcow2
+
+// note[6]:
+after finshing the size gets lower than .img, which is 41.0 GB (41,035,235,328 bytes)
+
+// resize the research_jun2013.qcow2 to fit 100GB
+source:	https://wiki.archlinux.org/index.php/KVM#Resizing_the_image
+qemu-img resize research_jun2013.qcow2 +50G
+
+//note[7]:
+the size still the same 41.0 GB (41,035,237,376 bytes) that is why I coverted the file image format to qcow2
+
+// booting ubuntu-11.04 liveCD to the clone image, booted but the gparted has issue with the image partition!!
+qemu-system-x86_64 -cdrom ubuntu-11.04-desktop-amd64.iso -boot d research_jun2013.qcow2 -m 2048
+
+// using updated ubuntu version 13.04, image has problems!!
+qemu-system-x86_64 -cdrom ubuntu-13.04-desktop-amd64.iso -boot d research_jun2013.qcow2 -m 2048
+
+// booting ubuntu-11.04 liveCD to the clone image increasing the ram size
+qemu-system-x86_64 -cdrom ubuntu-11.04-desktop-amd64.iso -boot d research_jun2013.qcow2 -m 4000
+
+// note[8]
+	I had to mount a lot of partition to do update-grub. I mounted these
+	[1] mount -o bind /dev /mnt/vm1/dev
+	[2] mount -o bind /dev/pts /mnt/vm1/dev/pts
+	[3] mount -o bind /proc/ /mnt/vm1/proc/
+	[4] mount -o bind /sys /mnt/vm1/sys
+	-----------------------------------
+	then I did chroot and update-grub
+
+// testing it, fualled due the system is linked to the CD!!
+qemu-system-x86_64 research_jun2013.qcow2 -m 2048
+
+// when I did fdisk -l. it gave me this note
+"ubuntu disk /dev/sdb doesn't contain a valid partition table"
+
+
+
+// after booting, use gparted to fix the size
+// then use update-grub command to make the image bootable
+
+

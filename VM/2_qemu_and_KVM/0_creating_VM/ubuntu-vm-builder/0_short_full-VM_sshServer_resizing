@@ -1,0 +1,228 @@
+//
+
+Thu Jul 31, 2014
+-----------------
+objective:
+[1] building a VM that has the following:
+	1. ssh server 		-- for having the ability to copy and paste between the VM and host
+	2. bash-completion 	-- for having the ability to use <tab> to auto-complete
+	3. bigger size
+	
+steps:
+[1] do this 
+
+	// for help
+	(host) $ vmbuilder kvm ubuntu -h
+	// building the VM
+	(host) $ sudo time vmbuilder kvm ubuntu  --verbose --suite trusty  --arch=amd64 --addpkg=linux-image-generic --addpkg=bash-completion --addpkg=openssh-server --addpkg=git --addpkg=build-essential --addpkg=libncurses5-dev --rootsize=15000 	--user alshamlan --pass 288071100637 --rootpass=288071100637 2>&1 | tee vmbuilder.log
+	// rename the VM from random string to something is readable!!
+	(host) $ cp ubuntu-kvm/tmpsNpluA.qcow2 Jul30_ubuntu_x86_14.04.qcow2
+	// run the vm
+	(host) $ kvm -m 15G -cpu host -hda Jul30_ubuntu_x86_14.04.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	// accessing the VM through ssh
+	(host) $ ssh -p 2222 alshamlan@localhost 
+		// login onto the target
+		username:	alshamlan
+		passowrd:	288071100637
+		
+// result fro the target
+	alshamlan@ubuntu:~$ uname -a
+	Linux ubuntu 3.13.0-32-generic #57-Ubuntu SMP Tue Jul 15 03:51:08 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
+	alshamlan@ubuntu:~$ df -h
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sda1        14G  829M   13G   7% /
+	none            4.0K     0  4.0K   0% /sys/fs/cgroup
+	udev            7.4G  4.0K  7.4G   1% /dev
+	tmpfs           1.5G  284K  1.5G   1% /run
+	none            5.0M     0  5.0M   0% /run/lock
+	none            7.4G     0  7.4G   0% /run/shm
+	none            100M     0  100M   0% /run/user
+	alshamlan@ubuntu:~$ free -h
+		     total       used       free     shared    buffers     cached
+	Mem:           14G       155M        14G       292K       5.5M        26M
+	-/+ buffers/cache:       123M        14G
+	Swap:         975M         0B       975M
+	alshamlan@ubuntu:~$ lsb_release -a
+	No LSB modules are available.
+	Distributor ID:	Ubuntu
+	Description:	Ubuntu 14.04.1 LTS
+	Release:	14.04
+	Codename:	trusty
+	alshamlan@ubuntu:~$ 
+		
+		
+
+//---------------		
+// raw help info
+//---------------
+
+alshamlan@alshamlan-OptiPlex-980:~/development$ vmbuilder kvm ubuntu -h
+2014-07-31 09:37:20,020 INFO    : logging to file: /tmp/tmpc8OY2T
+Usage: vmbuilder hypervisor distro [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --version             Show version information
+
+  Build options:
+    --debug             Show debug information
+    -v, --verbose       Show progress information
+    -q, --quiet         Silent operation
+    -o, --overwrite     Remove destination directory before starting build
+    -c CONFIG, --config=CONFIG
+                        Configuration file
+    --templates=DIR     Prepend DIR to template search path.
+    -d DESTDIR, --destdir=DESTDIR
+                        Destination directory
+    --only-chroot       Only build the chroot. Don't install it on disk images
+                        or anything.
+    --chroot-dir=CHROOT_DIR
+                        Build the chroot in directory.
+    --existing-chroot=EXISTING_CHROOT
+                        Use existing chroot.
+    -t DIR, --tmp=DIR   Use TMP as temporary working space for image
+                        generation. Defaults to $TMPDIR if it is defined or
+                        /tmp otherwise. [default: /tmp]
+    --tmpfs=SIZE        Use a tmpfs as the working directory, specifying its
+                        size or "-" to use tmpfs default (suid,dev,size=1G).
+
+  Disk:
+    --rootsize=SIZE     Size (in MB) of the root filesystem [default: 4096]
+    --optsize=SIZE      Size (in MB) of the /opt filesystem. If not set, no
+                        /opt filesystem will be added.
+    --swapsize=SIZE     Size (in MB) of the swap partition [default: 1024]
+    --raw=PATH          Specify a file (or block device) to use as first disk
+                        image (can be specified multiple times).
+    --part=PATH         Specify a partition table in PATH. Each line of
+                        partfile should specify (root first):      mountpoint
+                        size  one per line, separated by space, where size is
+                        in megabytes. You can have up to 4 virtual disks, a
+                        new disk starts on a line containing only '---'. ie:
+                        root 2000      /boot 512      swap 1000      ---
+                        /var 8000      /var/log 2000
+
+  Other options:
+    --ssh-key=PATH      Add PATH to root's ~/.ssh/authorized_keys (WARNING:
+                        this has strong security implications).
+    --ssh-user-key=SSH_USER_KEY
+                        Add PATH to the user's ~/.ssh/authorized_keys.
+    --manifest=PATH     If passed, a manifest will be written to PATH
+
+  Package options:
+    --addpkg=PKG        Install PKG into the guest (can be specified multiple
+                        times).
+    --removepkg=PKG     Remove PKG from the guest (can be specified multiple
+                        times)
+    --seedfile=SEEDFILE
+                        Seed the debconf database with the contents of this
+                        seed file before installing packages
+
+  General OS options:
+    -a ARCH, --arch=ARCH
+                        Specify the target architecture.  Valid options: amd64
+                        i386 lpia (defaults to host arch)
+    --hostname=HOSTNAME
+                        Set NAME as the hostname of the guest. Default:
+                        ubuntu. Also uses this name as the VM name.
+
+  Post install actions:
+    --copy=FILE         Read 'source dest' lines from FILE, copying source
+                        files from host to dest in the guest's file system.
+    --execscript=SCRIPT, --exec=SCRIPT
+                        Run SCRIPT after distro installation finishes. Script
+                        will be called with the guest's chroot as first
+                        argument, so you can use 'chroot $1 <cmd>' to run code
+                        in the virtual machine.
+
+  Network:
+    --domain=DOMAIN     Set DOMAIN as the domain name of the guest [default:
+                        defaultdomain].
+
+  Installation options:
+    --suite=SUITE       Suite to install. Valid options: dapper gutsy hardy
+                        intrepid jaunty karmic lucid maverick natty oneiric
+                        precise quantal raring saucy trusty [default: lucid]
+    --flavour=FLAVOUR, --kernel-flavour=FLAVOUR
+                        Kernel flavour to use. Default and valid options
+                        depend on architecture and suite
+    --variant=VARIANT   Passed to debootstrap --variant flag; use minbase,
+                        buildd, or fakechroot.
+    --debootstrap-tarball=FILE
+                        Passed to debootstrap --unpack-tarball flag.
+    --iso=PATH          Use an iso image as the source for installation of
+                        file. Full path to the iso must be provided. If
+                        --mirror is also provided, it will be used in the
+                        final sources.list of the vm.  This requires suite and
+                        kernel parameter to match what is available on the
+                        iso, obviously.
+    --mirror=URL        Use Ubuntu mirror at URL instead of the default, which
+                        is http://archive.ubuntu.com/ubuntu for official
+                        arches and http://ports.ubuntu.com/ubuntu-ports
+                        otherwise
+    --proxy=URL         Use proxy at URL for cached packages
+    --install-mirror=URL
+                        Use Ubuntu mirror at URL for the installation only.
+                        Apt's sources.list will still use default or URL set
+                        by --mirror
+    --security-mirror=URL
+                        Use Ubuntu security mirror at URL instead of the
+                        default, which is http://security.ubuntu.com/ubuntu
+                        for official arches and http://ports.ubuntu.com
+                        /ubuntu-ports otherwise.
+    --install-security-mirror=URL
+                        Use the security mirror at URL for installation only.
+                        Apt's sources.list will still use default or URL set
+                        by --security-mirror
+    --components=COMPS  A comma seperated list of distro components to include
+                        (e.g. main,universe).
+    --ppa=PPA           Add ppa belonging to PPA to the vm's sources.list.
+    --lang=LANG         Set the locale to LANG [default: en_US.UTF-8]
+    --timezone=TZ       Set the timezone to TZ in the vm. [default: UTC]
+
+  Settings for the initial user:
+    --user=USER         Username of initial user [default: ubuntu]
+    --name=NAME         Full name of initial user [default: Ubuntu]
+    --pass=PASS         Password of initial user [default: ubuntu]
+    --rootpass=ROOTPASS
+                        Initial root password (WARNING: this has strong
+                        security implications).
+    --uid=UID           Initial UID value.
+    --gid=GID           Initial GID value.
+    --lock-user         Lock the initial user [default: none]
+
+  Scripts:
+    --firstboot=PATH    Specify a script that will be copied into the guest
+                        and executed the first time the machine boots.  This
+                        script must not be interactive.
+    --firstlogin=PATH   Specify a script that will be copied into the guest
+                        and will be executed the first time the user logs in.
+                        This script can be interactive.
+
+  Network:
+    --ip=ADDRESS        IP address in dotted form [default: dhcp].
+    --mac=MAC           MAC address of the guest [default: random].
+    --mask=VALUE        IP mask in dotted form [default: based on ip setting].
+                        Ignored if ip is not specified.
+    --net=ADDRESS       IP net address in dotted form [default: based on ip
+                        setting]. Ignored if ip is not specified.
+    --bcast=VALUE       IP broadcast in dotted form [default: based on ip
+                        setting]. Ignored if ip is not specified.
+    --gw=ADDRESS        Gateway (router) address in dotted form [default:
+                        based on ip setting (first valid address in the
+                        network)]. Ignored if ip is not specified.
+    --dns=ADDRESS       DNS address in dotted form [default: based on ip
+                        setting (first valid address in the network)] Ignored
+                        if ip is not specified.
+
+  libvirt integration:
+    --libvirt=URI       Add VM to given URI
+    --bridge=BRIDGE     Set up bridged network connected to BRIDGE.
+    --network=NETWORK   Set up a network connection to virtual network
+                        NETWORK.
+
+  VM settings:
+    -m MEM, --mem=MEM   Assign MEM megabytes of memory to the guest vm.
+                        [default: 128]
+    --cpus=CPUS         Assign NUM cpus to the guest vm. [default: 1]
+alshamlan@alshamlan-OptiPlex-980:~/development$ 
+

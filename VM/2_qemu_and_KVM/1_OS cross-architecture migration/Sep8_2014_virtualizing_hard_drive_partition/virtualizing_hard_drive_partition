@@ -1,0 +1,222 @@
+//
+
+Wed Sep 10, 2014
+-----------------
+just for Mike's opensuse setup
+[1] boot with liveCD as follows:
+	(host) $ kvm -m 15G -cpu host -cpu host  -boot d -cdrom ubuntu-14.04.1-desktop-amd64.iso -hda PHD_server_full_HD.img -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22 
+[2] run live ubuntu
+[3] on live ubuntu do the following
+	// be root
+	(live ubuntu) $ sudo -s
+	// mount opensuse
+	(live ubuntu) $ mount /dev/sda1 /mnt
+	// praper for chroot
+	(live ubuntu) $ mount -t proc proc proc/
+	(live ubuntu) $ mount --rbind /sys sys/
+	(live ubuntu) $ mount --rbind /dev dev/  
+	// chroot into the system 
+	(live ubuntu) $ chroot .
+	// regenrate initrd
+	(chrooted live ubuntu) $ mkinitrd
+	// reconfigure grub
+	(chrooted live ubuntu) $ grub2-mkconfig -o /boot/grub2/grub.cfg
+
+// reoarder the partition 
+ kvm -m 15G -cpu host  -boot d -cdrom ubuntu-14.04.1-desktop-amd64.iso -hda Sep8_2014_PHD_VM.qcow2 -hdb PHD_server_full_HD.img -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+
+// removing 200GB from the img
+(host) $ qemu-img resize PHD_server_full_HD.img  -100G 	
+
+
+Mon Sept 8, 2014	-- "incomplete"
+----------------
+objective:
+[1] virtualizing a full partation, and not the whole device
+
+steps:
+[1] create the partaion image
+	(orginal) $ dd if=/dev/sda1 of=/mnt/HD/PHD.img
+	// note[1]: /dev/sda is not mounted
+	// note[2]: /dev/sdb is the lived-usb
+	// note[3]: /dev/sdc1 is mounted onto /mnt/HD
+	// note[4]: I'm running lived-USB to copy a partation from the computer, which is /dev/sda/ to external HD, which is /dev/sdc
+	
+	
+[2] we need to create a full VM system
+	// for help
+	(host) $ vmbuilder kvm ubuntu -h
+	// building the VM
+	(host) $ sudo time vmbuilder kvm ubuntu  --verbose --suite trusty  --arch=amd64 --addpkg=linux-image-generic  --addpkg=bash-completion --addpkg=openssh-server 2>&1 | tee vmbuilder.log
+		// login
+		username:	"ubuntu"
+		passowrd:	"ubuntu"
+	// rename the VM from random string to something is readable!!
+	(host) $ cp ubuntu-kvm/tmpsNpluA.qcow2 Sep8_2014_PHD_VM.qcow2
+	// because PHD.img is 21.5 GB, so I will add 25GB just in case, for you add accordingly
+	(host) $ qemu-img resize Sep8_2014_PHD_VM.qcow2 +30G 	
+
+[3] run the image
+	// run the vm: 1) hda is Sep8_2014_PHD_VM.qcow2, and 2) hdb is PHD.img
+	(host) $ kvm -m 15G -cpu host -hda Sep8_2014_PHD_VM.qcow2 -hdb PHD.img -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	// login through ssh
+		// login
+		username:	"ubuntu"
+		passowrd:	"ubuntu"
+	(host) $ sshpass -p 'ubuntu' ssh -p 2222 ubuntu@localhost
+	// check the hard disk storage
+	ubuntu@ubuntu:~$ sudo fdisk -l
+
+	Disk /dev/sda: 37.6 GB, 37580963840 bytes
+	4 heads, 32 sectors/track, 573440 cylinders, total 73400320 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x0007f186
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1              63     7998046     3998992   83  Linux
+	/dev/sda2         7999488     9998335      999424   82  Linux swap / Solaris
+
+	Disk /dev/sdb: 21.5 GB, 21474836480 bytes
+	255 heads, 63 sectors/track, 2610 cylinders, total 41943040 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	   Device Boot      Start         End      Blocks   Id  System
+
+
+	ubuntu@ubuntu:~$ sudo fdisk -l /dev/sda1
+
+	Disk /dev/sda1: 4094 MB, 4094967808 bytes
+	255 heads, 63 sectors/track, 497 cylinders, total 7997984 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	Disk /dev/sda1 doesn't contain a valid partition table
+
+	ubuntu@ubuntu:~$ sudo fdisk -l /dev/sda2
+
+	Disk /dev/sda2: 1023 MB, 1023410176 bytes
+	255 heads, 63 sectors/track, 124 cylinders, total 1998848 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	Disk /dev/sda2 doesn't contain a valid partition table
+	ubuntu@ubuntu:~$ 
+	
+	// so, /dev/sda 25G is not identify as a device, so let create /dev/sda3
+	(target) $ cfdisk /dev/sda	
+	// after write this info, let check the device again
+	ubuntu@ubuntu:~$ sudo fdisk -l 
+
+	Disk /dev/sda: 37.6 GB, 37580963840 bytes
+	4 heads, 32 sectors/track, 573440 cylinders, total 73400320 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x0007f186
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sda1              63     7998046     3998992   83  Linux
+	/dev/sda2         7999488     9998335      999424   82  Linux swap / Solaris
+	/dev/sda3         9998336    73400319    31700992   83  Linux
+
+	Disk /dev/sdb: 21.5 GB, 21474836480 bytes
+	255 heads, 63 sectors/track, 2610 cylinders, total 41943040 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk identifier: 0x00000000
+
+	   Device Boot      Start         End      Blocks   Id  System
+	ubuntu@ubuntu:~$ 
+	// reboot just in case
+	(target) $ sudo reboot
+	// good now we have /dev/sd3, so let us dd /dev/sdb into /dev/sda3
+	(target) $ sudo time dd if=/dev/sdb of=/dev/sda3
+
+[4] setup the bootloader
+	// I wasn't able to de "update-grub" maybe because vm-builder didn't use x86
+	// So, I will reinstall ubuntu along side, opensuse. 
+	(host) $ kvm -m 15G -cpu host  -boot d -cdrom ubuntu-14.04.1-desktop-amd64.iso -hda Sep8_2014_PHD_VM.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+ 
+ 	// the problem that I had
+ 	vm-builder outputs image with kernel "i686", and opensuse is "x86". Maybe this was the prolem with "upgrade-update"
+
+	// run the VM without the second hard disk
+	(host) $ kvm -m 15G -cpu host -hda Sep8_2014_PHD_VM.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22	
+	
+	
+	// booting from CD
+	(host) $ kvm -m 15G -cpu host  -boot d -cdrom gparted-live-0.19.1-1-i486.iso -hda Sep8_2014_PHD_VM.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	
+	-cdrom
+	
+	
+//---------------------
+kvm -m 15G -cpu host -cpu host  -boot d -cdrom ubuntu-14.04.1-desktop-amd64.iso -hda PHD_server_full_HD.img -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22 
+
+//---------------------
+
+	// running kvm
+	$ kvm -m 512M  -hda ubuntu_x86_14.04.qcow2
+		// login
+		username:	"ubuntu"
+		passowrd:	"ubuntu"
+
+[2] or, fix it by livedCD as follows:
+	(host) $ kvm -m 15G -cpu host  -boot d -cdrom gparted-live-0.19.1-1-i486.iso -hda Jul30_ubuntu_x86_14.04.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+
+
+	// rename the VM from random string to something is readable!!
+	(host) $ cp ubuntu-kvm/tmpsNpluA.qcow2 Jul30_ubuntu_x86_14.04.qcow2
+	// add more storage for the vm such as 30G
+	(host) $ qemu-img resize Jul30_ubuntu_x86_14.04.qcow2 +30G 
+	// run the vm
+	(host) $ kvm -m 15G -cpu host -hda Jul30_ubuntu_x86_14.04.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	// accessing the VM through ssh
+	(host) $ ssh -p 2222 alshamlan@localhost 
+		// login onto the target
+		username:	alshamlan
+		passowrd:	288071100637
+	// or ssh as follows:
+	(host) $ sshpass -p '288071100637' ssh -p 2222 alshamlan@localhost
+	
+
+	// setting up the hard disk
+	// check what is availabe
+	(target) $ sudo fdisk -l 
+	// create the third partion from the new space
+	(target) $ sudo cfdisk /dev/sda
+	// you need to reboot!!
+	(target) $ sudo reboot
+	// To format Linux partitions using ext3 on the new disk:
+	(target) $ sudo mkfs.ext3 /dev/sda3
+	//Note: Repeat the above step for each partition created (using it's new corresponding partition #, IE /dev/sdb1, /dev/sdb2)
+
+	// Update /etc/fstab file (Automatic Mount on boot)
+	// Open /etc/fstab file, enter:
+	(target) $ sudo mkdir -p /export
+	(target) $ sudo vi /etc/fstab
+		//Append as follows:
+
+		/dev/sda3 /export ext3 defaults 1 2
+
+		//Save and close the file.
+
+	// now, reboot and it is automounted 
+	(target) $ sudo reboot
+	//or do the following if you don't want to reboot
+	(target) $ sudo mount /export 
+
+	to-do-list:
+	----------
+	1. add more hard disk space, which can be done after the build or in the build time -- choose accordingly!!

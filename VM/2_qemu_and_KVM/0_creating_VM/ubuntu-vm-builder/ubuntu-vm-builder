@@ -1,0 +1,1140 @@
+//
+
+Tue Jul 29, 2014
+-----------------
+objective:
+[1] after building the VM as shown below, I want to run it onto libvirt
+
+steps:
+[1] install libvirt in the host
+	(host) $ sudo apt-get install kvm libvirt-bin
+	
+[2] setup "Virtual Machine Management" which is GUI for libvirt, which is already install by the above command
+	You needed to do the following:
+	1. import ubuntu_x86_14.04.qcow2. common mistake is not selecting the image type to be qcow2
+	2. add a second hard disk
+	3. I used macvtap for networking
+	
+[3] setup the second hard disk
+	// check what is availabe
+	(target) $ sudo fdisk -l | grep ^Disk
+	//To partition the disk - /dev/sdb, enter:
+	(target) $ sudo fdisk /dev/sda
+		
+		//The basic fdisk commands you need are:
+		* m - print help
+		* p - print the partition table
+		* n - create a new partition
+		* d - delete a partition
+		* q - quit without saving changes
+		* w - write the new partition table and exit
+
+		You will need to create (n) a new partition and write (w) the changes.
+		Please note the partition number(s) you have chosen.
+
+	// To format Linux partitions using ext3 on the new disk:
+	(target) $ sudo mkfs.ext3 /dev/sda1
+	//Note: Repeat the above step for each partition created (using it's new corresponding partition #, IE /dev/sdb1, /dev/sdb2)
+
+	// Update /etc/fstab file (Automatic Mount on boot)
+	// Open /etc/fstab file, enter:
+	(target) $ sudo mkdir -p /export
+	(target) $ sudo vi /etc/fstab
+		//Append as follows:
+
+		/dev/sda1 /export ext3 defaults 1 2
+
+		//Save and close the file.
+
+	// now, reboot and it is automounted 
+	(target) $ sudo reboot
+	//or do the following if you don't want to reboot
+	(target) $ sudo mount /export 
+	
+
+
+
+Step#3 : Mount the new disk using mount command
+===============================
+First create a mount point /backup1 and use mount command to mount /dev/sdb1, enter:
+# mkdir /backup1
+# mount /dev/sdb1 /backup1
+# df -H
+
+
+
+
+
+Tue Jul 29, 2014
+----------------
+[1] creating ubuntu VM the fastest way possible
+[2] modify the VM to my custom settings
+[3] modify the vm for kernel development
+[4] make it with compatible with libvirt
+
+steps:
+[1] create the VM
+	// setup the directory
+	$ mkdir development
+	$ cd development/
+	// install vmbuilder
+	$ sudo apt-get install ubuntu-vm-builder
+	// use the same host version name, to check it out
+	$ lsb_release -a
+	// build the VM
+	$ sudo vmbuilder kvm ubuntu --suite trusty  --addpkg=linux-image-generic
+	// copy the created VM to easier name
+	$ cp ubuntu-kvm/tmpSpK47c.qcow2 ubuntu_x86_14.04.qcow2
+	// running kvm
+	$ kvm -m 512M  -hda ubuntu_x86_14.04.qcow2
+		// login
+		username:	"ubuntu"
+		passowrd:	"ubuntu"
+
+
+	
+[2] setting up the system
+	1. install bash-completion to make the <tab> button works
+	(target) $ sudo apt-get install bash-completion
+	
+	2. however, copy and paste doesn't work between the guest and host
+	// we will resolve by using ssh by redirecting host port 2222 to target ssh port (which is 22)
+	(host) $ kvm -m 512M  -hda ubuntu_x86_14.04.qcow2 -serial stdio -net nic,model=pcnet -net user -redir tcp:2222::22
+	// now, we need to install ssh server onto the target
+	(target) $ sudo apt-get install openssh-server
+	// accessing the VM through ssh
+	(host) $ sshpass -p 'ubuntu' ssh -p 2222 ubuntu@localhost
+	
+	3. create a new username
+	// note: when creating the username use my common linux passowrd
+	(target) $ sudo adduser alshamlan
+	// add 'alshamlan' to /etc/sudoers
+	(target) $ sudo su		// root is needed becuase sudo will be disable when changing /etc/sudoers file
+	(target) $ chmod +w /etc/sudoers	// isn't writable, so we must make it so!!
+	(target) $ vi /etc/sudoers
+		for objective:
+		1) add this line at the end of the file:
+		"alshamlan ALL=(ALL) NOPASSWD:ALL"
+	
+		for vi coomands:
+		1) undo last change:				<Esc> + 'u'
+		2) undo all changes on line			<Esc> + 'U'
+		3) One can enter insert mode with the "i" (insert), "a" (insert after), "A" (insert at end of line), "o" (open new line after current line) or "O" (Open line above current line) 
+		4) 
+		
+		quit without saving anything			<Esc> + ':q!'	
+		saving						<Esc> + 'w'
+		quit and save 					<Esc> + 'x'	
+		
+	// after editing:
+		root@ubuntu:/home/ubuntu# vi /etc/sudoers
+		root@ubuntu:/home/ubuntu# cat /etc/sudoers
+		# /etc/sudoers
+		# This file MUST be edited with the 'visudo' command as root.
+		# See the man page for details on how to write a sudoers file.
+		# Defaults
+
+		Defaults	!lecture,tty_tickets,!fqdn
+
+		# Uncomment to allow members of group sudo to not need a password
+		# %sudo ALL=NOPASSWD: ALL
+
+		# Host alias specification
+
+		# User alias specification
+
+		# Cmnd alias specification
+
+		# User privilege specification
+		root	ALL=(ALL) ALL
+
+		# Members of the admin group may gain root privileges
+		%admin ALL=(ALL) ALL
+		alshamlan ALL=(ALL) NOPASSWD:ALL
+		root@ubuntu:/home/ubuntu# 
+	// change the permission back 
+	(target) $ chmod -w /etc/sudoers		// you must do this, if you didn't, then you will never be able to use "sudo"
+		// that means you will never be root again!! Make sure the permission is 0440 as follows:
+		root@ubuntu:/home/ubuntu# ls -lsh /etc/sudoers
+		4.0K -r--r----- 1 root root 525 Jul 29 18:15 /etc/sudoers
+		root@ubuntu:/home/ubuntu# 
+	// change root password to be the same as alshamlan password
+	(target) $ passwd root
+	// be 'alshamlan'
+	(target) $ su alshamlan
+	
+[3] analyze the target system
+	// memory and storage
+	alshamlan@ubuntu:/home/ubuntu$ df -h
+	Filesystem      Size  Used Avail Use% Mounted on
+	/dev/sda1       3.7G  678M  2.9G  19% /
+	none            4.0K     0  4.0K   0% /sys/fs/cgroup
+	udev            235M  4.0K  235M   1% /dev
+	tmpfs            50M  284K   49M   1% /run
+	none            5.0M     0  5.0M   0% /run/lock
+	none            246M     0  246M   0% /run/shm
+	none            100M     0  100M   0% /run/user
+	
+	alshamlan@ubuntu:/home/ubuntu$ mount
+	/dev/sda1 on / type ext4 (rw)
+	proc on /proc type proc (rw)
+	sysfs on /sys type sysfs (rw,noexec,nosuid,nodev)
+	none on /sys/fs/cgroup type tmpfs (rw)
+	none on /sys/fs/fuse/connections type fusectl (rw)
+	none on /sys/kernel/debug type debugfs (rw)
+	none on /sys/kernel/security type securityfs (rw)
+	udev on /dev type devtmpfs (rw,mode=0755)
+	devpts on /dev/pts type devpts (rw,noexec,nosuid,gid=5,mode=0620)
+	tmpfs on /run type tmpfs (rw,noexec,nosuid,size=10%,mode=0755)
+	none on /run/lock type tmpfs (rw,noexec,nosuid,nodev,size=5242880)
+	none on /run/shm type tmpfs (rw,nosuid,nodev)
+	none on /run/user type tmpfs (rw,noexec,nosuid,nodev,size=104857600,mode=0755)
+	none on /sys/fs/pstore type pstore (rw)
+	
+	alshamlan@ubuntu:/home/ubuntu$ free -h
+		     total       used       free     shared    buffers     cached
+	Mem:          490M       288M       201M       292K        17M       214M
+	-/+ buffers/cache:        55M       434M
+	Swap:         975M         0B       975M
+	alshamlan@ubuntu:/home/ubuntu$ 
+	
+	// analyze the cpu
+	alshamlan@ubuntu:/home/ubuntu$ cat /proc/cpuinfo 
+	processor	: 0
+	vendor_id	: GenuineIntel
+	cpu family	: 6
+	model		: 6
+	model name	: QEMU Virtual CPU version 2.0.0
+	stepping	: 3
+	microcode	: 0x1
+	cpu MHz		: 2792.978
+	cache size	: 4096 KB
+	physical id	: 0
+	siblings	: 1
+	core id		: 0
+	cpu cores	: 1
+	apicid		: 0
+	initial apicid	: 0
+	fpu		: yes
+	fpu_exception	: yes
+	cpuid level	: 4
+	wp		: yes
+	flags		: fpu de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 clflush mmx fxsr sse sse2 syscall nx lm rep_good nopl pni vmx cx16 x2apic popcnt hypervisor lahf_lm vnmi ept
+	bogomips	: 5585.95
+	clflush size	: 64
+	cache_alignment	: 64
+	address sizes	: 40 bits physical, 48 bits virtual
+	power management:
+
+	alshamlan@ubuntu:/home/ubuntu$ 
+	
+	// check the system availabe commands
+	$ ls -lsh `echo -e ${PATH//[:]/'\n'}` > all_commands.log
+	// scp the file from the target to the host
+	alshamlan@ubuntu:~$ netstat -n
+	Active Internet connections (w/o servers)
+	Proto Recv-Q Send-Q Local Address           Foreign Address         State      
+	tcp        0      0 10.0.2.15:22            10.0.2.2:56188          ESTABLISHED
+	Active UNIX domain sockets (w/o servers)
+	Proto RefCnt Flags       Type       State         I-Node   Path
+	unix  8      [ ]         DGRAM                    7488     /dev/log
+	unix  3      [ ]         STREAM     CONNECTED     11033    
+	unix  3      [ ]         STREAM     CONNECTED     7286     @/com/ubuntu/upstart
+	unix  2      [ ]         DGRAM                    11209    
+	unix  2      [ ]         DGRAM                    11226    
+	unix  2      [ ]         DGRAM                    11285    
+	unix  3      [ ]         STREAM     CONNECTED     8232     
+	unix  3      [ ]         STREAM     CONNECTED     8296     @/com/ubuntu/upstart
+	unix  2      [ ]         DGRAM                    11025    
+	unix  2      [ ]         DGRAM                    8757     
+	unix  3      [ ]         STREAM     CONNECTED     11034    
+	unix  2      [ ]         STREAM     CONNECTED     11207    
+	unix  3      [ ]         STREAM     CONNECTED     7277     
+	unix  2      [ ]         DGRAM                    7534     
+	unix  3      [ ]         STREAM     CONNECTED     7466     @/com/ubuntu/upstart
+	unix  3      [ ]         STREAM     CONNECTED     7448     
+	unix  3      [ ]         DGRAM                    7332     
+	unix  3      [ ]         DGRAM                    7331     
+ 
+	alshamlan@ubuntu:~$ scp all_commands.log alshamlan@10.0.2.2:/tmp
+	The authenticity of host '10.0.2.2 (10.0.2.2)' can't be established.
+	ECDSA key fingerprint is 4b:54:30:75:22:8a:1a:41:dd:7d:19:ae:5c:74:8e:60.
+	Are you sure you want to continue connecting (yes/no)? yes
+	Warning: Permanently added '10.0.2.2' (ECDSA) to the list of known hosts.
+	alshamlan@10.0.2.2's password: 
+	all_commands.log                                                                                                      100%   43KB  43.4KB/s   00:00    
+	alshamlan@ubuntu:~$ 
+
+	
+	// checking the file in the host
+	(host) $ cat /tmp/
+	/bin:
+	total 6.3M
+	996K -rwxr-xr-x 1 root root 994K Apr 23 22:43 bash
+	 32K -rwxr-xr-x 3 root root  31K Oct 21  2013 bunzip2
+	 32K -rwxr-xr-x 3 root root  31K Oct 21  2013 bzcat
+	   0 lrwxrwxrwx 1 root root    6 Oct 21  2013 bzcmp -> bzdiff
+	4.0K -rwxr-xr-x 1 root root 2.1K Oct 21  2013 bzdiff
+	   0 lrwxrwxrwx 1 root root    6 Oct 21  2013 bzegrep -> bzgrep
+	8.0K -rwxr-xr-x 1 root root 4.8K Oct 21  2013 bzexe
+	   0 lrwxrwxrwx 1 root root    6 Oct 21  2013 bzfgrep -> bzgrep
+	4.0K -rwxr-xr-x 1 root root 3.6K Oct 21  2013 bzgrep
+	 32K -rwxr-xr-x 3 root root  31K Oct 21  2013 bzip2
+	 16K -rwxr-xr-x 1 root root  15K Oct 21  2013 bzip2recover
+	   0 lrwxrwxrwx 1 root root    6 Oct 21  2013 bzless -> bzmore
+	4.0K -rwxr-xr-x 1 root root 1.3K Oct 21  2013 bzmore
+	 48K -rwxr-xr-x 1 root root  47K Mar 24 07:35 cat
+	 60K -rwxr-xr-x 1 root root  59K Mar 24 07:35 chgrp
+	 56K -rwxr-xr-x 1 root root  55K Mar 24 07:35 chmod
+	 60K -rwxr-xr-x 1 root root  59K Mar 24 07:35 chown
+	 12K -rwxr-xr-x 1 root root  11K Feb 18  2013 chvt
+	128K -rwxr-xr-x 1 root root 128K Mar 24 07:35 cp
+	136K -rwxr-xr-x 1 root root 135K Jun  2  2013 cpio
+	120K -rwxr-xr-x 1 root root 119K Feb 19 12:13 dash
+	 64K -rwxr-xr-x 1 root root  63K Mar 24 07:35 date
+	 56K -rwxr-xr-x 1 root root  55K Mar 24 07:35 dd
+	 96K -rwxr-xr-x 1 root root  96K Mar 24 07:35 df
+	108K -rwxr-xr-x 1 root root 108K Mar 24 07:35 dir
+	 24K -rwxr-xr-x 1 root root  23K Jun  3 20:54 dmesg
+	   0 lrwxrwxrwx 1 root root    8 Dec 13  2013 dnsdomainname -> hostname
+	   0 lrwxrwxrwx 1 root root    8 Dec 13  2013 domainname -> hostname
+	 84K -rwxr-xr-x 1 root root  81K Feb 18  2013 dumpkeys
+	 32K -rwxr-xr-x 1 root root  31K Mar 24 07:35 echo
+	180K -rwxr-xr-x 1 root root 180K Jan 18  2014 egrep
+	 28K -rwxr-xr-x 1 root root  27K Mar 24 07:35 false
+	 12K -rwxr-xr-x 1 root root  11K Feb 18  2013 fgconsole
+	136K -rwxr-xr-x 1 root root 136K Jan 18  2014 fgrep
+	 36K -rwxr-xr-x 1 root root  36K Jun  3 20:54 findmnt
+	188K -rwxr-xr-x 1 root root 188K Jan 18  2014 grep
+	4.0K -rwxr-xr-x 2 root root 2.3K Jan 10  2014 gunzip
+	8.0K -rwxr-xr-x 1 root root 5.8K Jan 10  2014 gzexe
+	 92K -rwxr-xr-x 1 root root  92K Jan 10  2014 gzip
+	 16K -rwxr-xr-x 1 root root  15K Dec 13  2013 hostname
+	304K -rwxr-xr-x 1 root root 301K Feb 17 10:04 ip
+	 12K -rwxr-xr-x 1 root root  11K Feb 18  2013 kbd_mode
+	 24K -rwxr-xr-x 1 root root  23K Jan  6  2014 kill
+	152K -rwxr-xr-x 1 root root 151K Apr 10 14:07 kmod
+	152K -rwxr-xr-x 1 root root 151K Jun 10  2013 less
+	 12K -rwxr-xr-x 1 root root  11K Jun 10  2013 lessecho
+	   0 lrwxrwxrwx 1 root root    8 Jun 10  2013 lessfile -> lesspipe
+	 16K -rwxr-xr-x 1 root root  16K Jun 10  2013 lesskey
+	8.0K -rwxr-xr-x 1 root root 7.6K Jun 10  2013 lesspipe
+	 56K -rwxr-xr-x 1 root root  55K Mar 24 07:35 ln
+	112K -rwxr-xr-x 1 root root 109K Feb 18  2013 loadkeys
+	 48K -rwxr-xr-x 1 root root  48K Feb 17 02:42 login
+	108K -rwxr-xr-x 1 root root 108K Mar 24 07:35 ls
+	 44K -rwxr-xr-x 1 root root  44K Jun  3 20:54 lsblk
+	   0 lrwxrwxrwx 1 root root    4 Apr 10 14:07 lsmod -> kmod
+	 52K -rwxr-xr-x 1 root root  51K Mar 24 07:35 mkdir
+	 36K -rwxr-xr-x 1 root root  35K Mar 24 07:35 mknod
+	 40K -rwxr-xr-x 1 root root  39K Mar 24 07:35 mktemp
+	 40K -rwxr-xr-x 1 root root  39K Jun  3 20:54 more
+	 96K -rwsr-xr-x 1 root root  93K Jun  3 20:54 mount
+	 12K -rwxr-xr-x 1 root root  11K Mar 13 01:41 mountpoint
+	   0 lrwxrwxrwx 1 root root   20 Jul 29 13:38 mt -> /etc/alternatives/mt
+	 68K -rwxr-xr-x 1 root root  68K Jun  2  2013 mt-gnu
+	120K -rwxr-xr-x 1 root root 120K Mar 24 07:35 mv
+	   0 lrwxrwxrwx 1 root root   20 Jul 29 13:40 nc -> /etc/alternatives/nc
+	 32K -rwxr-xr-x 1 root root  31K Dec  4  2012 nc.openbsd
+	   0 lrwxrwxrwx 1 root root   24 Jul 29 13:40 netcat -> /etc/alternatives/netcat
+	120K -rwxr-xr-x 1 root root 117K Dec  8  2013 netstat
+	   0 lrwxrwxrwx 1 root root    8 Dec 13  2013 nisdomainname -> hostname
+	   0 lrwxrwxrwx 1 root root    6 Feb 18  2013 open -> openvt
+	 20K -rwxr-xr-x 1 root root  19K Feb 18  2013 openvt
+	   0 lrwxrwxrwx 1 root root   14 Mar 13 01:41 pidof -> /sbin/killall5
+	 44K -rwsr-xr-x 1 root root  44K May  7 21:51 ping
+	 44K -rwsr-xr-x 1 root root  44K May  7 21:51 ping6
+	 36K -rwxr-xr-x 1 root root  35K Apr 11 17:20 plymouth
+	 32K -rwxr-xr-x 1 root root  31K Apr 11 17:20 plymouth-upstart-bridge
+	 92K -rwxr-xr-x 1 root root  92K Jan  6  2014 ps
+	 32K -rwxr-xr-x 1 root root  31K Mar 24 07:35 pwd
+	   0 lrwxrwxrwx 1 root root    4 Apr 23 22:43 rbash -> bash
+	 40K -rwxr-xr-x 1 root root  39K Mar 24 07:35 readlink
+	 60K -rwxr-xr-x 1 root root  59K Mar 24 07:35 rm
+	 44K -rwxr-xr-x 1 root root  43K Mar 24 07:35 rmdir
+	4.0K -rwxr-xr-x 1 root root  254 Jul 18 09:42 running-in-container
+	 20K -rwxr-xr-x 1 root root  19K Aug 28  2013 run-parts
+	 72K -rwxr-xr-x 1 root root  72K Feb 13 11:38 sed
+	 40K -rwxr-xr-x 1 root root  39K Feb 18  2013 setfont
+	 12K -rwxr-xr-x 1 root root  12K Jan 29 13:39 setupcon
+	   0 lrwxrwxrwx 1 root root    4 Feb 19 12:13 sh -> dash
+	   0 lrwxrwxrwx 1 root root    4 Feb 19 12:13 sh.distrib -> dash
+	 32K -rwxr-xr-x 1 root root  31K Mar 24 07:35 sleep
+	 76K -rwxr-xr-x 1 root root  75K Feb 17 10:04 ss
+	 68K -rwxr-xr-x 1 root root  67K Mar 24 07:35 stty
+	 40K -rwsr-xr-x 1 root root  37K Feb 17 02:42 su
+	 28K -rwxr-xr-x 1 root root  27K Mar 24 07:35 sync
+	 16K -rwxr-xr-x 1 root root  15K Jun  3 20:54 tailf
+	348K -rwxr-xr-x 1 root root 346K Feb  4 13:16 tar
+	 12K -rwxr-xr-x 1 root root  11K Aug 28  2013 tempfile
+	 60K -rwxr-xr-x 1 root root  59K Mar 24 07:35 touch
+	 28K -rwxr-xr-x 1 root root  27K Mar 24 07:35 true
+	244K -rwxr-xr-x 1 root root 243K Jun 20 05:20 udevadm
+	 68K -rwsr-xr-x 1 root root  68K Jun  3 20:54 umount
+	 32K -rwxr-xr-x 1 root root  31K Mar 24 07:35 uname
+	4.0K -rwxr-xr-x 2 root root 2.3K Jan 10  2014 uncompress
+	4.0K -rwxr-xr-x 1 root root 2.7K Feb 18  2013 unicode_start
+	108K -rwxr-xr-x 1 root root 108K Mar 24 07:35 vdir
+	4.0K -rwxr-xr-x 1 root root  946 Aug 28  2013 which
+	 28K -rwxr-xr-x 1 root root  27K Mar 23 15:44 whiptail
+	   0 lrwxrwxrwx 1 root root    8 Dec 13  2013 ypdomainname -> hostname
+	4.0K -rwxr-xr-x 1 root root 1.9K Jan 10  2014 zcat
+	4.0K -rwxr-xr-x 1 root root 1.8K Jan 10  2014 zcmp
+	8.0K -rwxr-xr-x 1 root root 5.7K Jan 10  2014 zdiff
+	4.0K -rwxr-xr-x 1 root root  142 Jan 10  2014 zegrep
+	4.0K -rwxr-xr-x 1 root root  142 Jan 10  2014 zfgrep
+	4.0K -rwxr-xr-x 1 root root 2.1K Jan 10  2014 zforce
+	8.0K -rwxr-xr-x 1 root root 5.9K Jan 10  2014 zgrep
+	4.0K -rwxr-xr-x 1 root root 2.0K Jan 10  2014 zless
+	4.0K -rwxr-xr-x 1 root root 1.9K Jan 10  2014 zmore
+	8.0K -rwxr-xr-x 1 root root 5.0K Jan 10  2014 znew
+
+	/sbin:
+	total 7.0M
+	 32K -rwxr-xr-x 2 root root    32K Jun  3 20:54 agetty
+	 28K -rwxr-xr-x 1 root root    27K Feb 19 11:31 badblocks
+	 32K -rwxr-xr-x 1 root root    31K Jun  3 20:54 blkid
+	 20K -rwxr-xr-x 1 root root    19K Jun  3 20:54 blockdev
+	 52K -rwxr-xr-x 1 root root    51K Feb 17 10:04 bridge
+	 20K -rwxr-xr-x 1 root root    19K Feb 21 19:20 capsh
+	 56K -rwxr-xr-x 1 root root    54K Jun  3 20:54 cfdisk
+	 16K -rwxr-xr-x 1 root root    15K Oct  1  2012 crda
+	8.0K -rwxr-xr-x 1 root root   6.2K Jun  3 20:54 ctrlaltdel
+	116K -rwxr-xr-x 1 root root   114K Feb 19 11:31 debugfs
+	   0 lrwxrwxrwx 1 root root      9 Apr 10 14:07 depmod -> /bin/kmod
+	1.6M -rwxr-xr-x 1 root root   1.6M Apr  7 14:21 dhclient
+	 16K -rwxr-xr-x 1 root root    15K Apr  7 14:21 dhclient-script
+	 72K -rwxr-xr-x 1 root root    70K Dec 13  2013 dmsetup
+	 24K -rwxr-xr-x 1 root root    23K Feb 19 11:31 dumpe2fs
+	244K -rwxr-xr-x 1 root root   243K Feb 19 11:31 e2fsck
+	 32K -rwxr-xr-x 1 root root    31K Feb 19 11:31 e2image
+	   0 lrwxrwxrwx 1 root root      7 Feb 19 11:30 e2label -> tune2fs
+	 12K -rwxr-xr-x 1 root root    11K Feb 19 11:31 e2undo
+	100K -rwxr-xr-x 1 root root    98K Jun  3 20:54 fdisk
+	8.0K -rwxr-xr-x 1 root root   6.2K Jun  3 20:54 findfs
+	 32K -rwxr-xr-x 1 root root    31K Jun  3 20:54 fsck
+	 16K -rwxr-xr-x 1 root root    15K Jun  3 20:54 fsck.cramfs
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 fsck.ext2 -> e2fsck
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 fsck.ext3 -> e2fsck
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 fsck.ext4 -> e2fsck
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 fsck.ext4dev -> e2fsck
+	 32K -rwxr-xr-x 1 root root    31K Jun  3 20:54 fsck.minix
+	4.0K -rwxr-xr-x 1 root root    333 Mar 13 01:41 fsck.nfs
+	 12K -rwxr-xr-x 1 root root    11K Jun  3 20:54 fsfreeze
+	8.0K -rwxr-xr-x 1 root root   6.2K Mar 13 01:41 fstab-decode
+	 16K -rwxr-xr-x 1 root root    15K Jun  3 20:54 fstrim
+	4.0K -rwxr-xr-x 1 root root   3.0K Jun  3 20:54 fstrim-all
+	 12K -rwxr-xr-x 1 root root    11K Feb 21 19:20 getcap
+	8.0K -rwxr-xr-x 1 root root   6.2K Feb 21 19:20 getpcaps
+	 32K -rwxr-xr-x 2 root root    32K Jun  3 20:54 getty
+	4.0K -rwxr-xr-x 1 root root    375 Mar 16  2012 grub-install
+	   0 lrwxrwxrwx 1 root root      6 Jul 18 09:46 halt -> reboot
+	 36K -rwxr-xr-x 1 root root    35K Jun  3 20:54 hwclock
+	 68K -rwxr-xr-x 1 root root    67K Dec  8  2013 ifconfig
+	   0 lrwxrwxrwx 1 root root      4 May 12 16:16 ifdown -> ifup
+	   0 lrwxrwxrwx 1 root root      4 May 12 16:16 ifquery -> ifup
+	 64K -rwxr-xr-x 1 root root    62K May 12 16:16 ifup
+	260K -rwxr-xr-x 1 root root   260K Jul 18 09:46 init
+	192K -rwxr-xr-x 1 root root   189K Jul 18 09:46 initctl
+	   0 lrwxrwxrwx 1 root root      9 Apr 10 14:07 insmod -> /bin/kmod
+	4.0K -rwxr-xr-x 1 root root   2.4K Aug 28  2013 installkernel
+	   0 lrwxrwxrwx 1 root root      7 Feb 17 10:04 ip -> /bin/ip
+	 20K -rwxr-xr-x 1 root root    19K Dec  8  2013 ipmaddr
+	 24K -rwxr-xr-x 1 root root    23K Dec  8  2013 iptunnel
+	 16K -rwxr-xr-x 1 root root    15K Jun  3 20:54 isosize
+	108K -rwxr-xr-x 1 root root   105K May 24  2012 iw
+	 12K -rwxr-xr-x 1 root root    11K Feb 18  2013 kbdrate
+	 20K -rwxr-xr-x 1 root root    19K Mar 13 01:41 killall5
+	4.0K -rwxr-xr-x 1 root root    387 Apr 12 10:39 ldconfig
+	936K -rwxr-xr-x 1 root root   934K Apr 12 10:39 ldconfig.real
+	 12K -rwxr-xr-x 1 root root    11K Feb 19 11:31 logsave
+	 44K -rwxr-xr-x 1 root root    43K Jun  3 20:54 losetup
+	   0 lrwxrwxrwx 1 root root      9 Apr 10 14:07 lsmod -> /bin/kmod
+	 52K -rwxr-xr-x 1 root root    52K May 19  2013 MAKEDEV
+	 20K -rwxr-xr-x 1 root root    19K Dec  8  2013 mii-tool
+	 96K -rwxr-xr-x 1 root root    96K Feb 19 11:31 mke2fs
+	 12K -rwxr-xr-x 1 root root    11K Jun  3 20:54 mkfs
+	 20K -rwxr-xr-x 1 root root    19K Jun  3 20:54 mkfs.bfs
+	 32K -rwxr-xr-x 1 root root    31K Jun  3 20:54 mkfs.cramfs
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 mkfs.ext2 -> mke2fs
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 mkfs.ext3 -> mke2fs
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 mkfs.ext4 -> mke2fs
+	   0 lrwxrwxrwx 1 root root      6 Feb 19 11:30 mkfs.ext4dev -> mke2fs
+	 28K -rwxr-xr-x 1 root root    27K Jun  3 20:54 mkfs.minix
+	 20K -rwxr-xr-x 1 root root    19K Jan 31 22:21 mkhomedir_helper
+	 24K -rwxr-xr-x 1 root root    23K Jun  3 20:54 mkswap
+	 32K -rwxr-xr-x 1 root root    31K Feb 22 01:40 mntctl
+	   0 lrwxrwxrwx 1 root root      9 Apr 10 14:07 modinfo -> /bin/kmod
+	   0 lrwxrwxrwx 1 root root      9 Apr 10 14:07 modprobe -> /bin/kmod
+	104K -rwxr-xr-x 1 root root   103K Feb 22 01:40 mountall
+	 16K -rwxr-xr-x 1 root root    15K Dec  8  2013 nameif
+	 12K -rwxr-xr-x 1 root root    11K Jan 31 22:21 pam_tally
+	 16K -rwxr-xr-x 1 root root    15K Jan 31 22:21 pam_tally2
+	8.0K -rwxr-xr-x 1 root root   6.1K Jun  3 20:54 pivot_root
+	 12K -rwxr-xr-x 1 root root    11K Dec  8  2013 plipconfig
+	 80K -rwxr-xr-x 1 root root    80K Apr 11 17:20 plymouthd
+	   0 lrwxrwxrwx 1 root root      6 Jul 18 09:46 poweroff -> reboot
+	 32K -rwxr-xr-x 1 root root    30K Dec  8  2013 rarp
+	 12K -rwxr-xr-x 1 root root    11K Jun  3 20:54 raw
+	 16K -rwxr-xr-x 1 root root    15K Jul 18 09:46 reboot
+	 12K -rwxr-xr-x 1 root root    11K Oct  1  2012 regdbdump
+	   0 lrwxrwxrwx 1 root root      7 Jul 18 09:46 reload -> initctl
+	 48K -rwxr-xr-x 1 root root    48K Feb 19 11:31 resize2fs
+	8.0K -rwxr-xr-x 1 root root   5.5K Jun 13 13:05 resolvconf
+	   0 lrwxrwxrwx 1 root root      7 Jul 18 09:46 restart -> initctl
+	   0 lrwxrwxrwx 1 root root      9 Apr 10 14:07 rmmod -> /bin/kmod
+	 60K -rwxr-xr-x 1 root root    57K Dec  8  2013 route
+	 36K -rwxr-xr-x 1 root root    35K Feb 17 10:04 rtacct
+	 36K -rwxr-xr-x 1 root root    35K Feb 17 10:04 rtmon
+	 12K -rwxr-xr-x 1 root root    10K Jul 18 09:46 runlevel
+	 12K -rwxr-xr-x 1 root root    11K Feb 21 19:20 setcap
+	 12K -rwxr-xr-x 1 root root    11K Feb 18  2013 setvtrgb
+	 64K -rwxr-xr-x 1 root root    61K Jun  3 20:54 sfdisk
+	4.0K -rwxr-xr-x 1 root root    885 Feb 17 02:42 shadowconfig
+	 84K -rwxr-xr-x 1 root root    83K Jul 18 09:46 shutdown
+	 36K -rwxr-xr-x 1 root root    34K Dec  8  2013 slattach
+	   0 lrwxrwxrwx 1 root root      7 Jul 18 09:46 start -> initctl
+	 36K -rwxr-xr-x 1 root root    35K Mar 13 01:41 startpar
+	8.0K -rwxr-xr-x 1 root root   6.2K Mar 13 01:41 startpar-upstart-inject
+	 28K -rwxr-xr-x 1 root root    28K Jun  9 17:23 start-stop-daemon
+	   0 lrwxrwxrwx 1 root root      7 Jul 18 09:46 status -> initctl
+	   0 lrwxrwxrwx 1 root root      7 Jul 18 09:46 stop -> initctl
+	 16K -rwxr-xr-x 1 root root    15K Mar 13 01:41 sulogin
+	 16K -rwxr-xr-x 1 root root    15K Jun  3 20:54 swaplabel
+	   0 lrwxrwxrwx 1 root root      6 Jun  3 20:54 swapoff -> swapon
+	 28K -rwxr-xr-x 1 root root    27K Jun  3 20:54 swapon
+	 12K -rwxr-xr-x 1 root root    11K Jun  3 20:54 switch_root
+	 24K -rwxr-xr-x 1 root root    23K Jan  6  2014 sysctl
+	276K -rwxr-xr-x 1 root root   276K Feb 17 10:04 tc
+	104K -rwxr-xr-x 1 root root   103K Jul 18 09:46 telinit
+	 68K -rwxr-xr-x 1 root root    68K Feb 19 11:31 tune2fs
+	   0 lrwxrwxrwx 1 root root     12 Jun 20 05:20 udevadm -> /bin/udevadm
+	   0 lrwxrwxrwx 1 root root     26 Jun 20 05:20 udevd -> /lib/systemd/systemd-udevd
+	 36K -rwxr-sr-x 1 root shadow  35K Jan 31 22:21 unix_chkpwd
+	 32K -rwxr-xr-x 1 root root    31K Jan 31 22:21 unix_update
+	4.0K -rwxr-xr-x 1 root root    466 Mar 16  2012 update-grub
+	132K -rwxr-xr-x 1 root root   131K Jul 18 09:46 upstart-dbus-bridge
+	124K -rwxr-xr-x 1 root root   123K Jul 18 09:46 upstart-event-bridge
+	140K -rwxr-xr-x 1 root root   139K Jul 18 09:46 upstart-file-bridge
+	132K -rwxr-xr-x 1 root root   131K Jul 18 09:46 upstart-local-bridge
+	132K -rwxr-xr-x 1 root root   131K Jul 18 09:46 upstart-socket-bridge
+	 76K -rwxr-xr-x 1 root root    75K Jul 18 09:46 upstart-udev-bridge
+	 48K -rwxr-xr-x 1 root root    47K Mar 25  2013 ureadahead
+	 20K -rwxr-xr-x 1 root root    19K Jun  3 20:54 wipefs
+
+	/usr/bin:
+	total 35M
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 [
+	   0 lrwxrwxrwx 1 root root       8 Dec 21  2013 2to3 -> 2to3-2.7
+	4.0K -rwxr-xr-x 1 root root      96 Mar 22 23:55 2to3-2.7
+	4.0K -rwxr-xr-x 1 root root      96 Apr 11 14:14 2to3-3.4
+	104K -rwxr-xr-x 1 root root    104K Mar 27 18:52 a2p
+	8.0K -rwxr-xr-x 1 root root    6.2K Jun  3 20:54 addpart
+	 16K -rwxr-xr-x 1 root root     15K Jun 13 17:41 apt
+	112K -rwxr-xr-x 1 root root    112K Jun 13 17:41 apt-cache
+	 28K -rwxr-xr-x 1 root root     27K Jun 13 17:41 apt-cdrom
+	 20K -rwxr-xr-x 1 root root     19K Jun 13 17:41 apt-config
+	 24K -rwxr-xr-x 1 root root     23K Jun 13 17:41 apt-extracttemplates
+	208K -rwxr-xr-x 1 root root    208K Jun 13 17:41 apt-ftparchive
+	132K -rwxr-xr-x 1 root root    132K Jun 13 17:41 apt-get
+	 12K -rwxr-xr-x 1 root root     12K Jun 13 17:40 apt-key
+	 48K -rwxr-xr-x 1 root root     47K Jun 13 17:41 apt-mark
+	 32K -rwxr-xr-x 1 root root     31K Jun 13 17:41 apt-sortpkgs
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 arch
+	   0 lrwxrwxrwx 1 root root      21 Jul 29 13:37 awk -> /etc/alternatives/awk
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 base64
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 basename
+	8.0K -rwxr-xr-x 1 root root    6.9K Apr 23 22:43 bashbug
+	 36K -rwxr-xr-x 2 root root     36K Mar 27 18:52 c2ph
+	   0 lrwxrwxrwx 1 root root       3 Mar 22 19:05 captoinfo -> tic
+	4.0K -rwxr-xr-x 1 root root    3.3K Apr 12 10:35 catchsegv
+	4.0K -rwxr-xr-x 1 root root     853 May 13  2013 cautious-launcher
+	 56K -rwxr-sr-x 1 root shadow   54K Feb 17 02:42 chage
+	8.0K -rwxr-xr-x 1 root root    4.4K Feb 23 14:30 chardet
+	 12K -rwxr-xr-x 1 root root     11K Feb 19 11:31 chattr
+	 60K -rwxr-xr-x 1 root root     59K Mar 24 07:35 chcon
+	 48K -rwsr-xr-x 1 root root     46K Feb 17 02:42 chfn
+	4.0K -rwxr-xr-x 1 root root    3.6K Jun  3 20:54 chkdupexe
+	 20K -rwxr-xr-x 1 root root     19K Jun  3 20:54 chrt
+	 44K -rwsr-xr-x 1 root root     41K Feb 17 02:42 chsh
+	116K -rwxr-xr-x 1 root root    116K Jan 29 13:39 ckbcomp
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 cksum
+	8.0K -rwxr-xr-x 1 root root    6.2K Mar 22 19:05 clear
+	 12K -rwxr-xr-x 1 root root     11K Apr 23 22:43 clear_console
+	 44K -rwxr-xr-x 1 root root     43K Oct 21  2013 cmp
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 codepage
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 comm
+	   0 lrwxrwxrwx 1 root root      11 May 13  2013 compose -> run-mailcap
+	8.0K -rwxr-xr-x 1 root root    7.1K Mar 27 18:52 config_data
+	 16K -rwxr-xr-x 1 root root     13K Mar 27 18:52 corelist
+	8.0K -rwxr-xr-x 1 root root    5.8K Mar 27 18:52 cpan
+	 24K -rwxr-xr-x 1 root root     22K Mar 27 18:52 cpan2dist
+	4.0K -rwxr-xr-x 1 root root    3.4K Mar 27 18:52 cpanp
+	4.0K -rwxr-xr-x 1 root root     545 Mar 27 18:52 cpanp-run-perl
+	8.0K -rwxr-xr-x 1 root root    4.6K Jun 20 18:58 c_rehash
+	 36K -rwxr-sr-x 1 root crontab  36K Feb  9  2013 crontab
+	 48K -rwxr-xr-x 1 root root     47K Mar 24 07:35 csplit
+	   0 lrwxrwxrwx 1 root root       6 Feb 17 10:04 ctstat -> lnstat
+	 44K -rwxr-xr-x 1 root root     43K Mar 24 07:35 cut
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 ddate
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 deallocvt
+	4.0K -rwxr-xr-x 1 root root    2.8K Feb 23 14:30 debconf
+	 12K -rwxr-xr-x 1 root root     12K Feb 23 14:30 debconf-apt-progress
+	4.0K -rwxr-xr-x 1 root root     608 Feb 23 14:30 debconf-communicate
+	4.0K -rwxr-xr-x 1 root root    1.7K Feb 23 14:30 debconf-copydb
+	4.0K -rwxr-xr-x 1 root root     647 Feb 23 14:30 debconf-escape
+	4.0K -rwxr-xr-x 1 root root    2.9K Feb 23 14:30 debconf-set-selections
+	4.0K -rwxr-xr-x 1 root root    1.8K Feb 23 14:30 debconf-show
+	 20K -rwxr-xr-x 1 root root     18K Dec 25  2013 deb-systemd-helper
+	4.0K -rwxr-xr-x 1 root root    3.0K Dec 25  2013 deb-systemd-invoke
+	8.0K -rwxr-xr-x 1 root root    6.2K Jun  3 20:54 delpart
+	4.0K -rwxr-xr-x 1 root root    2.5K Mar 22 20:57 dh_bash-completion
+	   0 lrwxrwxrwx 1 root root      26 Mar 24 16:41 dh_pypy -> ../share/dh-python/dh_pypy
+	4.0K -rwxr-xr-x 1 root root    1.1K Dec 21  2013 dh_python2
+	   0 lrwxrwxrwx 1 root root      29 Mar 24 16:41 dh_python3 -> ../share/dh-python/dh_python3
+	124K -rwxr-xr-x 1 root root    124K Oct 21  2013 diff
+	 56K -rwxr-xr-x 1 root root     55K Oct 21  2013 diff3
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 dircolors
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 dirname
+	 16K -rwxr-sr-x 1 root mail     15K Dec  7  2013 dotlockfile
+	256K -rwxr-xr-x 1 root root    256K Jun  9 17:23 dpkg
+	124K -rwxr-xr-x 1 root root    124K Jun  9 17:23 dpkg-deb
+	128K -rwxr-xr-x 1 root root    128K Jun  9 17:23 dpkg-divert
+	 20K -rwxr-xr-x 1 root root     17K Jun  9 17:23 dpkg-maintscript-helper
+	132K -rwxr-xr-x 1 root root    132K Jun  9 17:23 dpkg-query
+	 60K -rwxr-xr-x 1 root root     59K Jun  9 17:23 dpkg-split
+	 56K -rwxr-xr-x 1 root root     55K Jun  9 17:23 dpkg-statoverride
+	 68K -rwxr-xr-x 1 root root     67K Jun  9 17:23 dpkg-trigger
+	108K -rwxr-xr-x 1 root root    107K Mar 24 07:35 du
+	   0 lrwxrwxrwx 1 root root      13 Feb 18  2013 dumpkeys -> /bin/dumpkeys
+	   0 lrwxrwxrwx 1 root root      11 May 13  2013 edit -> run-mailcap
+	   0 lrwxrwxrwx 1 root root      24 Jul 29 13:40 editor -> /etc/alternatives/editor
+	 32K -rwxr-xr-x 1 root root     31K Feb 25 09:51 eject
+	 40K -rwxr-xr-x 1 root root     39K Mar 27 18:52 enc2xs
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 env
+	 36K -rwxr-xr-x 1 root root     35K Apr 28 15:43 envsubst
+	   0 lrwxrwxrwx 1 root root      20 Jul 29 13:40 ex -> /etc/alternatives/ex
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 expand
+	 24K -rwxr-sr-x 1 root shadow   23K Feb 17 02:42 expiry
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 expr
+	 88K -rwxr-xr-x 1 root root     87K Mar 24 07:35 factor
+	 20K -rwxr-xr-x 1 root root     19K Feb 17 02:42 faillog
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 fallocate
+	 20K -rwxr-xr-x 1 root root     19K Jul 10 17:38 file
+	228K -rwxr-xr-x 1 root root    225K Jan  6  2014 find
+	 24K -rwxr-xr-x 1 root root     24K Mar 27 18:52 find2perl
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 flock
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 fmt
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 fold
+	 16K -rwxr-xr-x 1 root root     15K Jan  6  2014 free
+	 24K -rwxr-xr-x 1 root root     23K Apr 12 10:39 getconf
+	 28K -rwxr-xr-x 1 root root     28K Apr 12 10:39 getent
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 getkeycodes
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 getopt
+	 36K -rwxr-xr-x 1 root root     35K Apr 28 15:43 gettext
+	8.0K -rwxr-xr-x 1 root root    4.6K Apr 28 15:43 gettext.sh
+	 68K -rwsr-xr-x 1 root root     67K Feb 17 02:42 gpasswd
+	976K -rwxr-xr-x 1 root root    973K Jun 26 13:30 gpg
+	 56K -rwxr-xr-x 1 root root     55K Jun 26 13:30 gpgsplit
+	356K -rwxr-xr-x 1 root root    356K Jun 26 13:30 gpgv
+	4.0K -rwxr-xr-x 1 root root    3.3K Jun 26 13:30 gpg-zip
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 groups
+	228K -rwxr-xr-x 1 root root    225K May 15 19:03 grub-editenv
+	624K -rwxr-xr-x 1 root root    621K May 15 19:03 grub-file
+	752K -rwxr-xr-x 1 root root    751K May 15 19:03 grub-fstest
+	224K -rwxr-xr-x 1 root root    221K May 15 19:03 grub-glue-efi
+	4.0K -rwxr-xr-x 1 root root    1.7K May 15 19:02 grub-kbdcomp
+	204K -rwxr-xr-x 1 root root    201K May 15 19:03 grub-menulst2cfg
+	248K -rwxr-xr-x 1 root root    246K May 15 19:03 grub-mkfont
+	308K -rwxr-xr-x 1 root root    306K May 15 19:03 grub-mkimage
+	228K -rwxr-xr-x 1 root root    225K May 15 19:03 grub-mklayout
+	344K -rwxr-xr-x 1 root root    343K May 15 19:03 grub-mknetdir
+	228K -rwxr-xr-x 1 root root    225K May 15 19:03 grub-mkpasswd-pbkdf2
+	224K -rwxr-xr-x 1 root root    221K May 15 19:03 grub-mkrelpath
+	768K -rwxr-xr-x 1 root root    768K May 15 19:03 grub-mkrescue
+	420K -rwxr-xr-x 1 root root    419K May 15 19:03 grub-mkstandalone
+	576K -rwxr-xr-x 1 root root    574K May 15 19:03 grub-mount
+	640K -rwxr-xr-x 1 root root    638K May 15 19:03 grub-render-label
+	248K -rwxr-xr-x 1 root root    245K May 15 19:03 grub-script-check
+	592K -rwxr-xr-x 1 root root    590K May 15 19:03 grub-syslinux2cfg
+	 28K -rwxr-xr-x 1 root root     28K Mar 27 18:52 h2ph
+	 60K -rwxr-xr-x 1 root root     60K Mar 27 18:52 h2xs
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 head
+	4.0K -rwxr-xr-x 1 root root    2.5K Feb 22  2013 helpztags
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 hostid
+	   0 lrwxrwxrwx 1 root root       7 Jun  3 20:54 i386 -> setarch
+	 60K -rwxr-xr-x 1 root root     59K Apr 12 10:39 iconv
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 id
+	 56K -rwxr-xr-x 1 root root     55K Mar 22 19:05 infocmp
+	   0 lrwxrwxrwx 1 root root       3 Mar 22 19:05 infotocap -> tic
+	8.0K -rwxr-xr-x 1 root root    6.8K Jul 18 09:46 init-checkconf
+	 20K -rwxr-xr-x 1 root root     19K Jul 18 09:46 initctl2dot
+	116K -rwxr-xr-x 1 root root    116K Mar 24 07:35 install
+	8.0K -rwxr-xr-x 1 root root    4.3K Mar 27 18:52 instmodsh
+	 20K -rwxr-xr-x 1 root root     19K Jun  3 20:54 ionice
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 ipcmk
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 ipcrm
+	 24K -rwxr-xr-x 1 root root     23K Jun  3 20:54 ipcs
+	 12K -rwxr-xr-x 1 root root     11K Aug 28  2013 ischroot
+	 44K -rwxr-xr-x 1 root root     43K Mar 24 07:35 join
+	4.0K -rwxr-xr-x 1 root root    3.9K Mar 27 18:52 json_pp
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 kbdinfo
+	 20K -rwxr-xr-x 1 root root     19K Mar 13 01:41 last
+	   0 lrwxrwxrwx 1 root root       4 Mar 13 01:41 lastb -> last
+	 16K -rwxr-xr-x 1 root root     15K Feb 17 02:42 lastlog
+	8.0K -rwxr-xr-x 1 root root    7.7K Jul  1  2013 lcf
+	8.0K -rwxr-xr-x 1 root root    5.3K Apr 12 10:35 ldd
+	   0 lrwxrwxrwx 1 root root       9 Jun 10  2013 less -> /bin/less
+	   0 lrwxrwxrwx 1 root root      13 Jun 10  2013 lessecho -> /bin/lessecho
+	   0 lrwxrwxrwx 1 root root      13 Jun 10  2013 lessfile -> /bin/lesspipe
+	   0 lrwxrwxrwx 1 root root      12 Jun 10  2013 lesskey -> /bin/lesskey
+	   0 lrwxrwxrwx 1 root root      13 Jun 10  2013 lesspipe -> /bin/lesspipe
+	 16K -rwxr-xr-x 1 root root     16K Mar 27 18:52 libnetcfg
+	8.0K -rwxr-xr-x 1 root root    6.1K Jun  3 20:54 line
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 link
+	   0 lrwxrwxrwx 1 root root       7 Jun  3 20:54 linux32 -> setarch
+	   0 lrwxrwxrwx 1 root root       7 Jun  3 20:54 linux64 -> setarch
+	4.0K -rwxr-xr-x 1 root root    1.6K Jan 20  2011 linux-boot-prober
+	 16K -rwxr-xr-x 1 root root     15K Feb 17 10:04 lnstat
+	   0 lrwxrwxrwx 1 root root      13 Feb 18  2013 loadkeys -> /bin/loadkeys
+	 24K -rwxr-xr-x 1 root root     23K Feb 18  2013 loadunimap
+	 40K -rwxr-xr-x 1 root root     38K Apr 12 10:39 locale
+	312K -rwxr-xr-x 1 root root    312K Apr 12 10:39 localedef
+	 16K -rwxr-xr-x 4 root root     15K Dec  3  2012 lockfile-check
+	 16K -rwxr-xr-x 4 root root     15K Dec  3  2012 lockfile-create
+	 16K -rwxr-xr-x 4 root root     15K Dec  3  2012 lockfile-remove
+	 16K -rwxr-xr-x 4 root root     15K Dec  3  2012 lockfile-touch
+	 20K -rwxr-xr-x 1 root root     20K Jun  3 20:54 logger
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 logname
+	 12K -rwxr-xr-x 1 root root     11K Feb 19 11:31 lsattr
+	4.0K -rwxr-xr-x 1 root root    3.7K Feb 23 16:13 lsb_release
+	 32K -rwxr-xr-x 1 root root     31K Jun  3 20:54 lscpu
+	4.0K -rwxr-xr-x 1 root root     767 Jun  1  2012 lsinitramfs
+	4.0K -rwxr-xr-x 1 root root    1.1K Mar 15  2013 lspgpot
+	 16K -rwxr-sr-x 3 root mail     15K Dec  3  2012 mail-lock
+	 16K -rwxr-sr-x 3 root mail     15K Dec  3  2012 mail-touchlock
+	 16K -rwxr-sr-x 3 root mail     15K Dec  3  2012 mail-unlock
+	 20K -rwxr-xr-x 1 root root     19K Feb 18  2013 mapscrn
+	116K -rwxr-xr-x 1 root root    116K Mar 24 09:53 mawk
+	664K -rwxr-xr-x 1 root root    661K Mar 16  2012 mbchk
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 mcookie
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 md5sum
+	   0 lrwxrwxrwx 1 root root       6 Mar 24 07:35 md5sum.textutils -> md5sum
+	 12K -rwxr-xr-x 1 root root     11K Mar 13 01:41 mesg
+	4.0K -rwxr-xr-x 1 root root     153 Mar 16  2012 mkbimage
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 mkfifo
+	 16K -rwxr-xr-x 1 root root     16K Feb 18  2013 mk_modmap
+	 20K -rwxr-xr-x 1 root root     19K Jun  3 20:54 namei
+	   0 lrwxrwxrwx 1 root root      22 Jul 29 13:37 nawk -> /etc/alternatives/nawk
+	8.0K -rwxr-xr-x 1 root root    5.9K Mar 22 19:05 ncurses5-config
+	8.0K -rwxr-xr-x 1 root root    5.9K Mar 22 19:05 ncursesw5-config
+	 32K -rwsr-xr-x 1 root root     32K Feb 17 02:42 newgrp
+	 36K -rwxr-xr-x 1 root root     35K Apr 28 15:43 ngettext
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 nice
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 nl
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 nohup
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 nproc
+	 20K -rwxr-xr-x 1 root root     19K Feb 17 10:04 nstat
+	 64K -rwxr-xr-x 1 root root     63K Mar 24 07:35 numfmt
+	 64K -rwxr-xr-x 1 root root     63K Mar 24 07:35 od
+	228K -rwxr-xr-x 1 root root    225K Jan  6  2014 oldfind
+	1.6M -rwxr-xr-x 1 root root    1.6M Apr  7 14:21 omshell
+	504K -rwxr-xr-x 1 root root    502K Jun 20 18:58 openssl
+	8.0K -rwxr-xr-x 1 root root    4.2K Jul 13  2013 os-prober
+	   0 lrwxrwxrwx 1 root root      23 Jul 29 13:38 pager -> /etc/alternatives/pager
+	 44K -rwxr-xr-x 1 root root     44K Jun  3 20:54 partx
+	 48K -rwsr-xr-x 1 root root     46K Feb 17 02:42 passwd
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 paste
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 pathchk
+	   0 lrwxrwxrwx 1 root root       6 Dec 21  2013 pdb -> pdb2.7
+	   0 lrwxrwxrwx 1 root root      23 Mar 22 23:57 pdb2.7 -> ../lib/python2.7/pdb.py
+	   0 lrwxrwxrwx 1 root root       6 Mar 23 08:17 pdb3 -> pdb3.4
+	   0 lrwxrwxrwx 1 root root      23 Apr 11 14:15 pdb3.4 -> ../lib/python3.4/pdb.py
+	 12K -rwxr-xr-x 2 root root     11K Mar 27 18:52 perl
+	 12K -rwxr-xr-x 2 root root     11K Mar 27 18:52 perl5.18.2
+	 44K -rwxr-xr-x 2 root root     41K Mar 27 18:52 perlbug
+	4.0K -rwxr-xr-x 1 root root     125 Mar 27 18:52 perldoc
+	 12K -rwxr-xr-x 1 root root     11K Mar 27 18:52 perlivp
+	 44K -rwxr-xr-x 2 root root     41K Mar 27 18:52 perlthanks
+	 32K -rwxr-xr-x 1 root root     31K Jun  3 20:54 pg
+	 28K -rwxr-xr-x 1 root root     27K Jan  6  2014 pgrep
+	8.0K -rwxr-xr-x 1 root root    7.2K Mar 27 18:52 piconv
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 pinky
+	   0 lrwxrwxrwx 1 root root       5 Jan  6  2014 pkill -> pgrep
+	8.0K -rwxr-xr-x 1 root root    4.5K Mar 27 18:52 pl2pm
+	 16K -rwxr-xr-x 1 root root     15K Apr 12 10:39 pldd
+	 28K -rwxr-xr-x 1 root root     27K Jan  6  2014 pmap
+	4.0K -rwxr-xr-x 1 root root    2.0K Mar 27 18:52 pod2html
+	 12K -rwxr-xr-x 1 root root     11K May 31  2013 pod2latex
+	 12K -rwxr-xr-x 1 root root     11K Mar 27 18:52 pod2latex.bundled
+	 16K -rwxr-xr-x 1 root root     14K Mar 27 18:52 pod2man
+	 12K -rwxr-xr-x 1 root root     11K Mar 27 18:52 pod2text
+	4.0K -rwxr-xr-x 1 root root    3.7K Mar 27 18:52 pod2usage
+	4.0K -rwxr-xr-x 1 root root    3.7K Mar 27 18:52 podchecker
+	4.0K -rwxr-xr-x 1 root root    2.6K Mar 27 18:52 podselect
+	 64K -rwxr-xr-x 1 root root     63K Mar 24 07:35 pr
+	4.0K -rwxr-xr-x 1 root root    3.0K Mar 27 18:52 prename
+	   0 lrwxrwxrwx 1 root root      11 May 13  2013 print -> run-mailcap
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 printenv
+	 52K -rwxr-xr-x 1 root root     51K Mar 24 07:35 printf
+	 12K -rwxr-xr-x 1 root root     11K Mar 27 18:52 prove
+	 56K -rwxr-xr-x 2 root root     53K Mar 27 18:52 psed
+	   0 lrwxrwxrwx 1 root root       9 Feb 18  2013 psfaddtable -> psfxtable
+	   0 lrwxrwxrwx 1 root root       9 Feb 18  2013 psfgettable -> psfxtable
+	   0 lrwxrwxrwx 1 root root       9 Feb 18  2013 psfstriptable -> psfxtable
+	 20K -rwxr-xr-x 1 root root     19K Feb 18  2013 psfxtable
+	 36K -rwxr-xr-x 2 root root     36K Mar 27 18:52 pstruct
+	4.0K -rwxr-xr-x 1 root root    3.5K Mar 27 18:52 ptar
+	4.0K -rwxr-xr-x 1 root root    2.5K Mar 27 18:52 ptardiff
+	8.0K -rwxr-xr-x 1 root root    4.2K Mar 27 18:52 ptargrep
+	 64K -rwxr-xr-x 1 root root     63K Mar 24 07:35 ptx
+	 12K -rwxr-xr-x 1 root root     11K Jan  6  2014 pwdx
+	8.0K -rwxr-xr-x 1 root root    7.1K Mar 23 08:17 py3clean
+	 12K -rwxr-xr-x 1 root root     12K Mar 23 08:17 py3compile
+	   0 lrwxrwxrwx 1 root root      31 Mar 23 08:17 py3versions -> ../share/python3/py3versions.py
+	   0 lrwxrwxrwx 1 root root      26 Mar 24 16:41 pybuild -> ../share/dh-python/pybuild
+	8.0K -rwxr-xr-x 1 root root    4.1K Dec 21  2013 pyclean
+	 12K -rwxr-xr-x 1 root root     12K Dec 21  2013 pycompile
+	   0 lrwxrwxrwx 1 root root       8 Dec 21  2013 pydoc -> pydoc2.7
+	4.0K -rwxr-xr-x 1 root root      79 Mar 22 23:55 pydoc2.7
+	   0 lrwxrwxrwx 1 root root       8 Mar 23 08:17 pydoc3 -> pydoc3.4
+	4.0K -rwxr-xr-x 1 root root      79 Apr 11 14:14 pydoc3.4
+	   0 lrwxrwxrwx 1 root root      12 Dec 21  2013 pygettext -> pygettext2.7
+	 24K -rwxr-xr-x 1 root root     22K Mar 22 23:55 pygettext2.7
+	   0 lrwxrwxrwx 1 root root      12 Mar 23 08:17 pygettext3 -> pygettext3.4
+	 24K -rwxr-xr-x 1 root root     22K Apr 11 14:14 pygettext3.4
+	   0 lrwxrwxrwx 1 root root       9 Dec 21  2013 python -> python2.7
+	   0 lrwxrwxrwx 1 root root       9 Dec 21  2013 python2 -> python2.7
+	3.2M -rwxr-xr-x 1 root root    3.2M Mar 22 23:57 python2.7
+	   0 lrwxrwxrwx 1 root root       9 Mar 23 08:17 python3 -> python3.4
+	3.9M -rwxr-xr-x 2 root root    3.9M Apr 11 14:15 python3.4
+	3.9M -rwxr-xr-x 2 root root    3.9M Apr 11 14:15 python3.4m
+	   0 lrwxrwxrwx 1 root root      10 Mar 23 08:17 python3m -> python3.4m
+	4.0K -rwxr-xr-x 1 root root     231 Apr 11 14:14 pyvenv-3.4
+	   0 lrwxrwxrwx 1 root root      29 Dec 21  2013 pyversions -> ../share/python/pyversions.py
+	   0 lrwxrwxrwx 1 root root      21 Jul 29 17:57 rcp -> /etc/alternatives/rcp
+	   0 lrwxrwxrwx 1 root root      24 Jul 29 13:40 rename -> /etc/alternatives/rename
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 rename.ul
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 renice
+	   0 lrwxrwxrwx 1 root root       4 Mar 22 19:05 reset -> tset
+	 20K -rwxr-xr-x 1 root root     19K Feb 18  2013 resizecons
+	 32K -rwxr-xr-x 1 root root     31K Jun  3 20:54 resizepart
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 rev
+	4.0K -rwxr-xr-x 1 root root      30 Jan 18  2014 rgrep
+	   0 lrwxrwxrwx 1 root root      24 Jul 29 17:57 rlogin -> /etc/alternatives/rlogin
+	4.0K -rwxr-xr-x 1 root root     173 Nov 23  2013 routef
+	4.0K -rwxr-xr-x 1 root root    1.3K Nov 23  2013 routel
+	   0 lrwxrwxrwx 1 root root      21 Jul 29 17:57 rsh -> /etc/alternatives/rsh
+	   0 lrwxrwxrwx 1 root root       6 Feb 17 10:04 rtstat -> lnstat
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 runcon
+	 20K -rwxr-xr-x 1 root root     17K May 13  2013 run-mailcap
+	   0 lrwxrwxrwx 1 root root      23 Jul 29 13:40 rview -> /etc/alternatives/rview
+	 56K -rwxr-xr-x 2 root root     53K Mar 27 18:52 s2p
+	 12K -rwxr-xr-x 1 root root     11K Aug 28  2013 savelog
+	 68K -rwxr-xr-x 1 root root     67K May 12 16:04 scp
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 screendump
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 script
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 scriptreplay
+	 48K -rwxr-xr-x 1 root root     47K Oct 21  2013 sdiff
+	   0 lrwxrwxrwx 1 root root      11 May 13  2013 see -> run-mailcap
+	4.0K -rwxr-xr-x 1 root root    1.2K Jun 17  2013 select-editor
+	4.0K -rwxr-xr-x 1 root root    1.5K Jun 17  2013 sensible-browser
+	4.0K -rwxr-xr-x 1 root root    1.1K Jun 17  2013 sensible-editor
+	4.0K -rwxr-xr-x 1 root root     288 Jun 17  2013 sensible-pager
+	 48K -rwxr-xr-x 1 root root     47K Mar 24 07:35 seq
+	   0 lrwxrwxrwx 1 root root      15 Mar 13 01:41 service -> ../sbin/service
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 setarch
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 setkeycodes
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 setleds
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 setlogcons
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 setmetamode
+	8.0K -rwxr-xr-x 1 root root    6.2K Jun  3 20:54 setsid
+	 28K -rwxr-xr-x 1 root root     27K Jun  3 20:54 setterm
+	120K -rwxr-xr-x 1 root root    119K May 12 16:04 sftp
+	   0 lrwxrwxrwx 1 root root       6 Feb 17 02:42 sg -> newgrp
+	 44K -rwxr-xr-x 1 root root     43K Mar 24 07:35 sha1sum
+	 48K -rwxr-xr-x 1 root root     47K Mar 24 07:35 sha224sum
+	 48K -rwxr-xr-x 1 root root     47K Mar 24 07:35 sha256sum
+	 52K -rwxr-xr-x 1 root root     51K Mar 24 07:35 sha384sum
+	 52K -rwxr-xr-x 1 root root     51K Mar 24 07:35 sha512sum
+	 12K -rwxr-xr-x 1 root root    8.4K Mar 27 18:52 shasum
+	 20K -rwxr-xr-x 1 root root     19K Feb 18  2013 showconsolefont
+	 16K -rwxr-xr-x 1 root root     15K Feb 18  2013 showkey
+	 52K -rwxr-xr-x 1 root root     51K Mar 24 07:35 shred
+	 48K -rwxr-xr-x 1 root root     47K Mar 24 07:35 shuf
+	 24K -rwxr-xr-x 1 root root     23K Jan  6  2014 skill
+	 20K -rwxr-xr-x 1 root root     19K Jan  6  2014 slabtop
+	   0 lrwxrwxrwx 1 root root       3 May 12 16:04 slogin -> ssh
+	   0 lrwxrwxrwx 1 root root       5 Jan  6  2014 snice -> skill
+	100K -rwxr-xr-x 1 root root    100K Mar 24 07:35 sort
+	 20K -rwxr-xr-x 1 root root     19K Mar 27 18:52 splain
+	 64K -rwxr-xr-x 1 root root     64K Mar 24 07:35 split
+	 12K -rwxr-xr-x 1 root root     11K Feb 18  2013 splitfont
+	628K -rwxr-xr-x 1 root root    627K May 12 16:04 ssh
+	320K -rwxr-xr-x 1 root root    319K May 12 16:04 ssh-add
+	280K -rwxr-sr-x 1 root ssh     279K May 12 16:04 ssh-agent
+	4.0K -rwxr-xr-x 1 root root    1.5K May  2 08:35 ssh-argv0
+	 12K -rwxr-xr-x 1 root root    9.2K Jun  5  2013 ssh-copy-id
+	8.0K -rwxr-xr-x 1 root root    7.6K Feb 27 15:42 ssh-import-id
+	4.0K -rwxr-xr-x 1 root root    2.1K Feb 27 15:42 ssh-import-id-gh
+	4.0K -rwxr-xr-x 1 root root    2.5K Feb 27 15:42 ssh-import-id-lp
+	396K -rwxr-xr-x 1 root root    395K May 12 16:04 ssh-keygen
+	408K -rwxr-xr-x 1 root root    407K May 12 16:04 ssh-keyscan
+	 72K -rwxr-xr-x 1 root root     71K Mar 24 07:35 stat
+	 64K -rwxr-xr-x 1 root root     63K Mar 24 07:35 stdbuf
+	152K -rwsr-xr-x 1 root root    152K Feb 10 19:16 sudo
+	   0 lrwxrwxrwx 1 root root       4 Feb 10 19:16 sudoedit -> sudo
+	 80K -rwxr-xr-x 1 root root     80K Feb 10 19:16 sudoreplay
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 sum
+	 16K -rwxr-xr-x 1 root root     15K Mar 22 19:05 tabs
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 tac
+	 64K -rwxr-xr-x 1 root root     63K Mar 24 07:35 tail
+	 20K -rwxr-xr-x 1 root root     19K Jun  3 20:54 taskset
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 tee
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 test
+	 64K -rwxr-xr-x 1 root root     63K Mar 22 19:05 tic
+	 52K -rwxr-xr-x 1 root root     52K Mar 24 07:35 timeout
+	 16K -rwxr-xr-x 1 root root     15K Jan  6  2014 tload
+	 16K -rwxr-xr-x 1 root root     15K Mar 22 19:05 toe
+	100K -rwxr-xr-x 1 root root     99K Jan  6  2014 top
+	   0 lrwxrwxrwx 1 root root      10 Mar 24 07:35 touch -> /bin/touch
+	 16K -rwxr-xr-x 1 root root     15K Mar 22 19:05 tput
+	 44K -rwxr-xr-x 1 root root     43K Mar 24 07:35 tr
+	 52K -rwxr-xr-x 1 root root     51K Mar 24 07:35 truncate
+	 20K -rwxr-xr-x 1 root root     19K Mar 22 19:05 tset
+	 36K -rwxr-xr-x 1 root root     35K Mar 24 07:35 tsort
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 tty
+	 16K -rwxr-xr-x 1 root root     13K Apr 12 10:35 tzselect
+	 40K -rwxr-xr-x 1 root root     38K Jul  1  2013 ucf
+	 20K -rwxr-xr-x 1 root root     19K Jul  1  2013 ucfq
+	 12K -rwxr-xr-x 1 root root     11K Jul  1  2013 ucfr
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 unexpand
+	4.0K -rwxr-xr-x 1 root root     530 Feb 18  2013 unicode_stop
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 uniq
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 unlink
+	 12K -rwxr-xr-x 1 root root     11K Jun  3 20:54 unshare
+	 44K -rwxr-xr-x 1 root root     43K Jun  9 17:23 update-alternatives
+	 12K -rwxr-xr-x 1 root root     11K Jan  6  2014 uptime
+	 32K -rwxr-xr-x 1 root root     31K Mar 24 07:35 users
+	   0 lrwxrwxrwx 1 root root      20 Jul 29 13:40 vi -> /etc/alternatives/vi
+	   0 lrwxrwxrwx 1 root root      22 Jul 29 13:40 view -> /etc/alternatives/view
+	864K -rwxr-xr-x 1 root root    864K Jan  2  2014 vim.tiny
+	 32K -rwxr-xr-x 1 root root     31K Jan  6  2014 vmstat
+	 12K -rwxr-xr-x 1 root root     10K Feb 25 09:51 volname
+	   0 lrwxrwxrwx 1 root root      19 Jul 29 13:38 w -> /etc/alternatives/w
+	 20K -rwxr-sr-x 1 root tty      19K Jun  3 20:54 wall
+	 24K -rwxr-xr-x 1 root root     24K Jan  6  2014 watch
+	 40K -rwxr-xr-x 1 root root     39K Mar 24 07:35 wc
+	400K -rwxr-xr-x 1 root root    399K Feb  7 18:02 wget
+	 16K -rwxr-xr-x 1 root root     15K Jun  3 20:54 whereis
+	   0 lrwxrwxrwx 1 root root      10 Aug 28  2013 which -> /bin/which
+	 52K -rwxr-xr-x 1 root root     51K Mar 24 07:35 who
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 whoami
+	 20K -rwxr-xr-x 1 root root     19K Jan  6  2014 w.procps
+	   0 lrwxrwxrwx 1 root root       7 Jun  3 20:54 x86_64 -> setarch
+	 44K -rwxr-xr-x 1 root root     43K Jan  6  2014 xargs
+	 40K -rwxr-xr-x 1 root root     40K Dec  4  2012 xauth
+	8.0K -rwxr-xr-x 1 root root    4.5K Mar 27 18:52 xsubpp
+	 16K -rwxr-xr-x 1 root root     15K Jan  2  2014 xxd
+	 28K -rwxr-xr-x 1 root root     27K Mar 24 07:35 yes
+	 16K -rwxr-xr-x 1 root root     15K Apr 12 10:39 zdump
+	 48K -rwxr-xr-x 1 root root     47K Mar 27 18:52 zipdetails
+
+	/usr/games:
+	total 0
+
+	/usr/local/bin:
+	total 0
+
+	/usr/local/games:
+	total 0
+
+	/usr/local/sbin:
+	total 0
+
+	/usr/sbin:
+	total 6.0M
+	   0 lrwxrwxrwx 1 root root    7 Nov  7  2013 addgroup -> adduser
+	4.0K -rwxr-xr-x 1 root root  695 Aug 28  2013 add-shell
+	 36K -rwxr-xr-x 1 root root  35K Nov  7  2013 adduser
+	 56K -rwxr-xr-x 1 root root  55K Dec  8  2013 arp
+	 40K -rwxr-xr-x 1 root root  39K Feb 17 10:04 arpd
+	 52K -rwxr-xr-x 1 root root  51K Feb 17 02:42 chgpasswd
+	 48K -rwxr-xr-x 1 root root  47K Feb 17 02:42 chpasswd
+	 32K -rwxr-xr-x 1 root root  31K Mar 24 07:35 chroot
+	   0 lrwxrwxrwx 1 root root    4 Feb 17 02:42 cpgr -> cppw
+	 52K -rwxr-xr-x 1 root root  49K Feb 17 02:42 cppw
+	 44K -rwxr-xr-x 1 root root  44K Feb  9  2013 cron
+	 16K -rwxr-xr-x 1 root root  15K Jun  3 20:54 cytune
+	   0 lrwxrwxrwx 1 root root    7 Nov  7  2013 delgroup -> deluser
+	 20K -rwxr-xr-x 1 root root  17K Nov  7  2013 deluser
+	4.0K -rwxr-xr-x 1 root root 3.6K Feb 23 14:30 dpkg-preconfigure
+	8.0K -rwxr-xr-x 1 root root 4.7K Feb 23 14:30 dpkg-reconfigure
+	 12K -rwxr-xr-x 1 root root  11K Feb 19 11:31 e2freefrag
+	 28K -rwxr-xr-x 1 root root  27K Feb 19 11:31 e4defrag
+	 12K -rwxr-xr-x 1 root root  11K Jun  3 20:54 fdformat
+	 16K -rwxr-xr-x 1 root root  15K Feb 19 11:31 filefrag
+	 56K -rwxr-xr-x 1 root root  55K Feb 17 02:42 groupadd
+	 52K -rwxr-xr-x 1 root root  51K Feb 17 02:42 groupdel
+	 68K -rwxr-xr-x 1 root root  65K Feb 17 02:42 groupmod
+	 52K -rwxr-xr-x 1 root root  51K Feb 17 02:42 grpck
+	 48K -rwxr-xr-x 1 root root  47K Feb 17 02:42 grpconv
+	 48K -rwxr-xr-x 1 root root  47K Feb 17 02:42 grpunconv
+	816K -rwxr-xr-x 1 root root 813K Mar 16  2012 grub
+	4.0K -rwxr-xr-x 1 root root  153 Mar 16  2012 grub-floppy
+	 20K -rwxr-xr-x 1 root root  17K Mar 16  2012 grub-install
+	744K -rwxr-xr-x 1 root root 742K May 15 19:03 grub-macbless
+	4.0K -rwxr-xr-x 1 root root 2.3K Mar 16  2012 grub-md5-crypt
+	8.0K -rwxr-xr-x 1 root root 7.8K May 15 19:02 grub-mkconfig
+	196K -rwxr-xr-x 1 root root 193K May 15 19:03 grub-mkdevicemap
+	756K -rwxr-xr-x 1 root root 754K May 15 19:03 grub-probe
+	4.0K -rwxr-xr-x 1 root root 1.5K Mar 16  2012 grub-reboot
+	4.0K -rwxr-xr-x 1 root root 3.2K Mar 16  2012 grub-set-default
+	4.0K -rwxr-xr-x 1 root root 2.5K Mar 16  2012 grub-terminfo
+	 36K -rwxr-xr-x 1 root root  35K Apr 12 10:39 iconvconfig
+	 16K -rwxr-xr-x 1 root root  15K Mar 13 01:42 invoke-rc.d
+	4.0K -rwxr-xr-x 1 root root 2.4K Mar 16  2012 kernel-helper
+	 16K -rwxr-xr-x 1 root root  15K Jun  3 20:54 ldattach
+	8.0K -rwxr-xr-x 1 root root 6.5K Feb 14 18:34 locale-gen
+	 64K -rwxr-xr-x 1 root root  64K Jan 22  2014 logrotate
+	 12K -rwxr-xr-x 1 root root 9.9K Mar  3 08:09 mkinitramfs
+	 12K -rwxr-xr-x 1 root root  11K Feb 19 11:31 mklost+found
+	 72K -rwxr-xr-x 1 root root  71K Feb 17 02:42 newusers
+	8.0K -rwxr-xr-x 1 root root 6.2K Feb 17 02:42 nologin
+	104K -rwxr-xr-x 1 root root 101K Oct  9  2013 ntpdate
+	4.0K -rwxr-xr-x 1 root root  593 Oct  9  2013 ntpdate-debian
+	 20K -rwxr-xr-x 1 root root  20K Jan 31 22:19 pam-auth-update
+	4.0K -rwxr-xr-x 1 root root 2.9K Jan 31 22:19 pam_getenv
+	 12K -rwxr-xr-x 1 root root  11K Jan 31 22:21 pam_timestamp_check
+	 48K -rwxr-xr-x 1 root root  47K Feb 17 02:42 pwck
+	 44K -rwxr-xr-x 1 root root  43K Feb 17 02:42 pwconv
+	 36K -rwxr-xr-x 1 root root  34K Feb 17 02:42 pwunconv
+	 16K -rwxr-xr-x 1 root root  15K Jun  3 20:54 readprofile
+	4.0K -rwxr-xr-x 1 root root  749 Aug 28  2013 remove-shell
+	   0 lrwxrwxrwx 1 root root   21 Jul 29 13:38 rmt -> /etc/alternatives/rmt
+	 52K -rwxr-xr-x 1 root root  51K Feb  4 13:16 rmt-tar
+	512K -rwxr-xr-x 1 root root 511K Dec  4  2013 rsyslogd
+	 24K -rwxr-xr-x 1 root root  23K Jun  3 20:54 rtcwake
+	 12K -rwxr-xr-x 1 root root  11K Jan 12  2014 safe_finger
+	8.0K -rwxr-xr-x 1 root root 4.8K Mar 13 01:33 service
+	 12K -rwxr-xr-x 1 root root  11K Feb 18  2013 setvesablank
+	752K -rwxr-xr-x 1 root root 749K May 12 16:04 sshd
+	4.0K -rwxr-xr-x 1 root root  936 Feb  4 13:15 tarcat
+	 12K -rwxr-xr-x 1 root root  11K Jan 12  2014 tcpd
+	 24K -rwxr-xr-x 1 root root  23K Jan 12  2014 tcpdchk
+	 20K -rwxr-xr-x 1 root root  19K Jan 12  2014 tcpdmatch
+	 12K -rwxr-xr-x 1 root root  11K Jan 12  2014 try-from
+	 12K -rwxr-xr-x 1 root root  11K Jun  3 20:54 tunelp
+	4.0K -rwxr-xr-x 1 root root  106 Oct 20  2009 tzconfig
+	4.0K -rwxr-xr-x 1 root root 4.0K Feb 19 21:09 update-ca-certificates
+	 44K -rwxr-xr-x 1 root root  43K Mar 16  2012 update-grub
+	 12K -rwxr-xr-x 1 root root 9.0K Jun  1  2012 update-initramfs
+	4.0K -rwxr-xr-x 1 root root 3.0K Sep 14  2010 update-locale
+	 12K -rwxr-xr-x 1 root root 8.4K May 13  2013 update-mime
+	 32K -rwxr-xr-x 1 root root  31K Apr 10 02:43 update-passwd
+	 20K -rwxr-xr-x 1 root root  17K Mar 13 01:42 update-rc.d
+	108K -rwxr-xr-x 1 root root 108K Feb 17 02:42 useradd
+	 76K -rwxr-xr-x 1 root root  75K Feb 17 02:42 userdel
+	108K -rwxr-xr-x 1 root root 108K Feb 17 02:42 usermod
+	4.0K -rwxr-xr-x 1 root root 1.8K Dec 28  2005 validlocale
+	8.0K -rwxr-xr-x 1 root root 6.2K Feb 18  2013 vcstime
+	   0 lrwxrwxrwx 1 root root    4 Feb 17 02:42 vigr -> vipw
+	 56K -rwxr-xr-x 1 root root  53K Feb 17 02:42 vipw
+	212K -rwxr-xr-x 1 root root 209K Feb 10 19:16 visudo
+	 52K -rwxr-xr-x 1 root root  51K Apr 12 10:39 zic
+
+	
+to-do-list:
+[1] install these two packages: "bash-completion" and "openssh-server" when building with "vmbuilder"!! for example:
+	
+	$ sudo vmbuilder kvm ubuntu --suite trusty  --addpkg=linux-image-generic --addpkg=bash-completion --addpkg=openssh-server
+	
+[2] setup "alshamlan" username and password when building with "vmbuilder"
+	
+	$ sudo vmbuilder kvm ubuntu --suite trusty  --addpkg=linux-image-generic --addpkg=bash-completion --addpkg=openssh-server --user alshamlan --pass 288071100637
+
+[3]
+
+	vmbuilder kvm ubuntu \
+	--mem=1024 \
+	--cpus=1 \
+	--hostname=vm01 \
+	--dest=vm01 \
+	--mirror=http://192.168.122.1:3142/ubuntu \
+	--user=wikiadmin \
+	--name=administrator \
+	--pass=secret \
+	--rootpass=verysecret \
+	--libvirt=qemu:///system \
+	--rootsize=2048 \
+	--swapsize=512 \
+	--overwrite \
+	--tmpfs -
+
+Mon Jul 28,2014
+-----------------
+objective:
+[1] create ubuntu VM the fastest way possible
+
+sources:
+[1] https://help.ubuntu.com/community/KVM/CreateGuests
+
+steps:
+
+	// 
+	$ sudo apt-get install ubuntu-vm-builder
+	// use the same version ubuntu name
+	$ lsb_release -a
+	// worked!!  
+	$ sudo vmbuilder kvm ubuntu 
+		// running kvm
+		$ kvm -m 512M -smp 1 -drive file=tmpr2ePYz.qcow2 
+		// login
+		username:	"ubuntu"
+		passowrd:	"ubuntu"
+	// better worked!! 
+	$ sudo vmbuilder kvm ubuntu --suite trusty  --addpkg=linux-image-generic
+		// running kvm
+		$ kvm -m 512M -smp 1 -drive file=ubuntu_14.04_x86.qcow2 
+		// better way for running kvm
+		$  kvm -m 512M -smp 1 -drive file=ubuntu_14.04_x86.qcow2 -curses
+
+		
+	
+	
+	// didn't work!!
+	$ sudo ubuntu-vm-builder kvm trusty
+
+	// didn't work!!
+	$ sudo vmbuilder kvm ubuntu --suite trusty --flavour virtual --arch i386 -o --libvirt qemu:///system
+	
+	// didn't work!!
+	$ sudo vmbuilder kvm ubuntu --suite trusty 
+	// didn't work!!
+	$ sudo vmbuilder kvm ubuntu --suite saucy
+	
+	// for help
+	$ vmbuilder kvm ubuntu --help
+	
+	// More complex example
+	$ ubuntu-vm-builder kvm hardy \
+		          --domain newvm \
+		          --dest newvm \
+		          --arch i386 \
+		          --hostname hostnameformyvm \
+		          --mem 256 \
+		          --user john \
+		          --pass doe \
+		          --ip 192.168.0.12 \
+		          --mask 255.255.255.0 \
+		          --net 192.168.0.0 \
+		          --bcast 192.168.0.255 \
+		          --gw 192.168.0.1 \
+		          --dns 192.168.0.1 \
+		          --mirror http://archive.localubuntumirror.net/ubuntu \
+		          --components main,universe \
+		          --addpkg acpid \ 
+		          --addpkg vim \
+		          --addpkg openssh-server \
+		          --addpkg avahi-daemon \
+		          --libvirt qemu:///system ;

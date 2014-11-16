@@ -1,0 +1,14 @@
+//
+
+Tue Feb 25, 2014
+----------------
+objective:
+[1] using chroot with qemu to access mips root filesystem
+
+steps:
+[1] install the following
+
+	alshamlan@alshamlan-OptiPlex-980:~/malshamlan_alshamlan-OptiPlex-980_6871/malshamlan_alshamlan-OptiPlex-980_6871/depot/ipstb/factory/head/build$ sudo apt-get install qemu binfmt-support qemu-user-static qemu-system-mips 
+
+[2] Check whether the binfmt entries were successfully registered:
+	sudo update-binfmts --display

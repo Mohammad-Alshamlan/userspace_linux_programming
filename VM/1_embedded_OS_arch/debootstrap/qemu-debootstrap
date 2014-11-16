@@ -1,0 +1,74 @@
+//
+
+Sat Jun 28, 2014
+------------------
+source:
+[1] https://wiki.debian.org/EmDebian/DeBootstrap
+[2] source: http://www.lucas-nussbaum.net/blog/?p=228
+
+// using wheezy distro
+qemu-debootstrap --arch mipsel wheezy http://archive.progeny.com/debian/
+
+
+
+// old debian distro
+debootstrap --arch mipsel --foreign etch /space/debian-mipsel http://ftp.fr.debian.org/debian
+
+// raw
+
+source: http://www.lucas-nussbaum.net/blog/?p=228
+
+Running Debian on your Linksys WRT54G* … sort of
+
+February 8th, 2007 by lucas
+
+I’m the happy owner of a Linksys WRT54GL. OpenWRT is nice, but … well. Debian is just nicer. And I couldn’t resist the idea of running Debian on this little MIPS system. Since there’s clearly not enough space available on the Linksys, I decided to install etch in a chroot, that I would mount using NFS.
+
+Joey tried that already, the Debian wiki provides some information, but I use another technique.
+
+First, on another system (an i386, I debootstrap’ed a mipsel etch, using --foreign. This tells debootstrap not to run the second stage:
+debootstrap --arch mipsel --foreign etch /space/debian-mipsel http://ftp.fr.debian.org/debian
+
+Then, I modified /etc/exports to allow the router to mount that chroot:
+/space/debian-mipsel 192.168.1.1(rw,sync,no_root_squash)
+
+I mounted it on the router:
+ipkg install kmod-nfs
+insmod sunrpc
+insmod lockd
+insmod nfs
+mount -t nfs star:/space/debian-mipsel /debian -o nolock
+mount -t proc /dev/null /debian/proc
+
+I set up some swap space on the NFS mount (mandatory, or debootstrap’s second stage will fail):
+ipkg install losetup
+ipkg install kmod-loop
+ipkg install swap-utils
+dd if=/dev/zero of=/debian/swapfile bs=1M count=100
+losetup /dev/loop/0 /debian/swapfile
+mkswap /dev/loop/0
+swapon /dev/loop/0
+
+I chrooted inside /debian, and ran debootstrap’s second stage:
+chroot /debian /bin/bash
+debootstrap/debootstrap --second-stage
+
+When you are done playing, you can disable the swap space and umount everything:
+swapoff /dev/loop/0
+losetup -d /dev/loop/0
+umount /debian/proc
+sleep 1 # or umount /debian will fail
+umount /debian
+
+If you want to re-mount everything, all you need to do is:
+insmod sunrpc
+insmod lockd
+insmod nfs
+mount -t nfs star:/space/debian-mipsel /debian -o nolock
+mount -t proc /dev/null /debian/proc
+losetup /dev/loop/0 /debian/swapfile
+swapon /dev/loop/0
+chroot /debian /bin/bash
+
+That first stage/second stage split in debootstrap is really cool: it’s an easy way to run Debian anywhere, only requiring to be able to chroot at some point.
+

@@ -1,0 +1,796 @@
+//
+
+Fri Jul 25, 2014
+---------------------
+[1] try to use u-boot regradless to the ISA, so arm is the most documented. I will simply go with that!! 
+[2] 
+
+source:
+[1] http://balau82.wordpress.com/2010/03/10/u-boot-for-arm-on-qemu/
+[2] first read the "README"!! for info
+	$  gedit README &
+[3] http://balau82.wordpress.com/2010/02/28/hello-world-for-bare-metal-arm-using-qemu/
+[4] http://rechtzeit.wordpress.com/2012/06/18/problem-running-u-boot-on-qemu-for-versatilepb-arm729ej-s/
+
+steps:
+[1] install the needed packages
+	$ sudo apt-get install u-boot-tools qemu qemu-kvm libsdl1.2-dev device-tree-compiler
+
+// arm toolchian
+	$ sudo apt-get install gcc-arm-linux-gnueabi
+	
+[2] cloning u-boot git repo
+	$ cd <where you want>
+	$ mkdir u-boot && cd u-boot
+	$ git clone git://git.denx.de/u-boot.git
+
+[3] building u-boot image
+	// clean the sandbox
+	$ make distclean ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-
+	// configure before build
+	$ make versatilepb_config ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-
+
+	// add (or Patch) include/configs/versatile.h
+		Add this line
+
+		#define CONFIG_ARCH_VERSATILE_QEMU
+
+		just below
+
+		#ifndef __CONFIG_H
+		#define __CONFIG_H
+
+	// build
+	$ make all ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- 2>&1 | tee u-boot_arm_versatilepd.log
+
+note: The compilation will create a u-boot.bin binary image.
+
+[4] to run it onto qemu
+	$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel u-boot.bin
+Note: "You can have a list of commands by entering help, and then try out various commands (hit “Ctrl-a” and then “x” to exit QEMU)."
+
+[5] running hello world rather than the linux kernel
+
+// create "test.c" as follows:
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat test.c 
+	volatile unsigned int * const UART0DR = (unsigned int *)0x101f1000;
+	 
+	void print_uart0(const char *s) {
+	 while(*s != '\0') { /* Loop until end of string */
+	 *UART0DR = (unsigned int)(*s); /* Transmit char */
+	 s++; /* Next char */
+	 }
+	}
+	 
+	void c_entry() {
+	 print_uart0("Hello world!\n");
+	}
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+The code is pretty straightforward; a couple of details:
+
+    [1] The volatile keyword is necessary to instruct the compiler that the memory pointed by UART0DR can change or has effects independently of the program.
+    [2] The unsigned int type enforces 32-bits read and write access.
+    [3] The QEMU model of the PL011 serial port ignores the transmit FIFO capabilities; in a real system on chip the “Transmit FIFO Full” flag must be checked in the UARTFR register before writing on the UARTDR register.
+
+The QEMU emulator is written especially to emulate Linux guest systems; for this reason its startup procedure is implemented specifically: the -kernel option loads a binary file (usually a Linux kernel) inside the system memory starting at address 0x00010000. The emulator starts the execution at address 0x00000000, where few instructions (already in place) are used to jump at the beginning of the kernel image. The interrupt table of ARM cores, usually placed at address 0x00000000, is not present, and the peripheral interrupts are disabled at startup, as needed to boot a Linux kernel. Knowing this, to implement a working emulation I need to considerate a few things:
+
+    [1] The software must be compiled and linked to be placed at 0x00010000
+    [2] I need to create a binary image of our program
+    [3] I can ignore interrupt handling for now
+
+This is the startup.s assembler file I wrote, simplified from the one I wrote in the previous blog post (http://balau82.wordpress.com/2010/02/14/simplest-bare-metal-program-for-arm/):
+
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat startup.s
+	.global _Reset
+	_Reset:
+	 LDR sp, =stack_top
+	 BL c_entry
+	 B .
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+
+test.ld source code:
+
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat test.ld
+	ENTRY(_Reset)
+	SECTIONS
+	{
+	 . = 0x100000;
+	 .startup . : { startup.o(.text) }
+	 .text : { *(.text) }
+	 .data : { *(.data) }
+	 .bss : { *(.bss COMMON) }
+	 . = ALIGN(8);
+	 . = . + 0x1000; /* 4kB of stack memory */
+	 stack_top = .;
+	}
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+// compiling:
+	$ arm-linux-gnueabi-as -mcpu=arm926ej-s -g startup.s -o startup.o
+	$ arm-linux-gnueabi-gcc -c -mcpu=arm926ej-s test.c -o test.o
+	$ arm-linux-gnueabi-ld -T test.ld -Map=test.map test.o startup.o -o test.elf
+	$ arm-linux-gnueabi-objcopy -O binary test.elf test.bin
+
+// Now create the U-Boot image test.uimg with:
+	$ mkimage -A arm -C none -O linux -T kernel -d test.bin -a 0x00100000 -e 0x00100000 test.uimg
+	
+// Now we can create a single binary simply with:
+	$ cat u-boot.bin test.uimg > flash.bin
+
+// This binary can be run instead of the U-Boot binary with:
+	$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel flash.bin
+
+// To calculate the address, we must take the size of u-boot and sum the initial address where flash.bin is mapped. From the bash prompt, the following script prints the command to be written inside U-Boot:
+
+	$ printf "bootm 0x%X\n" $(expr $(stat -c%s u-boot) + $(stat -c%s test.uimg))
+	// raw
+	alshamlan@alshamlan-K55A:~/u-boot/u-boot$ printf "bootm 0x%X\n" $(expr $(stat -c%s u-boot.bin) + 65536)
+	bootm 0x28AE8
+	alshamlan@alshamlan-K55A:~/u-boot/u-boot$ 
+	
+	// raw about the file sizes
+	alshamlan@alshamlan-K55A:~/u-boot/u-boot$ ls -ls 
+	total 2052
+	  4 drwxrwxr-x   2 alshamlan alshamlan   4096 Jul 24 17:55 api
+	  4 drwxrwxr-x  17 alshamlan alshamlan   4096 Jul 24 17:55 arch
+	 12 drwxrwxr-x 264 alshamlan alshamlan  12288 Jul 24 17:55 board
+	324 -rw-rw-r--   1 alshamlan alshamlan 328183 Jul 25 21:17 boards.cfg
+	 12 drwxrwxr-x   3 alshamlan alshamlan  12288 Jul 25 22:01 common
+	  4 -rw-rw-r--   1 alshamlan alshamlan   1772 Jul 24 17:55 config.mk
+	 12 -rw-rw-r--   1 alshamlan alshamlan  12082 Jul 24 17:55 CREDITS
+	  4 drwxrwxr-x   2 alshamlan alshamlan   4096 Jul 25 22:01 disk
+	  4 drwxrwxr-x   8 alshamlan alshamlan   4096 Jul 24 17:55 doc
+	  4 drwxrwxr-x  34 alshamlan alshamlan   4096 Jul 25 22:01 drivers
+	  4 drwxrwxr-x   2 alshamlan alshamlan   4096 Jul 24 17:55 dts
+	  4 drwxrwxr-x   4 alshamlan alshamlan   4096 Jul 24 17:55 examples
+	100 -rw-rw-r--   1 alshamlan alshamlan 101304 Jul 25 22:13 flash.bin
+	  4 drwxrwxr-x  12 alshamlan alshamlan   4096 Jul 25 22:01 fs
+	 12 drwxrwxr-x  24 alshamlan alshamlan  12288 Jul 25 22:01 include
+	  4 -rw-rw-r--   1 alshamlan alshamlan   2227 Jul 24 17:55 Kbuild
+	  4 drwxrwxr-x   8 alshamlan alshamlan   4096 Jul 25 22:01 lib
+	  4 drwxrwxr-x   2 alshamlan alshamlan   4096 Jul 24 17:55 Licenses
+	 24 -rwxrwxr-x   1 alshamlan alshamlan  23394 Jul 24 17:55 MAKEALL
+	 48 -rw-rw-r--   1 alshamlan alshamlan  45830 Jul 25 21:17 Makefile
+	  8 -rwxrwxr-x   1 alshamlan alshamlan   4296 Jul 24 17:55 mkconfig
+	  4 drwxrwxr-x   2 alshamlan alshamlan   4096 Jul 25 22:01 net
+	  4 drwxrwxr-x   6 alshamlan alshamlan   4096 Jul 24 17:55 post
+	220 -rw-rw-r--   1 alshamlan alshamlan 224446 Jul 25 21:17 README
+	  4 drwxrwxr-x   3 alshamlan alshamlan   4096 Jul 25 21:17 scripts
+	  4 -rw-rw-r--   1 alshamlan alshamlan     17 Jul 24 17:55 snapshot.commit
+	  4 -rw-rw-r--   1 alshamlan alshamlan   1412 Jul 25 22:11 startup.o
+	  4 -rw-rw-r--   1 alshamlan alshamlan     60 Jul 25 22:05 startup.s
+	 20 -rw-rw-r--   1 alshamlan alshamlan  17400 Jul 25 22:01 System.map
+	  4 drwxrwxr-x   6 alshamlan alshamlan   4096 Jul 25 22:01 test
+	  4 -rwxrwxr-x   1 alshamlan alshamlan    144 Jul 25 22:12 test.bin
+	  4 -rw-rw-r--   1 alshamlan alshamlan    300 Jul 25 22:04 test.c
+	  8 -rwxrwxr-x   1 alshamlan alshamlan  34325 Jul 25 22:12 test.elf
+	  4 -rw-rw-r--   1 alshamlan alshamlan    222 Jul 25 22:07 test.ld
+	  4 -rw-rw-r--   1 alshamlan alshamlan   3068 Jul 25 22:12 test.map
+	  4 -rw-rw-r--   1 alshamlan alshamlan   1192 Jul 25 22:12 test.o
+	  4 -rw-rw-r--   1 alshamlan alshamlan    208 Jul 25 22:12 test.uimg
+	  4 drwxrwxr-x  15 alshamlan alshamlan   4096 Jul 25 22:01 tools
+	604 -rwxrwxr-x   1 alshamlan alshamlan 643506 Jul 25 22:01 u-boot
+	  8 -rw-rw-r--   1 alshamlan alshamlan   7204 Jul 25 22:01 u-boot_arm_versatilepd.log
+	100 -rw-rw-r--   1 alshamlan alshamlan 101096 Jul 25 22:01 u-boot.bin
+	  4 -rw-rw-r--   1 alshamlan alshamlan   1290 Jul 25 22:01 u-boot.lds
+	148 -rw-rw-r--   1 alshamlan alshamlan 150947 Jul 25 22:01 u-boot.map
+	284 -rw-rw-r--   1 alshamlan alshamlan 290762 Jul 25 22:01 u-boot.srec
+	alshamlan@alshamlan-K55A:~/u-boot/u-boot$ ls -ls 
+
+// check the image in u-boot
+	(u-boot) $ iminfo 0x28AE8
+	
+	// raw
+	VersatilePB # iminfo 0x28AE8
+
+	## Checking Image at 00028ae8 ...
+	   Legacy image found
+	   Image Name:   
+	   Image Type:   ARM Linux Kernel Image (uncompressed)
+	   Data Size:    144 Bytes = 144 Bytes
+	   Load Address: 00100000
+	   Entry Point:  00100000
+	   Verifying Checksum ... OK
+	VersatilePB # 
+
+	// run the image
+		(u-boot) $ bootm 0x28AE8
+
+	// raw
+	VersatilePB # bootm 0x28AE8
+	## Booting kernel from Legacy Image at 00028ae8 ...
+	   Image Name:   
+	   Image Type:   ARM Linux Kernel Image (uncompressed)
+	   Data Size:    144 Bytes = 144 Bytes
+	   Load Address: 00100000
+	   Entry Point:  00100000
+	   Loading Kernel Image ... OK
+
+	Starting kernel ...
+
+	Hello world!
+
+
+
+Fri Jul 25, 2014
+---------------------
+[1] try to use u-boot regradless to the ISA, so arm is the most documented. I will simply go with that!! 
+[2] 
+
+source:
+[1] http://balau82.wordpress.com/2010/03/10/u-boot-for-arm-on-qemu/
+[2] first read the "README"!! for info
+	$  gedit README &
+[3] http://balau82.wordpress.com/2010/02/28/hello-world-for-bare-metal-arm-using-qemu/
+
+steps:
+[1] install the needed packages
+	$ sudo apt-get install u-boot-tools qemu qemu-kvm-extras libsdl1.2-dev device-tree-compiler
+
+// arm toolchian
+	$ sudo apt-get install gcc-arm-linux-gnueabi
+	// results -- installed commands
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-
+	arm-linux-gnueabi-addr2line       arm-linux-gnueabi-elfedit         arm-linux-gnueabi-gcov-4.7        arm-linux-gnueabi-objdump
+	arm-linux-gnueabi-ar              arm-linux-gnueabi-gcc             arm-linux-gnueabi-gprof           arm-linux-gnueabi-ranlib
+	arm-linux-gnueabi-as              arm-linux-gnueabi-gcc-4.7         arm-linux-gnueabi-ld              arm-linux-gnueabi-readelf
+	arm-linux-gnueabi-c++filt         arm-linux-gnueabi-gcc-ar-4.7      arm-linux-gnueabi-ld.bfd          arm-linux-gnueabi-size
+	arm-linux-gnueabi-cpp             arm-linux-gnueabi-gcc-nm-4.7      arm-linux-gnueabi-ld.gold         arm-linux-gnueabi-strings
+	arm-linux-gnueabi-cpp-4.7         arm-linux-gnueabi-gcc-ranlib-4.7  arm-linux-gnueabi-nm              arm-linux-gnueabi-strip
+	arm-linux-gnueabi-dwp             arm-linux-gnueabi-gcov            arm-linux-gnueabi-objcopy         
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-
+
+	
+[2] cloning u-boot git repo
+	$ cd <where you want>
+	$ mkdir u-boot && cd u-boot
+	$ git clone git://git.denx.de/u-boot.git
+	// or behind the firewall
+	$ git clone http://git.denx.de/u-boot.git
+
+[3] building u-boot image
+	// clean the sandbox
+	$ make distclean
+	// configure before build
+	$ make versatilepb_config ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-
+/* result
+alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make versatilepb_config ARCH=arm CROSS_COMPILE=gcc-arm-linux-gnueabi 
+Configuring for versatilepb - Board: versatile, Options: ARCH_VERSATILE_PB
+alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+*/
+
+	// build
+	$ make all ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- 2>&1 | tee u-boot_arm_versatilepd.log
+
+note: The compilation will create a u-boot.bin binary image.
+
+[4] to run it onto qemu
+	$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel u-boot
+
+	// raw
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ ls
+	api    boards.cfg  CREDITS  drivers   fs       lib       Makefile  post     snapshot.commit  tools                       u-boot.bin  u-boot.srec
+	arch   common      disk     dts       include  Licenses  mkconfig  README   System.map       u-boot                      u-boot.lds
+	board  config.mk   doc      examples  Kbuild   MAKEALL   net       scripts  test             u-boot_arm_versatilepd.log  u-boot.map
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel u-boot.bin
+	pulseaudio: set_sink_input_volume() failed
+	pulseaudio: Reason: Invalid argument
+	pulseaudio: set_sink_input_mute() failed
+	pulseaudio: Reason: Invalid argument
+	qemu: fatal: Trying to execute code outside RAM or ROM at 0x08000000
+
+	R00=00000000 R01=00000183 R02=00000100 R03=00000000
+	R04=00000000 R05=00000000 R06=00000000 R07=00000000
+	R08=00000000 R09=00000000 R10=00000000 R11=00000000
+	R12=00000000 R13=00000000 R14=00000000 R15=08000000
+	PSR=400001d3 -Z-- A svc32
+	s00=00000000 s01=00000000 d00=0000000000000000
+	s02=00000000 s03=00000000 d01=0000000000000000
+	s04=00000000 s05=00000000 d02=0000000000000000
+	s06=00000000 s07=00000000 d03=0000000000000000
+	s08=00000000 s09=00000000 d04=0000000000000000
+	s10=00000000 s11=00000000 d05=0000000000000000
+	s12=00000000 s13=00000000 d06=0000000000000000
+	s14=00000000 s15=00000000 d07=0000000000000000
+	s16=00000000 s17=00000000 d08=0000000000000000
+	s18=00000000 s19=00000000 d09=0000000000000000
+	s20=00000000 s21=00000000 d10=0000000000000000
+	s22=00000000 s23=00000000 d11=0000000000000000
+	s24=00000000 s25=00000000 d12=0000000000000000
+	s26=00000000 s27=00000000 d13=0000000000000000
+	s28=00000000 s29=00000000 d14=0000000000000000
+	s30=00000000 s31=00000000 d15=0000000000000000
+	FPSCR: 00000000
+	Aborted (core dumped)
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ file u-boot.bin 
+	u-boot.bin: data
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ file u-boot
+	u-boot                      u-boot.bin                  u-boot.map                  
+	u-boot_arm_versatilepd.log  u-boot.lds                  u-boot.srec                 
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ file u-boot
+	u-boot: ELF 32-bit LSB  shared object, ARM, EABI5 version 1 (SYSV), dynamically linked (uses shared libs), not stripped
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel u-boot
+	pulseaudio: set_sink_input_volume() failed
+	pulseaudio: Reason: Invalid argument
+	pulseaudio: set_sink_input_mute() failed
+	pulseaudio: Reason: Invalid argument
+
+
+	U-Boot 2014.07-00058-gfbe79a1 (Jul 25 2014 - 11:05:31)
+
+	DRAM:  128 MiB
+	WARNING: Caches not enabled
+	Flash: 64 MiB
+	*** Warning - bad CRC, using default environment
+
+	In:    serial
+	Out:   serial
+	Err:   serial
+	Net:   SMC91111-0
+	Warning: SMC91111-0 using MAC address from net device
+
+	Warning: Your board does not use generic board. Please read
+	doc/README.generic-board and take action. Boards not
+	upgraded by the late 2014 may break or be removed.
+	VersatilePB # 
+	VersatilePB # reset
+	resetting ...
+
+Note: "You can have a list of commands by entering help, and then try out various commands (hit “Ctrl-a” and then “x” to exit QEMU)."
+
+[5] running hello world rather than the linux kernel
+
+The "bootm" command in particular is used to boot a program that is loaded in memory as a special U-Boot image, that can be created with the tool "mkimage". This program is usually an operating system kernel, but instead of running a full-blown Linux kernel, we can instead run the simple “Hello world” program described in (http://balau82.wordpress.com/2010/02/28/hello-world-for-bare-metal-arm-using-qemu/).
+To do so, we create a single binary that contains both the U-Boot program and our “Hello world” program together. The initial address of the “Hello world” program must be changed with respect to the instructions present in the last blog post, because at 0x10000 (our last initial address) QEMU places the beginning of the U-Boot binary. Since the U-Boot binary is about 100KB, we can place our binary at 0x100000 (that is 1MB) to be safe.
+
+The QEMU emulator supports the VersatilePB platform, that contains an ARM926EJ-S core and, among other peripherals, four UART serial ports; the first serial port in particular (UART0) works  as a terminal when using the -nographic or “-serial stdio” qemu option. The memory map of the VersatilePB board is implemented in QEMU in this board-specific C source; from that I note the address where the UART0 is mapped: 0x101f1000. The code that emulates the serial port inside QEMU (here in the source repository) implements a subset of the functionalities of the PL011 Prime Cell UART from ARM; there is a useful technical manual from the ARM info center that describes how to interact with the hardware. In details, there is a register (UARTDR) that is used to transmit (when writing in the register) and receive (when reading) bytes; this register is placed at offset 0x0, so I need to read and write at the beginning of the memory allocated for the UART0.
+
+// create "test.c" as follows:
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat test.c 
+	volatile unsigned int * const UART0DR = (unsigned int *)0x101f1000;
+	 
+	void print_uart0(const char *s) {
+	 while(*s != '\0') { /* Loop until end of string */
+	 *UART0DR = (unsigned int)(*s); /* Transmit char */
+	 s++; /* Next char */
+	 }
+	}
+	 
+	void c_entry() {
+	 print_uart0("Hello world!\n");
+	}
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+The code is pretty straightforward; a couple of details:
+
+    [1] The volatile keyword is necessary to instruct the compiler that the memory pointed by UART0DR can change or has effects independently of the program.
+    [2] The unsigned int type enforces 32-bits read and write access.
+    [3] The QEMU model of the PL011 serial port ignores the transmit FIFO capabilities; in a real system on chip the “Transmit FIFO Full” flag must be checked in the UARTFR register before writing on the UARTDR register.
+
+The QEMU emulator is written especially to emulate Linux guest systems; for this reason its startup procedure is implemented specifically: the -kernel option loads a binary file (usually a Linux kernel) inside the system memory starting at address 0x00010000. The emulator starts the execution at address 0x00000000, where few instructions (already in place) are used to jump at the beginning of the kernel image. The interrupt table of ARM cores, usually placed at address 0x00000000, is not present, and the peripheral interrupts are disabled at startup, as needed to boot a Linux kernel. Knowing this, to implement a working emulation I need to considerate a few things:
+
+    [1] The software must be compiled and linked to be placed at 0x00010000
+    [2] I need to create a binary image of our program
+    [3] I can ignore interrupt handling for now
+
+This is the startup.s assembler file I wrote, simplified from the one I wrote in the previous blog post (http://balau82.wordpress.com/2010/02/14/simplest-bare-metal-program-for-arm/):
+
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat startup.s
+	.global _Reset
+	_Reset:
+	 LDR sp, =stack_top
+	 BL c_entry
+	 B .
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+And this is the linker script test.ld, modified to place the program at the right address:
+
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat test.ld
+	ENTRY(_Reset)
+	SECTIONS
+	{
+	 . = 0x10000;
+	 .startup . : { startup.o(.text) }
+	 .text : { *(.text) }
+	 .data : { *(.data) }
+	 .bss : { *(.bss COMMON) }
+	 . = ALIGN(8);
+	 . = . + 0x1000; /* 4kB of stack memory */
+	 stack_top = .;
+	}
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+// Now compiling the code, these are the commands to run:
+	$ arm-linux-gnueabi-as -mcpu=arm926ej-s -g startup.s -o startup.o
+	$ arm-linux-gnueabi-gcc -c -mcpu=arm926ej-s -g test.c -o test.o
+	$ arm-linux-gnueabi-ld -T test.ld test.o startup.o -o test.elf
+	$ arm-linux-gnueabi-objcopy -O binary test.elf test.bin
+
+	// raw results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-as -mcpu=arm926ej-s -g startup.s -o startup.o
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-gcc -c -mcpu=arm926ej-s -g test.c -o test.o
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-ld -T test.ld test.o startup.o -o test.elf
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-objcopy -O binary test.elf test.bin
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ file test.bin 
+	test.bin: data
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ file test.elf 
+	test.elf: ELF 32-bit LSB  executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+These commands create a test.elf program and a test.bin binary image that I can use with the QEMU emulator for ARM systems. 
+// To run my program in the emulator, the command is:
+	$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel test.bin
+	
+	// raw results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel test.bin
+	pulseaudio: set_sink_input_volume() failed
+	pulseaudio: Reason: Invalid argument
+	pulseaudio: set_sink_input_mute() failed
+	pulseaudio: Reason: Invalid argument
+	Hello world!
+	QEMU 2.0.0 monitor - type 'help' for more information
+	(qemu) 
+	QEMU: Terminated
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+// to exit from qemu, press <Ctrl> + 'a' then 'x'
+
+The -M option specifies the emulated system. The program prints “Hello world!” in the terminal and runs indefinitely; to exit QEMU, press “Ctrl + a” and then “x”.
+
+It is possible also to debug the program using the CodeSourcery version of gdb, because QEMU implements a gdb connector using a TCP connection. To do so, I run the emulator with the correct options as follows:
+	// install arm gdb
+	$ sudo apt-get install gdb-arm-none-eabi 
+	// run qemu
+	$ qemu-system-arm -M versatilepb -m 128M -nographic -s -S -kernel test.bin
+	
+This command freezes the system before executing any guest code, and waits for a connection on the TCP port 1234. From another terminal, I run arm-none-eabi-gdb and enter the commands:
+
+	(gdb) $ target remote localhost:1234
+	(gdb) $ file test.elf
+
+This connects to the QEMU system and loads the debugging symbols of the test program, whose binary image is already loaded in the system memory. From there, it is possible to run the program with the continue command, single-step the program and debug it in general. The exit command in gdb closes both the debugger and the emulator.
+
+To summarize the necessary steps to create a “Hello world” program:
+
+    [1] Install CodeSourcery toolchain
+    [2] Install QEMU (in particular qemu-system-arm)
+    [3] Write the test.c, startup.s and test.ld source files
+    [4] Build the test ELF and binary image
+    [5] Run QEMU ARM emulator using the created binary image as a kernel
+    [6] Run the gdb debugger and attach to QEMU
+
+// now, let include the hello world onto u-boot image
+Create test.c, startup.s and test.ld as last time, but change line 4 of test.ld from “. = 0x10000” to “. = 0x100000“. Build the binary with:
+the new test.ld source code:
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ cat test.ld
+	ENTRY(_Reset)
+	SECTIONS
+	{
+	 . = 0x100000;
+	 .startup . : { startup.o(.text) }
+	 .text : { *(.text) }
+	 .data : { *(.data) }
+	 .bss : { *(.bss COMMON) }
+	 . = ALIGN(8);
+	 . = . + 0x1000; /* 4kB of stack memory */
+	 stack_top = .;
+	}
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+// compiling:
+	$ arm-linux-gnueabi-gcc -c -mcpu=arm926ej-s test.c -o test.o
+	$ arm-linux-gnueabi-ld -T test.ld -Map=test.map test.o startup.o -o test.elf
+	$ arm-linux-gnueabi-objcopy -O binary test.elf test.bin
+
+// Now create the U-Boot image test.uimg with:
+	$ mkimage -A arm -C none -O linux -T kernel -d test.bin -a 0x00100000 -e 0x00100000 test.uimg
+	
+	// raw results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-gcc -c -mcpu=arm926ej-s test.c -o test.o
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-ld -T test.ld -Map=test.map test.o startup.o -o test.elf
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ arm-linux-gnueabi-objcopy -O binary test.elf test.bin
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ mkimage -A arm -C none -O linux -T kernel -d test.bin -a 0x00100000 -e 0x00100000 test.uimg
+	Image Name:   
+	Created:      Fri Jul 25 11:56:48 2014
+	Image Type:   ARM Linux Kernel Image (uncompressed)
+	Data Size:    144 Bytes = 0.14 kB = 0.00 MB
+	Load Address: 00100000
+	Entry Point:  00100000
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+With these options we affirm that the image is for ARM architecture, is not compressed, is meant to be loaded at address 0x100000 and the entry point is at the same address. I use “linux” as operating system and “kernel” as image type because in this way U-Boot cleans the environment before passing the control to our image: this means disabling interrupts, caches and MMU.
+
+Now we can create a single binary simply with:
+	$ cat u-boot test.uimg > flash.bin
+
+This binary can be run instead of the U-Boot binary with:
+	$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel flash.bin
+	
+	// raw results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ qemu-system-arm -M versatilepb -m 128M -nographic -kernel flash.bin
+	pulseaudio: set_sink_input_volume() failed
+	pulseaudio: Reason: Invalid argument
+	pulseaudio: set_sink_input_mute() failed
+	pulseaudio: Reason: Invalid argument
+
+
+	U-Boot 2014.07-00058-gfbe79a1 (Jul 25 2014 - 11:05:31)
+
+	DRAM:  128 MiB
+	WARNING: Caches not enabled
+	Flash: 64 MiB
+	*** Warning - bad CRC, using default environment
+
+	In:    serial
+	Out:   serial
+	Err:   serial
+	Net:   SMC91111-0
+	Warning: SMC91111-0 using MAC address from net device
+
+	Warning: Your board does not use generic board. Please read
+	doc/README.generic-board and take action. Boards not
+	upgraded by the late 2014 may break or be removed.
+	VersatilePB # 
+
+//-------------------------------
+// still, I didn't make it work
+//-------------------------------
+	
+at the U-Boot prompt, we can check that the image is inside the memory: it should be exactly after the u-boot code. To calculate the address, we must take the size of u-boot and sum the initial address where flash.bin is mapped. From the bash prompt, the following script prints the command to be written inside U-Boot:
+
+	$ printf "bootm 0x%X\n" $(expr $(stat -c%s u-boot) + $(stat -c%s test.uimg))
+	
+	// raw results
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ printf "bootm 0x%X\n" $(expr $(stat -c%s u-boot) + 65536)
+	bootm 0xC11CA
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+in my case it prints “bootm 0xC11CA“. In fact, if I run “iminfo 0xC11CA” inside U-Boot prompt to check the memory content I get:
+
+// raw unedited
+//------------------
+at the U-Boot prompt, we can check that the image is inside the memory: it should be exactly after the u-boot.bin code. To calculate the address, we must take the size of u-boot.bin and sum the initial address where flash.bin is mapped. From the bash prompt, the following script prints the command to be written inside U-Boot:
+	$printf "bootm 0x%X\n" $(expr $(stat -c%s u-boot.bin) + 65536)
+
+in my case it prints “bootm 0x21C68“. In fact, if I run “iminfo 0x21C68” inside U-Boot prompt to check the memory content I get:
+
+	## Checking Image at 00021c68 ...
+	Image Name:
+	Image Type:   ARM U-Boot Standalone Program (uncompressed)
+	Data Size:    376 Bytes =  0.4 kB
+	Load Address: 00100000
+	Entry Point:  00100000
+	Verifying Checksum ... OK
+	
+I can then confidently run “bootm 0x21C68” (you should substitute your address in this command). This command copies the content of the image, that is actually test.bin, into the address 0x100000 as specified in the U-Boot image, and then jumps to the entry point. The emulator should print “Hello world!” as last time, and then run indefinitely (hit “Ctrl-a” and then “x” to exit). This is basically the same procedure that is used to boot a Linux kernel, with some modifications: for example, the Linux kernel accepts some parameters that must be received from U-Boot somehow. I plan to write a post about that in the future.
+In a real world example, the binary file we created could be placed inside the parallel Flash memory of an embedded platform, and the boot process can be controlled from the serial port.
+
+
+Thu Jul 24, 2014
+----------------
+objective:
+[1] using buildroot builds into u-boot image
+[2] then boot the u-boot image in qemu
+[3] all of that is done in ubuntu platform
+
+sources:
+[1] http://stackoverflow.com/questions/20763344/just-black-screen-after-running-qemu
+
+steps:
+[1] install the needed packages
+	$ sudo apt-get install u-boot-tools
+
+// arm toolchian
+	$ sudo apt-get install gcc-arm-linux-gnueabi 
+
+	
+[2] cloning u-boot git repo
+	$ cd <where you want>
+	$ mkdir u-boot && cd u-boot
+	$ git clone git://git.denx.de/u-boot.git
+	// or behind the firewall
+	$ git clone http://git.denx.de/u-boot.git
+
+[3] building u-boot image
+// first read the "README"!! for info
+	$  gedit README &
+
+// building from sandbox
+	// read the README
+	$ gedit board/sandbox/README.sandbox
+	// install the needed packages
+	$ sudo apt-get -y install libsdl1.2-dev device-tree-compiler
+	// clean the sandbox
+	$ make distclean
+	// build
+	$ make sandbox_config all
+	// test
+	./u-boot
+	
+
+// raw
+
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mips_config
+	Configuring for qemu_mips - Board: qemu-mips, Options: SYS_BIG_ENDIAN
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ make qemu_mipsel_config
+	Configuring for qemu_mipsel - Board: qemu-mips, Options: SYS_LITTLE_ENDIAN
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ 
+
+
+
+extra:
+// building linux kernel and run it in qemu
+	$ make ARCH=arm distclean
+	$ make ARCH=arm versatile_defconfig
+
+	3)make ARCH=arm menuconfig
+
+	here you need to enable below feature.
+
+	Kernel Features ---> [*] Use the ARM EABI to compile the kernel. (enable this).
+
+	4)make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabi- uImage
+
+	5)qemu-system-arm -M versatilepb -m 128M -kernel arch/arm/boot/uImage -append "console=tty1"
+
+	Here you will get console saying that kernel panic. to avoid this pass your rootfs parameter.
+
+	I guess you built rootfs from busybox if so try below command to boot system completely
+
+	6)qemu-system-arm -M versatilepb -m 128M -kernel arch/arm/boot/uImage -initrd rootfs.img -append "root=/dev/ram mem=128M rdinit=/sbin/init" -serial stdio.
+
+// checking all the availabe cross-compile toolchain in ubuntu
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ sudo apt-get install gcc-
+	gcc-4.4                               gcc-4.7-multilib                      gcc-arm-linux-androideabi
+	gcc-4.4-base                          gcc-4.7-multilib-arm-linux-gnueabi    gcc-arm-linux-gnueabi
+	gcc-4.4-base-mipsel-cross             gcc-4.7-multilib-arm-linux-gnueabihf  gcc-arm-linux-gnueabihf
+	gcc-4.4-doc                           gcc-4.7-plugin-dev                    gcc-arm-none-eabi
+	gcc-4.4-locales                       gcc-4.7-source                        gcc-avr
+	gcc-4.4-mipsel-linux-gnu-base         gcc-4.8                               gcc-bfin-linux-gnu
+	gcc-4.4-multilib                      gcc-4.8-aarch64-linux-gnu             gcc-c6x-linux-gnu
+	gcc-4.4-source                        gcc-4.8-aarch64-linux-gnu-base        gcc-doc
+	gcc-4.6                               gcc-4.8-arm-linux-gnueabihf           gcc-h8300-hms
+	gcc-4.6-base                          gcc-4.8-arm-linux-gnueabihf-base      gcc-i686-linux-android
+	gcc-4.6-doc                           gcc-4.8-base                          gcc-m68hc1x
+	gcc-4.6-locales                       gcc-4.8-doc                           gcc-mingw-w64
+	gcc-4.6-multilib                      gcc-4.8-locales                       gcc-mingw-w64-base
+	gcc-4.6-plugin-dev                    gcc-4.8-multilib                      gcc-mingw-w64-i686
+	gcc-4.6-source                        gcc-4.8-multilib-arm-linux-gnueabihf  gcc-mingw-w64-x86-64
+	gcc-4.7                               gcc-4.8-multilib-powerpc-linux-gnu    gcc-msp430
+	gcc-4.7-arm-linux-gnueabi             gcc-4.8-plugin-dev                    gcc-multilib
+	gcc-4.7-arm-linux-gnueabi-base        gcc-4.8-powerpc64le-linux-gnu         gcc-opt
+	gcc-4.7-arm-linux-gnueabihf           gcc-4.8-powerpc64le-linux-gnu-base    gcc-powerpc64le-linux-gnu
+	gcc-4.7-arm-linux-gnueabihf-base      gcc-4.8-powerpc-linux-gnu             gcc-powerpc-linux-gnu
+	gcc-4.7-base                          gcc-4.8-powerpc-linux-gnu-base        gcc-snapshot
+	gcc-4.7-base-mipsel-cross             gcc-4.8-source                        gcc-tile-linux-gnu
+	gcc-4.7-doc                           gcc-4.9-base                          
+	gcc-4.7-locales                       gcc-aarch64-linux-gnu                 
+	alshamlan@alshamlan-OptiPlex-980:~/u-boot/u-boot$ sudo apt-get install gcc-
+	
+// avaliable config in buildroot
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ make help
+	Cleaning:
+	  clean                  - delete all files created by build
+	  distclean              - delete all non-source files (including .config)
+
+	Build:
+	  all                    - make world
+	  toolchain              - build toolchain
+	  <package>-rebuild      - force recompile <package>
+	  <package>-reconfigure  - force reconfigure <package>
+	  <package>-graph-depends    - generate graph of the dependency tree for package
+
+	Configuration:
+	  menuconfig             - interactive curses-based configurator
+	  nconfig                - interactive ncurses-based configurator
+	  xconfig                - interactive Qt-based configurator
+	  gconfig                - interactive GTK-based configurator
+	  oldconfig              - resolve any unresolved symbols in .config
+	  silentoldconfig        - Same as oldconfig, but quietly, additionally update deps
+	  olddefconfig           - Same as silentoldconfig but sets new symbols to their default value
+	  randconfig             - New config with random answer to all options
+	  defconfig              - New config with default answer to all options
+		                     BR2_DEFCONFIG, if set, is used as input
+	  savedefconfig          - Save current config as ./defconfig (minimal config)
+	  allyesconfig           - New config where all options are accepted with yes
+	  allnoconfig            - New config where all options are answered with no
+	  randpackageconfig      - New config with random answer to package options
+	  allyespackageconfig    - New config where pkg options are accepted with yes
+	  allnopackageconfig     - New config where package options are answered with no
+	  busybox-menuconfig     - Run BusyBox menuconfig
+	  linux-menuconfig       - Run Linux kernel menuconfig
+	  linux-savedefconfig    - Run Linux kernel savedefconfig
+	  uclibc-menuconfig      - Run uClibc menuconfig
+
+	Documentation:
+	  manual                 - build manual in all formats
+	  manual-html            - build manual in HTML
+	  manual-split-html      - build manual in split HTML
+	  manual-pdf             - build manual in PDF
+	  manual-text            - build manual in text
+	  manual-epub            - build manual in ePub
+	  graph-build            - generate graphs of the build times
+	  graph-depends          - generate graph of the dependency tree
+
+	Miscellaneous:
+	  source                 - download all sources needed for offline-build
+	  source-check           - check selected packages for valid download URLs
+	  external-deps          - list external packages used
+	  legal-info             - generate info about license compliance
+
+	  make V=0|1             - 0 => quiet build (default), 1 => verbose build
+	  make O=dir             - Locate all output files in "dir", including .config
+
+	Built-in configs:
+	  altera_sockit_defconfig             - Build for altera_sockit
+	  arm_foundationv8_defconfig          - Build for arm_foundationv8
+	  armadeus_apf27_defconfig            - Build for armadeus_apf27
+	  armadeus_apf28_defconfig            - Build for armadeus_apf28
+	  armadeus_apf51_defconfig            - Build for armadeus_apf51
+	  armadeus_apf9328_defconfig          - Build for armadeus_apf9328
+	  at91rm9200df_defconfig              - Build for at91rm9200df
+	  at91sam9260dfc_defconfig            - Build for at91sam9260dfc
+	  at91sam9260eknf_defconfig           - Build for at91sam9260eknf
+	  at91sam9261ek_defconfig             - Build for at91sam9261ek
+	  at91sam9263ek_defconfig             - Build for at91sam9263ek
+	  at91sam9g20dfc_defconfig            - Build for at91sam9g20dfc
+	  at91sam9g45m10ek_defconfig          - Build for at91sam9g45m10ek
+	  atmel_xplained_defconfig            - Build for atmel_xplained
+	  atngw100_defconfig                  - Build for atngw100
+	  atstk100x_defconfig                 - Build for atstk100x
+	  beaglebone_defconfig                - Build for beaglebone
+	  calao_qil_a9260_defconfig           - Build for calao_qil_a9260
+	  calao_snowball_defconfig            - Build for calao_snowball
+	  calao_tny_a9g20_lpw_defconfig       - Build for calao_tny_a9g20_lpw
+	  calao_usb_a9260_defconfig           - Build for calao_usb_a9260
+	  calao_usb_a9263_defconfig           - Build for calao_usb_a9263
+	  calao_usb_a9g20_lpw_defconfig       - Build for calao_usb_a9g20_lpw
+	  cubieboard2_defconfig               - Build for cubieboard2
+	  cubieboard_defconfig                - Build for cubieboard
+	  freescale_imx6sabresd_defconfig     - Build for freescale_imx6sabresd
+	  freescale_imx6sololiteevk_defconfig - Build for freescale_imx6sololiteevk
+	  freescale_mpc8315erdb_defconfig     - Build for freescale_mpc8315erdb
+	  freescale_p1010rdb_pa_defconfig     - Build for freescale_p1010rdb_pa
+	  gnublin_defconfig                   - Build for gnublin
+	  integrator926_defconfig             - Build for integrator926
+	  kb9202_defconfig                    - Build for kb9202
+	  lego_ev3_defconfig                  - Build for lego_ev3
+	  mini2440_defconfig                  - Build for mini2440
+	  minnowboard_defconfig               - Build for minnowboard
+	  mx53loco_defconfig                  - Build for mx53loco
+	  nitrogen6x_defconfig                - Build for nitrogen6x
+	  olimex_imx233_olinuxino_defconfig   - Build for olimex_imx233_olinuxino
+	  openblocks_a6_defconfig             - Build for openblocks_a6
+	  pandaboard_defconfig                - Build for pandaboard
+	  qemu_arm_nuri_defconfig             - Build for qemu_arm_nuri
+	  qemu_arm_versatile_defconfig        - Build for qemu_arm_versatile
+	  qemu_arm_vexpress_defconfig         - Build for qemu_arm_vexpress
+	  qemu_microblazebe_mmu_defconfig     - Build for qemu_microblazebe_mmu
+	  qemu_microblazeel_mmu_defconfig     - Build for qemu_microblazeel_mmu
+	  qemu_mips64_malta_defconfig         - Build for qemu_mips64_malta
+	  qemu_mips64el_malta_defconfig       - Build for qemu_mips64el_malta
+	  qemu_mips_malta_defconfig           - Build for qemu_mips_malta
+	  qemu_mipsel_malta_defconfig         - Build for qemu_mipsel_malta
+	  qemu_ppc_g3beige_defconfig          - Build for qemu_ppc_g3beige
+	  qemu_ppc_mpc8544ds_defconfig        - Build for qemu_ppc_mpc8544ds
+	  qemu_ppc_virtex_ml507_defconfig     - Build for qemu_ppc_virtex_ml507
+	  qemu_sh4_r2d_defconfig              - Build for qemu_sh4_r2d
+	  qemu_sparc_ss10_defconfig           - Build for qemu_sparc_ss10
+	  qemu_x86_64_defconfig               - Build for qemu_x86_64
+	  qemu_x86_defconfig                  - Build for qemu_x86
+	  qemu_xtensa_lx60_defconfig          - Build for qemu_xtensa_lx60
+	  qmx6_defconfig                      - Build for qmx6
+	  raspberrypi_defconfig               - Build for raspberrypi
+	  s6lx9_microboard_defconfig          - Build for s6lx9_microboard
+	  sheevaplug_defconfig                - Build for sheevaplug
+	  telit_evk_pro3_defconfig            - Build for telit_evk_pro3
+	  ts5x00_defconfig                    - Build for ts5x00
+	  wandboard_defconfig                 - Build for wandboard
+	  zedboard_defconfig                  - Build for zedboard
+
+	See docs/README, or generate the Buildroot manual for further details
+
+	alshamlan@alshamlan-OptiPlex-980:~/buildroot/from_git/buildroot$ 
+

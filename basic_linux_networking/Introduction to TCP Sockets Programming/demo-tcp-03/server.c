@@ -1,5 +1,5 @@
 /*
-	echoserver: TCP/IP sockets example
+	echo server: TCP/IP sockets example
 	get a connect: keep reading data from the socket, echoing
 	back the received data.
 
@@ -57,8 +57,7 @@ main(int argc, char **argv)
 
 /* serve: set up the service */
 
-void
-serve(int port)
+void serve(int port)
 {
 	int svc;        /* listening socket providing service */
 	int rqst;       /* socket accepting the request */

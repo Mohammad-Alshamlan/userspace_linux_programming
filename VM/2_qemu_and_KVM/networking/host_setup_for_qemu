@@ -1,0 +1,522 @@
+//
+
+Thu Jul 17, 2014
+-----------------
+[1] create a bridge and connect the internet port to the VM
+
+steps:
+[1] steup the network as follows in libvirt
+// note: the internet is in eth1
+	source device:	"Host device eth1: macvtap"
+	Device model:	"virtio"
+	source mode:	"Bridge"
+
+// result in the host
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 00:14:d1:1d:0c:e2  
+		  inet addr:192.168.1.32  Bcast:192.168.1.255  Mask:255.255.255.0
+		  inet6 addr: fe80::214:d1ff:fe1d:ce2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:181 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:29648 (29.6 KB)
+
+	eth1      Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  inet addr:136.170.210.98  Bcast:136.170.210.255  Mask:255.255.255.0
+		  inet6 addr: fe80::7a2b:cbff:fe9a:1af2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:49795 errors:0 dropped:43 overruns:0 frame:0
+		  TX packets:17265 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:31177718 (31.1 MB)  TX bytes:3389549 (3.3 MB)
+		  Interrupt:21 Memory:f7fe0000-f8000000 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  inet6 addr: ::1/128 Scope:Host
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:9689 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:9689 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:11165971 (11.1 MB)  TX bytes:11165971 (11.1 MB)
+
+	macvtap0  Link encap:Ethernet  HWaddr 52:54:00:d0:0d:29  
+		  inet6 addr: fe80::5054:ff:fed0:d29/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:7435 errors:4 dropped:4 overruns:0 frame:0
+		  TX packets:2082 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:500 
+		  RX bytes:2149741 (2.1 MB)  TX bytes:691336 (691.3 KB)
+
+	virbr0    Link encap:Ethernet  HWaddr 4a:63:31:05:76:ea  
+		  inet addr:192.168.122.1  Bcast:192.168.122.255  Mask:255.255.255.0
+		  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ip addr show
+	1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default 
+	    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+	    inet 127.0.0.1/8 scope host lo
+	       valid_lft forever preferred_lft forever
+	    inet6 ::1/128 scope host 
+	       valid_lft forever preferred_lft forever
+	2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+	    link/ether 00:14:d1:1d:0c:e2 brd ff:ff:ff:ff:ff:ff
+	    inet 192.168.1.32/24 brd 192.168.1.255 scope global eth0
+	       valid_lft forever preferred_lft forever
+	    inet6 fe80::214:d1ff:fe1d:ce2/64 scope link 
+	       valid_lft forever preferred_lft forever
+	3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+	    link/ether 78:2b:cb:9a:1a:f2 brd ff:ff:ff:ff:ff:ff
+	    inet 136.170.210.98/24 brd 136.170.210.255 scope global eth1
+	       valid_lft forever preferred_lft forever
+	    inet6 fe80::7a2b:cbff:fe9a:1af2/64 scope link 
+	       valid_lft forever preferred_lft forever
+	4: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+	    link/ether 4a:63:31:05:76:ea brd ff:ff:ff:ff:ff:ff
+	    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+	       valid_lft forever preferred_lft forever
+	6: macvtap0@eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UNKNOWN group default qlen 500
+	    link/ether 52:54:00:d0:0d:29 brd ff:ff:ff:ff:ff:ff
+	    inet6 fe80::5054:ff:fed0:d29/64 scope link 
+	       valid_lft forever preferred_lft forever
+
+	alshamlan@alshamlan-OptiPlex-980:~$ brctl show
+	bridge name	bridge id		STP enabled	interfaces
+	virbr0		8000.000000000000	yes		
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+[2] creating the bridge for these two devices:
+	1. eth1
+	2. macvtap0
+
+creating the bridge:
+	$ sudo brctl addbr br0
+	$ sudo brctl addif br0 eth1 macvtap0 
+
+// error
+	$ sudo brctl addif br0 eth1 macvtap0 
+	device eth1 is already a member of a bridge; can't enslave it to bridge br0.
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+
+
+Thu Jul 17, 2014
+-----------------
+objective:
+[1] create a bridge and connect the internet port to the VM
+
+steps:
+[1] you will need to know the internet gateway before changing anything:
+
+	alshamlan@alshamlan-OptiPlex-980:~$ route -n
+	Kernel IP routing table
+	Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+	0.0.0.0         136.170.210.6   0.0.0.0         UG    0      0        0 eth1
+	136.170.210.0   0.0.0.0         255.255.255.0   U     1      0        0 eth1
+	169.254.0.0     0.0.0.0         255.255.0.0     U     1000   0        0 eth0
+	192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+	192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+	
+Note: "U" means up, and "UG" means the gateway, so the internet gateway ip is 136.170.210.6
+
+for testing ping the gateway: 
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ping -c 136.170.210.6
+	Usage: ping [-aAbBdDfhLnOqrRUvV] [-c count] [-i interval] [-I interface]
+		    [-m mark] [-M pmtudisc_option] [-l preload] [-p pattern] [-Q tos]
+		    [-s packetsize] [-S sndbuf] [-t ttl] [-T timestamp_option]
+		    [-w deadline] [-W timeout] [hop1 ...] destination
+	alshamlan@alshamlan-OptiPlex-980:~$ ping -c 5 136.170.210.6
+	PING 136.170.210.6 (136.170.210.6) 56(84) bytes of data.
+	64 bytes from 136.170.210.6: icmp_seq=1 ttl=255 time=0.779 ms
+	64 bytes from 136.170.210.6: icmp_seq=2 ttl=255 time=0.695 ms
+	64 bytes from 136.170.210.6: icmp_seq=3 ttl=255 time=0.744 ms
+	64 bytes from 136.170.210.6: icmp_seq=4 ttl=255 time=0.835 ms
+	64 bytes from 136.170.210.6: icmp_seq=5 ttl=255 time=0.765 ms
+
+	--- 136.170.210.6 ping statistics ---
+	5 packets transmitted, 5 received, 0% packet loss, time 3999ms
+	rtt min/avg/max/mdev = 0.695/0.763/0.835/0.054 ms
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+[2] edit /etc/network/interfaces for creating a bridge. 
+Note:
+	1. eth0 is my private DHCP
+	2. eth1 is the internet 
+	3. virbr0, I don't know what is for!! but I will create a new bridge
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ifconfig 
+	eth0      Link encap:Ethernet  HWaddr 00:14:d1:1d:0c:e2  
+		  inet addr:192.168.1.32  Bcast:192.168.1.255  Mask:255.255.255.0
+		  inet6 addr: fe80::214:d1ff:fe1d:ce2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:142 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:21688 (21.6 KB)
+
+	eth1      Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  inet addr:136.170.210.98  Bcast:136.170.210.255  Mask:255.255.255.0
+		  inet6 addr: fe80::7a2b:cbff:fe9a:1af2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:7637 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:1635 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:1465481 (1.4 MB)  TX bytes:196793 (196.7 KB)
+		  Interrupt:21 Memory:f7fe0000-f8000000 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  inet6 addr: ::1/128 Scope:Host
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:1069 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:1069 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:101530 (101.5 KB)  TX bytes:101530 (101.5 KB)
+
+	virbr0    Link encap:Ethernet  HWaddr 12:0f:de:bf:7d:24  
+		  inet addr:192.168.122.1  Bcast:192.168.122.255  Mask:255.255.255.0
+		  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+// before editing
+	$ sudo gedit /etc/network/interfaces &
+	
+
+	# interfaces(5) file used by ifup(8) and ifdown(8)
+	#auto lo
+	#iface lo inet loopback
+
+	#auto eth0
+	#iface eth0 inet loopback
+
+	auto eth0
+		iface eth0 inet static
+		address 192.168.1.32
+		netmask 255.255.255.0
+		network 192.168.1.0
+		broadcast 192.168.1.255
+		gateway 192.168.1.32
+
+	# setting up ubuntu bridge kvm
+	#auto eth1
+	#iface eth1 inet static
+
+	#auto br0
+	#iface br0 inet manual
+	#        bridge_ports eth1
+		
+	#iface br0 inet manual
+
+// after editing
+
+	# interfaces(5) file used by ifup(8) and ifdown(8)
+	#auto lo
+	#iface lo inet loopback
+
+	#auto eth0
+	#iface eth0 inet loopback
+
+	auto eth0
+		iface eth0 inet static
+		address 192.168.1.32
+		netmask 255.255.255.0
+		network 192.168.1.0
+		broadcast 192.168.1.255
+		gateway 192.168.1.32
+
+	# setting up ubuntu bridge kvm
+	iface eth1 inet manual
+
+	auto br0
+	iface br0 inet dhcp
+		bridge_ports eth1
+
+
+// restart the system
+	$ sudo reboot
+	
+// after restarting
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ifconfig 
+	br0       Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  inet addr:136.170.210.98  Bcast:136.170.210.255  Mask:255.255.255.0
+		  inet6 addr: fe80::7a2b:cbff:fe9a:1af2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:1621 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:101 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:271364 (271.3 KB)  TX bytes:15208 (15.2 KB)
+
+	eth0      Link encap:Ethernet  HWaddr 00:14:d1:1d:0c:e2  
+		  inet addr:192.168.1.32  Bcast:192.168.1.255  Mask:255.255.255.0
+		  inet6 addr: fe80::214:d1ff:fe1d:ce2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:270 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:22356 (22.3 KB)
+
+	eth1      Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:1718 errors:0 dropped:5 overruns:0 frame:0
+		  TX packets:101 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:316856 (316.8 KB)  TX bytes:16128 (16.1 KB)
+		  Interrupt:21 Memory:f7fe0000-f8000000 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  inet6 addr: ::1/128 Scope:Host
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:242 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:242 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:22030 (22.0 KB)  TX bytes:22030 (22.0 KB)
+
+	virbr0    Link encap:Ethernet  HWaddr ea:9e:a9:c2:ec:3b  
+		  inet addr:192.168.122.1  Bcast:192.168.122.255  Mask:255.255.255.0
+		  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ifconfig -a
+	br0       Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  inet addr:136.170.210.98  Bcast:136.170.210.255  Mask:255.255.255.0
+		  inet6 addr: fe80::7a2b:cbff:fe9a:1af2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:1638 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:101 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:273767 (273.7 KB)  TX bytes:15208 (15.2 KB)
+
+	eth0      Link encap:Ethernet  HWaddr 00:14:d1:1d:0c:e2  
+		  inet addr:192.168.1.32  Bcast:192.168.1.255  Mask:255.255.255.0
+		  inet6 addr: fe80::214:d1ff:fe1d:ce2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:273 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:22482 (22.4 KB)
+
+	eth1      Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:1735 errors:0 dropped:5 overruns:0 frame:0
+		  TX packets:101 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:319577 (319.5 KB)  TX bytes:16128 (16.1 KB)
+		  Interrupt:21 Memory:f7fe0000-f8000000 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  inet6 addr: ::1/128 Scope:Host
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:242 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:242 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:22030 (22.0 KB)  TX bytes:22030 (22.0 KB)
+
+	virbr0    Link encap:Ethernet  HWaddr ea:9e:a9:c2:ec:3b  
+		  inet addr:192.168.122.1  Bcast:192.168.122.255  Mask:255.255.255.0
+		  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+// note, the internet isn't accessable, but I still can ping the internet gateway
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ping -c 5  136.170.210.6
+	PING 136.170.210.6 (136.170.210.6) 56(84) bytes of data.
+	64 bytes from 136.170.210.6: icmp_seq=1 ttl=255 time=2.78 ms
+	64 bytes from 136.170.210.6: icmp_seq=2 ttl=255 time=0.731 ms
+	64 bytes from 136.170.210.6: icmp_seq=3 ttl=255 time=0.794 ms
+	64 bytes from 136.170.210.6: icmp_seq=4 ttl=255 time=0.454 ms
+	64 bytes from 136.170.210.6: icmp_seq=5 ttl=255 time=0.656 ms
+
+	--- 136.170.210.6 ping statistics ---
+	5 packets transmitted, 5 received, 0% packet loss, time 4001ms
+	rtt min/avg/max/mdev = 0.454/1.083/2.780/0.856 ms
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+[3] create the bridge 
+// run libvirt
+the NIC configuration is:
+	source device:	"Specify shared device name"
+	Bridge name:	"br0"
+	Device model:	"virtio"
+	
+// check the ports
+
+	alshamlan@alshamlan-OptiPlex-980:~$ ifconfig 
+	br0       Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  inet addr:136.170.210.98  Bcast:136.170.210.255  Mask:255.255.255.0
+		  inet6 addr: fe80::7a2b:cbff:fe9a:1af2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:57824 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:353 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:9340671 (9.3 MB)  TX bytes:48815 (48.8 KB)
+
+	eth0      Link encap:Ethernet  HWaddr 00:14:d1:1d:0c:e2  
+		  inet addr:192.168.1.32  Bcast:192.168.1.255  Mask:255.255.255.0
+		  inet6 addr: fe80::214:d1ff:fe1d:ce2/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:5037 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:0 (0.0 B)  TX bytes:227920 (227.9 KB)
+
+	eth1      Link encap:Ethernet  HWaddr 78:2b:cb:9a:1a:f2  
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:69477 errors:0 dropped:177 overruns:0 frame:0
+		  TX packets:666 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:1000 
+		  RX bytes:12650796 (12.6 MB)  TX bytes:83095 (83.0 KB)
+		  Interrupt:21 Memory:f7fe0000-f8000000 
+
+	lo        Link encap:Local Loopback  
+		  inet addr:127.0.0.1  Mask:255.0.0.0
+		  inet6 addr: ::1/128 Scope:Host
+		  UP LOOPBACK RUNNING  MTU:65536  Metric:1
+		  RX packets:5472 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:5472 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:3154143 (3.1 MB)  TX bytes:3154143 (3.1 MB)
+
+	virbr0    Link encap:Ethernet  HWaddr ea:9e:a9:c2:ec:3b  
+		  inet addr:192.168.122.1  Bcast:192.168.122.255  Mask:255.255.255.0
+		  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+		  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:0 
+		  RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+	vnet0     Link encap:Ethernet  HWaddr fe:54:00:d0:0d:29  
+		  inet6 addr: fe80::fc54:ff:fed0:d29/64 Scope:Link
+		  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+		  RX packets:34 errors:0 dropped:0 overruns:0 frame:0
+		  TX packets:464 errors:0 dropped:0 overruns:0 carrier:0
+		  collisions:0 txqueuelen:500 
+		  RX bytes:3890 (3.8 KB)  TX bytes:83049 (83.0 KB)
+
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+	alshamlan@alshamlan-OptiPlex-980:~$ brctl show
+	bridge name	bridge id		STP enabled	interfaces
+	br0		8000.782bcb9a1af2	no		eth1
+								vnet0
+	virbr0		8000.000000000000	yes		
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+// setup the bridge
+	$ sudo ip addr flush dev eth1
+	$ sudo ip addr flush dev vnet0 
+	$ sudo brctl addbr br0			// skipped
+	$ sudo brctl addif br0 eth1 vnet0	// skipped
+	$ sudo ip link set br0 up		// skipped
+
+	alshamlan@alshamlan-OptiPlex-980:~$ sudo brctl show
+	bridge name	bridge id		STP enabled	interfaces
+	br0		8000.782bcb9a1af2	no		eth1
+								vnet0
+	virbr0		8000.000000000000	yes		
+	alshamlan@alshamlan-OptiPlex-980:~$ 
+
+// enable the internet
+	$ sudo ip route add default via 136.170.210.6	// error
+	$ sudo dhclient br0				// error
+
+-----------------------
+"didn't work!!!!!!!"
+-----------------------
+
+// raw	
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr dev eth1
+Command "dev" is unknown, try "ip addr help".
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr 
+add      change   del      flush    help     replace  show     
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr flush 
+br0         deprecated  dynamic     eth1        lo          primary     secondary   tentative   up          vnet0       
+dadfailed   dev         eth0        label       permanent   scope       temporary   to          virbr0      
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr flush d
+dadfailed   deprecated  dev         dynamic     
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr flush de
+deprecated  dev         
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr flush dev 
+br0     eth0    eth1    lo      virbr0  vnet0   
+alshamlan@alshamlan-OptiPlex-980:~$ ip addr flush dev eth1 
+alshamlan@alshamlan-OptiPlex-980:~$ sudo ip addr flush dev eth1 
+alshamlan@alshamlan-OptiPlex-980:~$ sudo ip addr flush dev 
+br0     eth0    eth1    lo      virbr0  vnet0   
+alshamlan@alshamlan-OptiPlex-980:~$ sudo ip addr flush dev vnet0 
+alshamlan@alshamlan-OptiPlex-980:~$ sudo brctl add
+addbr  addif  
+alshamlan@alshamlan-OptiPlex-980:~$ sudo brctl addbr br0
+device br0 already exists; can't create bridge with the same name
+alshamlan@alshamlan-OptiPlex-980:~$ sudo brctl addif br0 eth1 vnet0
+device eth1 is already a member of a bridge; can't enslave it to bridge br0.
+alshamlan@alshamlan-OptiPlex-980:~$ ip link 
+add     delete  help    set     show    
+alshamlan@alshamlan-OptiPlex-980:~$ ip link s
+set   show  
+alshamlan@alshamlan-OptiPlex-980:~$ ip link set 
+br0     eth0    eth1    lo      virbr0  vnet0   
+alshamlan@alshamlan-OptiPlex-980:~$ ip link set br0 up
+RTNETLINK answers: Operation not permitted
+alshamlan@alshamlan-OptiPlex-980:~$ sudo ip link set br0 up
+alshamlan@alshamlan-OptiPlex-980:~$ sudo brctl show
+bridge name	bridge id		STP enabled	interfaces
+br0		8000.782bcb9a1af2	no		eth1
+							vnet0
+virbr0		8000.000000000000	yes		
+alshamlan@alshamlan-OptiPlex-980:~$ sudo ip route add 
+RTNETLINK answers: No such device
+alshamlan@alshamlan-OptiPlex-980:~$ sudo ip route add default via 136.170.210.6
+RTNETLINK answers: File exists
+alshamlan@alshamlan-OptiPlex-980:~$ dh
+dh                              dh_fixperms                     dh_installlogrotate             dh_movefiles
+dh_apparmor                     dh_gconf                        dh_installman                   dh_perl
+dh_auto_build                   dh_gencontrol                   dh_installmanpages              dh_perl_dbi
+dh_auto_clean                   dh_icons                        dh_installmenu                  dh_prep
+dh_auto_configure               dh_install                      dh_installmime                  dh_pypy
+dh_auto_install                 dh_installcatalogs              dh_installmodules               dh_pysupport
+dh_auto_test                    dh_installchangelogs            dh_installpam                   dh_python2
+dh_autotools-dev_restoreconfig  dh_installcron                  dh_installppp                   dh_python3
+dh_autotools-dev_updateconfig   dh_installdeb                   dh_installtex                   dh_quilt_patch
+dh_bash-completion              dh_installdebconf               dh_installudev                  dh_quilt_unpatch
+dh_bugfiles                     dh_installdirs                  dh_installwm                    dh_scrollkeeper
+dh_builddeb                     dh_installdocs                  dh_installxfonts                dh_shlibdeps
+dh_clean                        dh_installemacsen               dh_installxmlcatalogs           dh_strip
+dhclient                        dh_installexamples              dh_link                         dh_suidregister
+dhclient-script                 dh_installgsettings             dh_lintian                      dh_testdir
+dh_compress                     dh_installifupdown              dh_listpackages                 dh_testroot
+dhcpd                           dh_installinfo                  dh_make                         dh_ucf
+dh_desktop                      dh_installinit                  dh_makeshlibs                   dh_undocumented
+dh_dkms                         dh_installlogcheck              dh_md5sums                      dh_usrlocal
+alshamlan@alshamlan-OptiPlex-980:~$ dhc
+dhclient         dhclient-script  dhcpd            
+alshamlan@alshamlan-OptiPlex-980:~$ dhc
+dhclient         dhclient-script  dhcpd            
+alshamlan@alshamlan-OptiPlex-980:~$ dhclient br0 
+RTNETLINK answers: Operation not permitted
+alshamlan@alshamlan-OptiPlex-980:~$ sudo dhclient br0 
+RTNETLINK answers: File exists
+alshamlan@alshamlan-OptiPlex-980:~$ 
+

@@ -1,0 +1,29 @@
+//
+
+// 
+
+// using iso with qemu-system-x86_64 ; worked 
+qemu-system-x86_64 -net user -cdrom ubuntu-12.04.2-desktop-amd64.iso
+
+// install qemu-system
+sudo apt-get install qemu-system
+
+// using iso; didn't work
+qemu-x86_64 -net user -cdrom ubuntu-12.04.2-desktop-amd64.iso
+
+//  first attempt; worked!!
+qemu-system-i386 linux-0.2.img
+
+// -------------------------
+
+// for 64bit ubuntu
+qemu-system-x86_64 precise-server-cloudimg-amd64-disk1.img
+
+// having 4 cores; worked!!
+qemu-system-i386 -smp 4 linux-0.2.img
+
+// using iso
+qemu-system-i386 -net user -cdrom my_iso.iso
+
+// installing iso to partition 
+qemu -localtime -net user -net nic -m 256 -cdrom minix.iso -hda minix.img -boot d

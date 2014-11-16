@@ -1,0 +1,80 @@
+//
+
+Sat Jun 28, 2014
+----------------------------
+
+//
+qemu-system-mipsel -kernel bin/malta/openwrt-malta-le-vmlinux.elf -netdev tap,helper="/usr/local/libexec/qemu-bridge-helper --br=virbr0",id=hn0 -device virtio-net-pci,netdev=hn0,id=nic1 -nographic
+
+// didn't work
+qemu-system-mipsel -kernel bin/malta/openwrt-malta-le-vmlinux.elf -m 128M -nographic
+
+// didn't work
+qemu-system-mipsel -kernel bin/malta/openwrt-malta-le-vmlinux.elf -net nic -net user -nographic
+
+
+Mon Jun 3, 2014
+----------------
+objective: 
+[1] analyze openwrt and familize yourself with it
+
+source:
+[1] https://dev.openwrt.org/wiki/GetSource
+[2] http://fosiao.com/content/running-openwrt-under-qemu
+
+steps;
+[1] cloning the repo 
+// normally
+	$ git clone git://git.openwrt.org/openwrt.git
+// or begind the firewall
+	$ git clone http://git.openwrt.org/openwrt.git
+	
+[2] analyzeing make
+// write "make" the press <tab> until you get the following
+
+alshamlan@alshamlan-OptiPlex-980:~/openwrt/openwrt$ make 
+clean                dirclean             download             kernel_nconfig       oldconfig            prereq               world
+config               distclean            FORCE                kernel_oldconfig     prepare_kernel_conf  printdb              
+config-clean         docs                 help                 Makefile             prepare-mk           scripts/             
+defconfig            docs/                kernel_menuconfig    menuconfig           prepare-tmpinfo      tmp/                 
+alshamlan@alshamlan-OptiPlex-980:~/openwrt/openwrt$ make 
+
+[3] use " make menuconfig"
+
+// before running "make menuconfig" make sure that you have all needed dependeces in your system 
+	$ sudo apt-get update
+	$ sudo apt-get install -y subversion build-essential git-core
+	$ sudo apt-get install -y build-essential subversion libncurses5-dev zlib1g-dev gawk gcc-multilib flex git-core gettext
+	
+// run "make menuconfig"
+	$ make menuconfig
+	
+[4] build
+	$ time make -j8
+	
+[5] using qemu
+	$ qemu-system-mipsel -kernel bin/malta/openwrt-malta-le-vmlinux.elf -nographic -m 64	// kernel panic!!
+
+
+// still unedited
+//-------------
+After everything is built, you will get the QEMU image at:
+bin/malta/openwrt-malta-be-vmlinux.elf
+
+To run this under QEMU, I need install QEMU on Ubuntu 10.04 64bit first:
+
+sudo aptitude install qemu-kvm-extras
+
+Now it's time to run this newly built OpenWRT image under QEMU:
+
+qemu-system-mips -kernel bin/malta/openwrt-malta-be-vmlinux.elf -nographic -m 64
+#after it's fully powered up(i.e. wait until you see: pcnet32 0000:00:0b.0: eth0: link up), do:
+udhcpc -i br-lan #this should grab a 10.0.*.* IP address, I got 10.0.2.15
+ping 10.0.2.2 #to test internal network
+scp userid@my-outside-server-ip:/tmp/test.img /tmp
+#now you can reach external network, however, you can not ping.
+
+To quit QEMU, do:
+CTRL-A c, then type: quit
+
+This is it. You can also choose QEMU for ARM similarly.

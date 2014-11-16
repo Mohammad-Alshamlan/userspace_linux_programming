@@ -1,0 +1,9 @@
+﻿Tue Jun 24, 2014
+--------------------------
+
+Objective:
+[1] create embedded OS and test it through qemu
+[2] after the desirable OS has been developed, then use it to create a Lived-USB  
+
+To-do-list:
+

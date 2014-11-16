@@ -1,0 +1,42 @@
+//
+
+Thu Jul 24, 2014
+----------------
+objective:
+[1] run u-boot natively from sandbox in Ubuntu system
+
+steps:
+[1] cloning u-boot git repo
+	$ cd <where you want>
+	$ mkdir u-boot && cd u-boot
+	$ git clone git://git.denx.de/u-boot.git
+	// or behind the firewall
+	$ git clone http://git.denx.de/u-boot.git
+
+[2] build your background
+// first read the "README"!! for info
+	$  gedit README &
+// read sandbox README
+	$ gedit board/sandbox/README.sandbox
+
+[3]
+	// install the needed packages
+	$ sudo apt-get -y install libsdl1.2-dev device-tree-compiler u-boot-tools
+	// clean the sandbox
+	$ make distclean
+	// build
+	$ make sandbox_config all
+[4] running u-boot 
+	$ ./u-boot
+// or you can run with LCD and keyboard emulation	
+	$ ./u-boot -d u-boot.dtb -l
+
+
+[5] to exit from u-boot sandbox
+	[1] from the keyboard click: 'c' + <Ctrl>
+	[2] or run the following command in u-boot
+		$ reset
+		
+to-do-list:
+[1] use "Memory Emulation" and read the sandbox README if you don't how to use it
+[2] 

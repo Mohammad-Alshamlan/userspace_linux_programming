@@ -1,0 +1,210 @@
+//
+
+Sun Oct 5, 2014
+---------------
+objectives:
+[1] forking buildroot into a new project
+[2] create a c code that runs onto embedded OS, which is the buildroot output
+[3] use qemu to run the system
+[4] try to use u-boot 
+
+background:
+>> to get help infomation for buildroot, run the following command:
+	$ make help
+	
+	// raw result
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ make help
+	Cleaning:
+	  clean                  - delete all files created by build
+	  distclean              - delete all non-source files (including .config)
+
+	Build:
+	  all                    - make world
+	  toolchain              - build toolchain
+	  <package>-rebuild      - force recompile <package>
+	  <package>-reconfigure  - force reconfigure <package>
+	  <package>-graph-depends    - generate graph of the dependency tree for package
+
+	Configuration:
+	  menuconfig             - interactive curses-based configurator
+	  nconfig                - interactive ncurses-based configurator
+	  xconfig                - interactive Qt-based configurator
+	  gconfig                - interactive GTK-based configurator
+	  oldconfig              - resolve any unresolved symbols in .config
+	  silentoldconfig        - Same as oldconfig, but quietly, additionally update deps
+	  olddefconfig           - Same as silentoldconfig but sets new symbols to their default value
+	  randconfig             - New config with random answer to all options
+	  defconfig              - New config with default answer to all options
+		                     BR2_DEFCONFIG, if set, is used as input
+	  savedefconfig          - Save current config as ./defconfig (minimal config)
+	  allyesconfig           - New config where all options are accepted with yes
+	  allnoconfig            - New config where all options are answered with no
+	  randpackageconfig      - New config with random answer to package options
+	  allyespackageconfig    - New config where pkg options are accepted with yes
+	  allnopackageconfig     - New config where package options are answered with no
+
+	Documentation:
+	  manual                 - build manual in all formats
+	  manual-html            - build manual in HTML
+	  manual-split-html      - build manual in split HTML
+	  manual-pdf             - build manual in PDF
+	  manual-text            - build manual in text
+	  manual-epub            - build manual in ePub
+	  graph-build            - generate graphs of the build times
+	  graph-depends          - generate graph of the dependency tree
+
+	Miscellaneous:
+	  source                 - download all sources needed for offline-build
+	  source-check           - check selected packages for valid download URLs
+	  external-deps          - list external packages used
+	  legal-info             - generate info about license compliance
+
+	  make V=0|1             - 0 => quiet build (default), 1 => verbose build
+	  make O=dir             - Locate all output files in "dir", including .config
+
+	Built-in configs:
+	  altera_sockit_defconfig             - Build for altera_sockit
+	  arm_foundationv8_defconfig          - Build for arm_foundationv8
+	  armadeus_apf27_defconfig            - Build for armadeus_apf27
+	  armadeus_apf28_defconfig            - Build for armadeus_apf28
+	  armadeus_apf51_defconfig            - Build for armadeus_apf51
+	  armadeus_apf9328_defconfig          - Build for armadeus_apf9328
+	  at91rm9200df_defconfig              - Build for at91rm9200df
+	  at91sam9260dfc_defconfig            - Build for at91sam9260dfc
+	  at91sam9260eknf_defconfig           - Build for at91sam9260eknf
+	  at91sam9261ek_defconfig             - Build for at91sam9261ek
+	  at91sam9263ek_defconfig             - Build for at91sam9263ek
+	  at91sam9g20dfc_defconfig            - Build for at91sam9g20dfc
+	  at91sam9g45m10ek_defconfig          - Build for at91sam9g45m10ek
+	  atmel_xplained_defconfig            - Build for atmel_xplained
+	  atngw100_defconfig                  - Build for atngw100
+	  atstk100x_defconfig                 - Build for atstk100x
+	  beaglebone_defconfig                - Build for beaglebone
+	  calao_qil_a9260_defconfig           - Build for calao_qil_a9260
+	  calao_snowball_defconfig            - Build for calao_snowball
+	  calao_tny_a9g20_lpw_defconfig       - Build for calao_tny_a9g20_lpw
+	  calao_usb_a9260_defconfig           - Build for calao_usb_a9260
+	  calao_usb_a9263_defconfig           - Build for calao_usb_a9263
+	  calao_usb_a9g20_lpw_defconfig       - Build for calao_usb_a9g20_lpw
+	  cubieboard2_defconfig               - Build for cubieboard2
+	  cubieboard_defconfig                - Build for cubieboard
+	  freescale_imx6dlsabresd_defconfig   - Build for freescale_imx6dlsabresd
+	  freescale_imx6qsabresd_defconfig    - Build for freescale_imx6qsabresd
+	  freescale_imx6sololiteevk_defconfig - Build for freescale_imx6sololiteevk
+	  freescale_mpc8315erdb_defconfig     - Build for freescale_mpc8315erdb
+	  freescale_p1010rdb_pa_defconfig     - Build for freescale_p1010rdb_pa
+	  gnublin_defconfig                   - Build for gnublin
+	  integrator926_defconfig             - Build for integrator926
+	  kb9202_defconfig                    - Build for kb9202
+	  lego_ev3_defconfig                  - Build for lego_ev3
+	  mini2440_defconfig                  - Build for mini2440
+	  minnowboard_defconfig               - Build for minnowboard
+	  mx53loco_defconfig                  - Build for mx53loco
+	  nitrogen6x_defconfig                - Build for nitrogen6x
+	  olimex_imx233_olinuxino_defconfig   - Build for olimex_imx233_olinuxino
+	  openblocks_a6_defconfig             - Build for openblocks_a6
+	  pandaboard_defconfig                - Build for pandaboard
+	  qemu_aarch64_virt_defconfig         - Build for qemu_aarch64_virt
+	  qemu_arm_nuri_defconfig             - Build for qemu_arm_nuri
+	  qemu_arm_versatile_defconfig        - Build for qemu_arm_versatile
+	  qemu_arm_vexpress_defconfig         - Build for qemu_arm_vexpress
+	  qemu_microblazebe_mmu_defconfig     - Build for qemu_microblazebe_mmu
+	  qemu_microblazeel_mmu_defconfig     - Build for qemu_microblazeel_mmu
+	  qemu_mips64_malta_defconfig         - Build for qemu_mips64_malta
+	  qemu_mips64el_malta_defconfig       - Build for qemu_mips64el_malta
+	  qemu_mips_malta_defconfig           - Build for qemu_mips_malta
+	  qemu_mipsel_malta_defconfig         - Build for qemu_mipsel_malta
+	  qemu_ppc64_pseries_defconfig        - Build for qemu_ppc64_pseries
+	  qemu_ppc_g3beige_defconfig          - Build for qemu_ppc_g3beige
+	  qemu_ppc_mpc8544ds_defconfig        - Build for qemu_ppc_mpc8544ds
+	  qemu_ppc_virtex_ml507_defconfig     - Build for qemu_ppc_virtex_ml507
+	  qemu_sh4_r2d_defconfig              - Build for qemu_sh4_r2d
+	  qemu_sparc_ss10_defconfig           - Build for qemu_sparc_ss10
+	  qemu_x86_64_defconfig               - Build for qemu_x86_64
+	  qemu_x86_defconfig                  - Build for qemu_x86
+	  qemu_xtensa_lx60_defconfig          - Build for qemu_xtensa_lx60
+	  qmx6_defconfig                      - Build for qmx6
+	  raspberrypi_defconfig               - Build for raspberrypi
+	  s6lx9_microboard_defconfig          - Build for s6lx9_microboard
+	  sheevaplug_defconfig                - Build for sheevaplug
+	  telit_evk_pro3_defconfig            - Build for telit_evk_pro3
+	  ts5x00_defconfig                    - Build for ts5x00
+	  wandboard_defconfig                 - Build for wandboard
+	  zedboard_defconfig                  - Build for zedboard
+
+	See docs/README, or generate the Buildroot manual for further details
+
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ 
+	
+
+>> to know the used command to run buildroot output onto qemu
+	// first you have all these board are qemu supported
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ ls -l board/qemu/
+	total 76
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Aug 29 18:39 aarch64-virt
+	drwxrwxr-x 2 alshamlan alshamlan 4096 May 23 23:53 arm-nuri
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 arm-versatile
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 arm-vexpress
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 microblazebe-mmu
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 microblazeel-mmu
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 mips64el-malta
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 mips64-malta
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 mipsel-malta
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 mips-malta
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Sep  7 19:18 powerpc64-pseries
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 powerpc-g3beige
+	drwxrwxr-x 2 alshamlan alshamlan 4096 May 23 23:53 powerpc-mpc8544ds
+	drwxrwxr-x 2 alshamlan alshamlan 4096 May 23 23:53 powerpc-virtex-ml507
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 sh4-r2d
+	drwxrwxr-x 3 alshamlan alshamlan 4096 Oct  5 12:07 sparc-ss10
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 x86
+	drwxrwxr-x 2 alshamlan alshamlan 4096 Oct  5 12:07 x86_64
+	drwxrwxr-x 3 alshamlan alshamlan 4096 Oct  5 12:07 xtensa-lx60
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ 
+
+	// check the readme file to see the qemu command
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ cat board/qemu/arm-versatile/readme.txt 
+	Run the emulation with:
+
+	  qemu-system-arm -M versatilepb -kernel output/images/zImage -drive file=output/images/rootfs.ext2,if=scsi -append "root=/dev/sda console=ttyAMA0,115200" -serial stdio -net nic,model=smc91c111 -net user
+
+	The login prompt will appear in the terminal that started Qemu. The
+	graphical window is the framebuffer.
+
+	Tested with QEMU 2.1.0
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ 
+	 
+
+steps:
+[1] download git repo
+
+	$ git clone git://git.buildroot.net/buildroot
+	$ cd buildroot/
+	
+[2] create a branch such as "fork"
+	
+	$ git checkout -b fork
+	
+	// raw result
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ git checkout -b fork
+	Switched to a new branch 'fork'
+	alshamlan@alshamlan-K55A:~/buildroot/buildroot$ 
+	
+[3] make the system self-contain
+	// configure the build to run in qemu arm ISA
+	$ make qemu_arm_versatile_defconfig
+	// download all the packages without building
+	$ make source
+
+[4] integrate two git repo
+idea: I have my own git repo, which is hosted in github. buildroot repo is ready for my adoptation, so how I combine both of them.
+	// go to your git repo, and the buildroot git repo as follows:
+	$ git submodule add ~/buildroot/buildroot/ buildroot
+	// add the new buildroot directory
+	$ git add buildroot/
+	// git commit
+	$ git commit -m 'adding buildroot git repo'
+	// testing the build
+	$ cd buildroot
+	$ make qemu_arm_versatile_defconfig	// should be removed!!
+	$ make
