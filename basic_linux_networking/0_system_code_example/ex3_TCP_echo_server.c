@@ -119,8 +119,7 @@ void serve(int port)
 	alen = sizeof(client_addr);     /* length of address */
 
 	for (;;) {
-		while ((rqst = accept(svc,
-		                (struct sockaddr *)&client_addr, &alen)) < 0) {
+		while ((rqst = accept(svc, (struct sockaddr *)&client_addr, &alen)) < 0) {
 			/* we may break out of accept if the system call */
 			/* was interrupted. In this case, loop back and */
 			/* try again */
