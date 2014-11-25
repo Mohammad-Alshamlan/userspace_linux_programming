@@ -1,21 +1,21 @@
 ################################
 # makefile settings	       #
+# version: Nov25_2014	       #
 ################################
 SHELL := /bin/bash
 CC=gcc
-CFLAGS= -g -Wall
+CFLAGS += -g -Wall
 RM := $(shell which rm)
 RM += -f 
-OBJ := $(shell (ls *.c | cut -d'.' --complement -f2-))
+OBJ = $(wildcard *.c)
 ################################
 # generic makefile for c code  #
 ################################
 all: $(OBJ)
 
 $(OBJ): 
-	$(CC) $(CFLAGS) $@.c -o $@ 
+	$(CC) $(CFLAGS) $@ -o $(@:%.c=%)
 
 clean:
-	$(RM) $(OBJ) 
-	# deleting the temp hiden saving files
-	$(RM) *~
+	$(RM) $(OBJ:%.c=%) *~
+

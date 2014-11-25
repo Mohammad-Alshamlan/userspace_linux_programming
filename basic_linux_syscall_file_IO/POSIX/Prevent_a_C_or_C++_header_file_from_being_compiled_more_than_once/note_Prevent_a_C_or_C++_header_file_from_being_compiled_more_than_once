@@ -1,0 +1,57 @@
+//
+
+Tue Nov 25, 2014
+------------------
+"objectives:
+[1] Prevent a C or C++ header file from being compiled more than once
+[2] To prevent a C or C++ header file from being compiled more than once as part of any given compilation unit, regardless of how many times it is included by other files
+
+source:
+[1] http://www.microhowto.info/howto/prevent_a_c_or_c++_header_file_from_being_compiled_more_than_once.html
+
+
+"Background:
+	Within a C or C++ program there are some types of declaration that cannot be safely repeated within a given compilation unit. These include class, struct, union, enum and function declarations (except for incomplete ones) and typedefs (in C but not in C++).
+
+	This can be problematic when header files include other header files, and doubly so when they are part of a library intended for use by other programmers.
+
+	(A compilation unit typically consists of one source file, and all of the header files that are directly or indirectly included by that source file.)
+
+
+
+"Scenario:
+
+	Suppose that you are writing a library in C++ called libfoobar which provides a number of header files. Three of these are named foo.h, bar.h and baz.h. The files foo.h and bar.h both include baz.h.
+
+	The file qux.cc is part of a program that uses libfoobar. It includes both foo.h and bar.h. In the absence of any preventative measures, compiling qux.cc would cause baz.h to be compiled twice. This is an error because baz.h contains a class declaration. You wish to prevent this or any similar errors from occurring.
+
+
+"Method:
+
+	The standard method for preventing a header file from being compiled more than once is to add an include guard. This consists of:
+
+	a #define directive, which sets a macro when the header is compiled to indicate that it should not be compiled again, and
+	an #ifndef directive, which prevents the header from being compiled if the macro has already been defined.
+	For example, using the include guard macro name LIBFOOBAR_BAZ for the file baz.h:
+
+	#ifndef LIBFOOBAR_BAZ
+	#define LIBFOOBAR_BAZ
+
+	class baz
+	{
+	    // ...
+	};
+
+	#endif
+
+	The chosen macro name must be unique within the program in question. In the case of libraries the aim should be to make it globally unique, so that indepenently developed libraries can be used alongside each other without interference. To this end it is helpful to use a systematic naming convention for the include guard macros. Typically this would incorporate the name of the program or library, and the relative pathname of the header file in question (as in the example above).
+
+	If you examine the system headers in /usr/include then you may encounter include guard macro names that begin with an underscore. For example, the header file <stdlib.h> from the GNU C Library uses the name _STDLIB_H for its include guard. Do not mimic this convention: those names are reserved for use by the compiler and standard library, and using them for other any purpose results in undefined behaviour. The specific macro names to avoid are those that begin with:
+
+	a double underscore, or
+	an underscore followed by an upper case letter.
+	It is considered good practice to add include guards to all header files, whether or not they are technically needed. This avoids the need to determine which guards are necessary, eliminates the possibility of making a mistake, and ensures that the code is robust against future changes.
+
+
+
+

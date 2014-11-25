@@ -1,0 +1,40 @@
+//
+
+Tue Nov 25, 2014
+-----------------
+objectives:
+[1] Suppress echoing of commands in a makefile
+[2] To prevent commands in a makefile from being echoed before they are executed
+
+source:
+[1] http://www.microhowto.info/howto/suppress_echoing_of_commands_in_a_makefile.html
+
+Background:
+The default behaviour of make is to echo each command to stdout before it is executed. This is usually helpful because it places error messages in context and gives an indication of progress. However there are some situations where echoing is less desirable, notably when using the echo command to print messages. In that case, allowing the command to be both echoed and executed causes the message to be printed twice.
+
+study:
+[1] Suppose that a makefile contains the following rule:
+
+	foo: foo.c
+		echo Building foo module
+		gcc -o $@ $<
+	Notes:
+	[1] "$@" is the name of the target. This allows you to easily write a generic action that can be used for multiple different targets that produce different output files. For example, the following two targets produce output files named client and server respectively.
+
+		client: client.c
+			$(CC) client.c -o $@
+
+		server: server.c
+			$(CC) server.c -o $@
+		
+	[2] "$<" If you only need the first dependency, then "$<" is for you. Using "$<" can be safer than relying on "$^" when you have only a single dependency that needs to appear in the commands executed by the target. If you start by using "$^" when you have a single dependency, if you then add a second, it may be problematic, whereas if you had used $< from the beginning, it will continue to work. (Of course, you may want to have all dependencies show up. Consider your needs carefully.)
+		
+the problem is: the default behaviour is to echo both commands. You wish to suppress this for the echo command but not for the mkfoo command.
+
+[2] Prepend an at sign (‘@’) to any command that you do not want to be echoed:
+
+	foo: foo.c
+		@echo Building foo module
+		gcc -o $@ $<
+
+This should have the desired effect with any POSIX-compatible implementation of make.
