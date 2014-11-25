@@ -35,6 +35,9 @@
  *	The received echoed message:	exit
  *	client is exiting now!!
  *	alshamlan@alshamlan-Precision-M6700:/tmp/interview$	
+ * 
+ * to-do-list:
+ *	[1] the server just talks to the first client and ignores other clients that came after the first one needs a fix
  */
 
 #include<stdio.h>

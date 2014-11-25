@@ -2,6 +2,38 @@
  * Write a c program to reverse a string?
  */
 
+#include<stdio.h>
+#include<string.h>
+
+void strrev(char *str)
+{
+	size_t i, j, len=strlen(str);
+	char tmp;
+	for(i=0, j=len-1; i < len/2 ; i++, j--){
+		tmp=str[i];
+		str[i]=str[j];
+		str[j]=tmp;	
+	}
+		
+}
+
+int main(int argc, char *argv[])
+{
+	char str[]="part dog";
+	puts(str);
+	strrev(str);
+	puts(str);
+	return 0;
+}
+
+/*
+alshamlan@alshamlan-Precision-M6700:/tmp/interview$ ./strrev 
+part dog
+god trap
+alshamlan@alshamlan-Precision-M6700:/tmp/interview$
+*/
+
+#if 0
 // mine
 #include<stdio.h>
 #include<string.h>
@@ -18,6 +50,7 @@ int main()
 	strcpy(str, temp);
 	return !printf("%s\n",str);	
 }
+#endif
 
 /*
 #include<stdio.h>
