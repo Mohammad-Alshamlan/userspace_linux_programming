@@ -1,0 +1,55 @@
+//
+
+Fri Dec 5, 2014
+------------------
+objectives:
+[1] having an easy accessible reference
+
+notes:
+[1] text replacement
+
+	// example
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo $PATH
+	/home/alshamlan/usr/p4v-2012.1.500245/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${PATH//[:]/' '}
+	/home/alshamlan/usr/p4v-2012.1.500245/bin /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin /usr/games /usr/local/games
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ 
+
+	// useful application is to see all avalibe commands
+	(bash) $ ls -lsh `echo -e ${PATH//[:]/'\n'}`
+	
+[2] truncate strings
+
+	// example
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo $test 
+	SOMETHING
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test:3} 
+	ETHING
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test::3} 
+	SOM
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test::3:2} 
+	bash: test: 3:2: syntax error in expression (error token is ":2")
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test::3:1} 
+	bash: test: 3:1: syntax error in expression (error token is ":1")
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test:3:1} 
+	E
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test:3} 
+	ETHING
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test:3::1} 
+	bash: test: :1: syntax error: operand expected (error token is ":1")
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test:3::1} 
+
+[3] changing the case letter
+
+	// example
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ test=SomEthING
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo $test 
+	SomEthING
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test,,} 
+	something
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ echo ${test^^} 
+	SOMETHING
+	alshamlan@alshamlan-Precision-M6700:~/Perforce/malshamlan_alshamlan-Precision-M6700_454/depot/ipstb/diagnostics2.0$ 
+	
+	// useful applications
+	[1] when comparing files that you don't care about their case sensitivity
