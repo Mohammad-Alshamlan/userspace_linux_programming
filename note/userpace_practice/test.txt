@@ -1,1 +1,0 @@
-This is a longer example about 140 lines long. It reads a text file into a string buffer, extracts words from the text adding them to a list of unique words and counts how many times each word was found.
