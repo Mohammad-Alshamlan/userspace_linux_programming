@@ -1,0 +1,27 @@
+//
+
+Mon Dec 15, 2014
+-----------------
+objectives:
+[1] converting number base radix with printf which is bash command-line that has similarity with C printf()
+
+notes:
+[1] converting Hex to Dec
+	alshamlan@alshamlan-Precision-M6700:~$ printf "%d\n" 0xb0
+	176
+	alshamlan@alshamlan-Precision-M6700:~$ 
+
+[2] converting Octal to Decimal
+	alshamlan@alshamlan-Precision-M6700:~$ printf "%d\n" 010
+	8
+	alshamlan@alshamlan-Precision-M6700:~$ 
+
+[3] converting Decimal to Hex
+	alshamlan@alshamlan-Precision-M6700:~$ printf "%x\n" 10
+	a
+	alshamlan@alshamlan-Precision-M6700:~$ 
+
+[4] converting Hexdecimal to Octoal
+	alshamlan@alshamlan-Precision-M6700:~$ printf "%o\n" 0x8
+	10
+	alshamlan@alshamlan-Precision-M6700:~$ 

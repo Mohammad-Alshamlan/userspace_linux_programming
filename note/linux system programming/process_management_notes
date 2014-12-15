@@ -1,0 +1,12 @@
+//
+
+Fri Doc 5, 2014
+--------------------
+objectives:
+[1] finding interesting topics
+[2] try to implement these topics to be reusable for future uses, so try to separate these topics if you can
+[3] know more about linux system, and dig deeper in the relationship between the userspace and kernelspace 
+
+to-do-list:
+	[1] write a c code that uses atexit()
+	[2] write a daemon in C?
