@@ -1,6 +1,28 @@
 /*
  * The idea is to copy a binary file such as a picture. 
  * Note, we can't use open(), read(), or write() in binary files
+ * 
+ * to send the image through socket programming, you need to be aware of the following:
+ *	[1] You need to open the file in binary mode ("rb" for reading, "wb" for writing), not the default text mode. On Windows (and any other systems which do line ending translation), the 
+ *	    stdio library converts LFs (bytes 0x0A) into CRLF pairs (the two bytes 0x0D 0x0A) when writing, and it does the inverse translation when reading. For non-text data like JPEG files, 
+ *	    this corrupts the data.
+ *
+ *	[2] There's no need to be sending your "handshake" bytes after each send. TCP/IP already handles acknowledgements/resends/flow control/etc. You can assume that as long as send()/write() 
+ *	    returns a positive value, then that many bytes were received by the other peer.
+ *
+ *	[3] send()/write() may not send all of the data you ask it to—they may do a partial send. If that happens, you need to keep trying to send the rest of the buffer in a loop.
+ *
+ *	[4] sizeof(char) is guaranteed to be 1 by the C language standard, there's rarely a need to say sizeof(char) when instead your code will be much clearer without it
+ *
+ *	[5] In the client code, there's no need to use that ioctl to determine how much data can be read without blocking because you're just looping again—your code will spin at 100% CPU while 
+ *	    there's no data available. Just let the read() call block. If you're running this code on a laptop, your battery will thank you.
+ *
+ *	[6] Likewise, the client will almost definitely be getting partial reads, you're not going to receive the whole file in a single call. You need to write out whatever data you get, then 
+ *	    loop and receive again.
+ *
+ *	[7] When you send the image size over the socket at the start, you might get a different value on the client if the two systems are not of the same endianness. In order to make your
+ *	    code bulletproof, you need to convert the data to network order (big-endian) when sending it, then convert it back to host (native) order after receiving it. You can use the 
+ *	    ntohl(3) and htonl(3) functions to do these conversions for 4-byte values.
  */
 
 #include<unistd.h>
