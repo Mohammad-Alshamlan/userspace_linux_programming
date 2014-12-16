@@ -1,19 +1,27 @@
 ################################
 # makefile settings	       #
+# version: Nov25_2014	       #
 ################################
 SHELL := /bin/bash
 CC=gcc
-CFLAGS= -g -Wall
+CFLAGS += -g -Wall
 RM := $(shell which rm)
 RM += -f 
-OBJ := $(shell (ls *.c | cut -d'.' --complement -f2-))
+OBJ = $(wildcard *.c)
 ################################
 # generic makefile for c code  #
 ################################
+.PHONY: all 
 all: $(OBJ)
 
 $(OBJ): 
-	$(CC) $(CFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@ -o $(@:%.c=%)
+	# let modify .gitignore if there is a new compiled executable
+	if [ "$(shell grep $(@:%.c=%) .gitignore)" != "$(@:%.c=%)" ];	\
+	then								\
+		echo $(@:%.c=%) >> .gitignore;				\
+	fi
 
 clean:
-	$(RM) $(OBJ) 
+	$(RM) $(OBJ:%.c=%) *~
+

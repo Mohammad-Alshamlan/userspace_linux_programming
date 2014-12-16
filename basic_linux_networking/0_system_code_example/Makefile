@@ -15,6 +15,11 @@ all: $(OBJ)
 
 $(OBJ): 
 	$(CC) $(CFLAGS) $@ -o $(@:%.c=%)
+	# let modify .gitignore if there is a new compiled executable
+	if [ "$(shell grep $(@:%.c=%) .gitignore)" != "$(@:%.c=%)" ];	\
+	then								\
+		echo $(@:%.c=%) >> .gitignore;				\
+	fi
 
 clean:
 	$(RM) $(OBJ:%.c=%) *~
