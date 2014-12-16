@@ -1,0 +1,70 @@
+//
+
+Wed Jun 19, 2014
+-----------------
+objective:
+[1] understanding and analyzing a makefile code that I saw, but I couldn't modify!! Due to lack of makefile advance knowledge.
+
+analysis:
+
+// the code that I saw, which is shown below as is:
+
+	#-----------------------------------------------------------------------------
+	# ./Makefile.common
+	#
+	TOP_BUILD_DIR := $(shell cd $(PATH_TO_TOP) && pwd)
+
+	MAKEFILE_CONFIG_PRESENT := $(shell if [ -f $(TOP_BUILD_DIR)/Makefile.config ] ; then echo "yes" ; fi)
+	ifneq '$(MAKEFILE_CONFIG_PRESENT)' 'yes'
+	$(warning You have not setup a top-level Makefile.config.        )
+	$(warning Please copy Makefile.config.sample to Makefile.config, )
+	$(warning and customize it as necessary.                         )
+	$(error Cannot proceed with build!)
+	endif
+
+	include $(PATH_TO_TOP)/Makefile.config
+	
+// including analysis in the code of Makefile.common
+
+	#-----------------------------------------------------------------------------
+	# ./Makefile.common	// this file is Make.common which is included by Makefile in the beginning
+	#
+	TOP_BUILD_DIR := $(shell cd $(PATH_TO_TOP) && pwd)	// ??? why just simply do, TOP_BUILD_DIR=$(PATH_TO_TOP)
+	
+	// check the existence of the file, theough the use bash to do this even though makefile has a built-in approach to do this!! 
+	MAKEFILE_CONFIG_PRESENT := $(shell if [ -f $(TOP_BUILD_DIR)/Makefile.config ] ; then echo "yes" ; fi)
+	// if the file exist, then branch is not taken!!
+	ifneq '$(MAKEFILE_CONFIG_PRESENT)' 'yes'
+	$(warning You have not setup a top-level Makefile.config.        )	// warining on the terminal
+	$(warning Please copy Makefile.config.sample to Makefile.config, )	// warining on the terminal
+	$(warning and customize it as necessary.                         )	// warining on the terminal
+	$(error Cannot proceed with build!)	// it seems tha "!)" means, the makefile must exit after this warnning ends!!
+	endif
+
+	include $(PATH_TO_TOP)/Makefile.config	// of course, to reach this point that means Makefile.config exist, so include it!!!
+
+
+// how the Makefile called Makefile.common, shown as is:
+
+	#
+	# ./Makefile
+	#
+	PATH_TO_TOP = .
+	export BUILD_VERSION := $(shell date -u +%Y%m%d_%H%M)
+	include $(PATH_TO_TOP)/Makefile.common
+
+	.PHONY: all
+	
+// including analysis in the code of Makefile
+
+	#
+	# ./Makefile
+	#
+	PATH_TO_TOP = .
+	export BUILD_VERSION := $(shell date -u +%Y%m%d_%H%M)
+	include $(PATH_TO_TOP)/Makefile.common	// including the above code segmant!!
+
+	.PHONY: all	// I tried to include the above code in all target, but the makefile starting to behave awkwardly
+			// I don't really know, but I go the apparition that the way we used the warnning method cannot be in the target
+			// I mean this warnning method is just before executaing any target or phony target!!
+	

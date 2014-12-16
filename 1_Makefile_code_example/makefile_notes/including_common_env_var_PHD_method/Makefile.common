@@ -1,0 +1,302 @@
+#-----------------------------------------------------------------------------
+# ./Makefile.common
+#
+TOP_BUILD_DIR := $(shell cd $(PATH_TO_TOP) && pwd)
+
+MAKEFILE_CONFIG_PRESENT := $(shell if [ -f $(TOP_BUILD_DIR)/Makefile.config ] ; then echo "yes" ; fi)
+ifneq '$(MAKEFILE_CONFIG_PRESENT)' 'yes'
+$(warning You have not setup a top-level Makefile.config.        )
+$(warning Please copy Makefile.config.sample to Makefile.config, )
+$(warning and customize it as necessary.                         )
+$(error Cannot proceed with build!)
+endif
+
+include $(PATH_TO_TOP)/Makefile.config
+
+#-----------------------------------------------------------------------------
+# Variable to track build information
+#
+export PACE_BUILDHOST         := \"$(HOSTNAME)\"
+export PRODUCT_DRIVER_VERSION := \"$(TT_VERSION)\"
+export USERNAME               := \"$(LOGNAME)\"
+
+#-----------------------------------------------------------------------------
+# System settings, variables, and global build settings
+#
+export         OS_TYPE := $(shell uname -s)
+export           SHELL := /bin/bash
+export       BUILD_DIR := $(TOP_BUILD_DIR)/build
+export       STAGE_DIR := $(TOP_BUILD_DIR)/staging
+export      IMAGES_DIR := $(TOP_BUILD_DIR)/images
+export  ROOT_STAGE_DIR := $(STAGE_DIR)/rootfs
+export   APP_STAGE_DIR := $(ROOT_STAGE_DIR)/opt
+        HOST_TOOLS_DIR := $(TOP_BUILD_DIR)/pace/host/tools
+
+# Stolen from Sigma build environment
+#
+export       HOST_ARCH := $(shell gcc -dumpmachine | sed -e s'/-.*//' -e 's/i[3-9]86/i386/' -e 's/x86_64/i386/')
+export BUILD_HOST_NAME := $(HOST_ARCH)-pc-linux-gnu
+
+
+#-----------------------------------------------------------------------------
+# Determine the number of processors on the system, and automatically set the
+# number of parallel make jobs.  Documentation recommends that number be set
+# at NUMBER_OF_PROCESSORS + 1.
+#
+ifeq (Linux,$(OS_TYPE))
+PROCESSORS := $(shell /bin/grep "^processor" /proc/cpuinfo | /usr/bin/wc -l)
+
+else
+
+# If we can't figure out what system we're running on, default to a single
+# 'make' job.
+#
+PROCESSORS := 1
+
+endif   # ifeq OS_TYPE == Linux
+
+export MAKE_JOBS := $(shell /bin/echo $(PROCESSORS) \+ 1 | /usr/bin/bc)
+
+# If you think that your system will run faster with only a single make job at
+# a time, uncomment the line below.  It will override any previous MAKE_JOBS
+# setting.
+#
+# export MAKE_JOBS := 1
+
+
+# System tools
+#
+# NOTE: Most latest Linux distributions ship with make 3.82 or newer.  Our
+#       kernel (at least, and possibly some other packages) rely on some old
+#       make rules, which get rejected by the newer make.  So, we build
+#       make-3.81 ourselves, and keep it handy for those packages that cannot
+#       be handled by the latest version of make.
+#
+export       MAKE := make
+export   OLD_MAKE := make-3.81
+export         RM := rm -f
+export         CP := cp
+export         MV := mv -f
+export        TAR := $(shell type -p tar)
+export        SED := $(shell type -p sed)
+export    INSTALL := $(shell type -p install)
+export	    TOUCH := touch
+
+
+#-----------------------------------------------------------------------------
+# Various global Sigma components
+#
+# If any item in this section is confirmed to be needed only by Sigma
+# sub-trees, then these settings should get moved to the
+# vendor/sigma/Makefile.
+#
+# Kernel stuff
+export KERNEL_DIR := $(TOP_BUILD_DIR)/vendor/kernel_source/$(KERNEL_VER)/linux-$(KERNEL_VER)
+
+# Some Sigma components like to have these
+#
+export SMP86XX_TOOLCHAIN_PATH := $(TOP_BUILD_DIR)/vendor/codesourcery/mips-4.3
+export    SMP86XX_ROOTFS_PATH := $(BUILD_DIR)
+export       INSTALL_MOD_PATH := $(BUILD_DIR)
+
+# This section is work in progress.
+#
+export             TOOLCHAIN_DIR := $(SMP86XX_TOOLCHAIN_PATH)
+export           SYSTEM_INCLUDES := -I$(TOOLCHAIN_DIR)/mips-linux-gnu/libc/usr/include \
+                                    -I$(TOOLCHAIN_DIR)/mips-linux-gnu/include/c++/4.3.3 \
+                                    -I$(TOOLCHAIN_DIR)/lib/gcc/mips-linux-gnu/4.3.3/include \
+                                    -I$(BUILD_DIR)/usr/include
+export             SYSTEM_LDPATH := -L$(BUILD_DIR)/lib \
+                                    -L$(BUILD_DIR)/usr/lib
+export             TOOLCHAIN_PKG := CodeSourcery-MIPS-4.3-154.with-mipsel-tools.tar.bz2
+export             SIGMA_TOP_DIR := $(TOP_BUILD_DIR)/vendor/sigmadesigns
+export        SIGMA_CHIP_DEFINES := -DEM86XX_CHIP=EM86XX_CHIPID_TANGO3 -DEM86XX_REVISION=3 -DRMPLATFORM=RMPLATFORMID_TANGO3 -DXBOOT2_SMP865X=1
+export          SIGMA_SW_DEFINES := -DWITH_XLOADED_UCODE=1 -DWITH_THREADS=1 -DWITHOUT_NERO_SPU=1 -DWITHOUT_RMOUTPUT=1 -DWITHOUT_RMLIBPLAY_PLUGINS=1
+export            SIGMA_INCLUDES := $(SYSTEM_INCLUDES) -I$(TOP_BUILD_DIR)/vendor/sigmadesigns/mrua/MRUA_src
+export             SIGMA_DEFINES := $(SIGMA_INCLUDES) $(SIGMA_CHIP_DEFINES) -DEM86XX_MODE=EM86XX_MODEID_STANDALONE $(SIGMA_SW_DEFINES)
+export                  RMCFLAGS := $(SIGMA_DEFINES)
+export              ARCH_DEFINES := -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 -D_REENTRANT -D__STDC_LIMIT_MACROS -D_GNU_SOURCE -DUSE_OPENSSL
+export                   RUA_DIR := $(SIGMA_TOP_DIR)/mrua/MRUA_src
+export SMP86XX_LINUX_KERNEL_PATH := $(KERNEL_DIR)
+export              LINUX_KERNEL := $(KERNEL_DIR)
+export            KERNEL_SOURCES := $(KERNEL_DIR)
+export            UCLINUX_KERNEL := $(KERNEL_DIR)
+export              CODESOURCERY := 1
+export              CPU_KEYS_DIR := $(SIGMA_TOP_DIR)/CPU_KEYS
+export                 XSDK_ROOT := $(CPU_KEYS_DIR)/signed_items
+
+#-----------------------------------------------------------------------------
+# Here we deal with configurable target items
+#
+
+COMPILKIND := codesourcery hardfloat glibc withthreads withdl
+ifeq (1,$(DEBUG_BUILD))
+#$(warning NOTE: Building DEBUG version of Sigma components)
+COMPILKIND += debug
+else
+#$(warning NOTE: Building RELEASE version of Sigma components)
+COMPILKIND += release
+endif					# ifneq (,$(DEBUG_BUILD))
+
+#
+# All relevant settings discerned, export the final value
+#
+export COMPILKIND
+
+
+ifeq (dev,$(CHIP_TYPE))
+#$(warning NOTE: Images will be signed for a DEV chip)
+export CHIPTYPE := dev
+else
+#$(warning NOTE: Images will be signed for a PROD chip)
+export CHIPTYPE := prod
+export RMCFLAGS += -DWITH_FACSPROD=1
+endif					# ifeq (dev,$(CHIP_TYPE))
+
+
+#-----------------------------------------------------------------------------
+# Config variables for CopperGate HPNA
+#
+export    COPPERGATE_TOOLS := CDK-3.1.3-RC7-mips.tar.gz
+export      COPPERGATE_VER := CDK-3.1.3
+export COPPERGATE_FW_IMAGE := CG3210H-194RC20-Custom_Profile1-Coax_12-44_M1_12-28.bin
+
+
+#-----------------------------------------------------------------------------
+# Now that all the necessary variables have been defined, we can update the
+# PATH.
+#
+export PATH := $(TOOLCHAIN_DIR)/bin:$(HOST_TOOLS_DIR)/bin:$(CPU_KEYS_DIR)/xbin:$(shell echo $$PATH)
+
+
+#-----------------------------------------------------------------------------
+# For building the host tools, we don't want to define the stuff below here
+#
+ifneq (1,$(HOST_BUILD))
+
+#-----------------------------------------------------------------------------
+#  CodeSourcery toolchain
+#
+# NOTE: Some people use "-mips32r2" instead of "-march=24kf".  We think that
+#       the latter is better, since we plan to ever run our code only on this
+#       variant of the CPU.  But, if we change to a different variant of the
+#       MIPS in the future, we'll have to update our optimization flags.
+#
+export      CC := mips-linux-gnu-gcc -EL
+export     CXX := mips-linux-gnu-g++ -EL
+export     CPP := mips-linux-gnu-cpp -EL
+export   STRIP := mips-linux-gnu-strip
+export    SIZE := mips-linux-gnu-size
+export      AR := mips-linux-gnu-ar
+export      AS := mips-linux-gnu-as -EL
+export      LD := mips-linux-gnu-ld -EL
+export      NM := mips-linux-gnu-nm
+export  RANLIB := mips-linux-gnu-ranlib
+export OBJDUMP := mips-linux-gnu-objdump
+export OBJCOPY := mips-linux-gnu-objcopy
+
+export CXXWARNFLAGS := -Wall -Wextra -Wundef -Wno-unused-parameter -Wno-write-strings -Wno-empty-body
+export   CWARNFLAGS := -Wall -Wextra -Wundef -Wno-unused-parameter
+export     OPTFLAGS := -O2 -Wa,-march=24kf -Wa,-mtune=24kf -march=24kf -mtune=24kf -pipe
+export  THREADFLAGS := -pthread
+export    LINKFLAGS := -Wl,--gc-sections
+export     CXXFLAGS  = -I$(BUILD_DIR)/usr/include $(OPTFLAGS) $(INCPATH) $(DEFINES)
+export       CFLAGS  = -I$(BUILD_DIR)/usr/include $(OPTFLAGS) $(INCPATH) $(DEFINES)
+export      CXXLINK := $(CXX) $(OPTFLAGS) $(THREADFLAGS) $(SYSTEM_LDPATH) $(LINKFLAGS)
+export       CCLINK := $(CC)  $(OPTFLAGS) $(THREADFLAGS) $(SYSTEM_LDPATH) $(LINKFLAGS)
+
+#
+# Make sure the toolchain is unpacked and ready to use
+#
+SETUP_TOOLCHAIN := $(shell $(TOP_BUILD_DIR)/pace/host/scripts/setup_toolchain.sh $(TOOLCHAIN_DIR) $(TOOLCHAIN_PKG))
+ifneq '$(SETUP_TOOLCHAIN)' 'OK'
+$(warning Failed to setup cross-compiling toolchain!)
+$(error Aborting build)
+endif
+
+
+ifdef VERBOSE_BUILD
+	QUIET = @\#
+	Q = 
+else
+	QUIET = @
+	Q = @
+endif
+
+#
+# Klocwork configuration
+#
+ifndef WORKROOT
+export WORKROOT:=$(shell pwd)
+endif
+export KLOCSERVER:=boc-klocwork.pace.internal
+KLOCPRODUCT:=TELCO_PHD
+KLOCBUILDID:=$(shell date -u +%Y).X
+KLOCCOMPILER:=mips-linux-gnu-gcc
+KLOCCOMPTYPE:=gnu
+KLOCBUILDTARGET:=make package
+KLOCDEVTARGET:=make all
+KLOCGROUP:=telcogroup
+include $(WORKROOT)/buildsys/klocwork/klocwork.mk
+ifdef BTAG
+KLOCBUILDID:=$(BTAG)
+else
+KLOCBUILDID:=$(BUILD_VERSION)
+endif
+include $(WORKROOT)/buildsys/klocwork/klocwork_rules.mk
+#
+#
+
+%.d: %.c
+	$(QUIET)echo "  [depend]  $<"
+	$(Q)$(CC) -M $(CFLAGS) $< > $@
+
+%.d: %.cpp
+	$(QUIET)echo "  [depend]  $<"
+	$(Q)$(CXX) -M $(CXXFLAGS) $< > $@
+
+%.i : %.c %.h
+	$(QUIET)echo "  [CC pre]  $<"
+	$(Q)$(CC) -E $(CFLAGS) -o $@ $<
+
+%.i : %.cpp %.h
+	$(QUIET)echo " [C++ pre]  $<"
+	$(Q)$(CXX) -E $(CXXFLAGS) -o $@ $<
+
+%.o: %.c
+	$(QUIET)echo "  [CC]      $<"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+
+%.o: %.cpp
+	$(QUIET)echo "  [C++]     $<"
+	$(Q)$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+%: %.o
+	$(QUIET)echo "  [LINK]    $<"
+	$(Q)$(CXXLINK) -o $@ $(CFLAGS) $^
+
+
+else    # HOST_BUILD __IS__ set
+
+export     CC := gcc
+export    CXX := g++
+export    CPP := cpp
+export  STRIP := strip
+export     AR := ar
+export     AS := as
+export     LD := ld
+export     NM := nm
+export RANLIB := ranlib
+
+export CXXWARNFLAGS := 
+export   CWARNFLAGS := 
+export     OPTFLAGS := 
+export  THREADFLAGS := 
+export    LINKFLAGS := 
+export     CXXFLAGS := 
+export       CFLAGS := 
+export      CXXLINK := 
+export       CCLINK := 
+
+endif	# ifneq (1,$(HOST_BUILD))
+

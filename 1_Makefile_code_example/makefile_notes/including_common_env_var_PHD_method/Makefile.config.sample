@@ -1,0 +1,59 @@
+#
+# This file contains build tree configuration options.
+#
+
+# To build MRUA, DCC-HD, and MvLayer with debugging enabled, uncomment this
+# line.
+#
+#export DEBUG_BUILD := 1
+
+# To see each compile line, uncomment below.  Otherwise each compile/link line
+# will be abbreviated.
+#
+export VERBOSE_BUILD := 1
+
+# Define the type of chip you want to build for: 'prod' or 'dev'
+# NOTE: This used to be optional, but is now mandatory!
+#
+export CHIP_TYPE := dev
+
+
+# Choose signature method
+# ------------------------
+# Normally we sign things (e.g. ezboot/phyblock, yamon, kernel) using Sigma
+# development (facsimile) keys (for PROD and DEV chips -- "development keys"
+# doesn't mean "just for DEV chips" here!).
+# However, if we're building things (e.g. Zboot) for the Pace-signed PROD
+# chips, we need to set these two variables.  We *also* need access to the
+# Pace keys, which are kept on an UN-networked computer behind closed & locked
+# doors.
+#
+# So, if you don't know what this is for, leave the following two variables commented out!
+#
+#export SECURITY_KEY_TYPE := $(CHIP_TYPE)
+
+# Options here include:
+#
+#  sigma_facsimile_insecure -- for a factory insecure loader (dev OR prod) 
+#  pace_signed_unencrypted  -- for a prod Mediaroom Zboot
+#  pace_signed_encrypted    -- for a prod Minerva kernel or Zboot loader .
+#
+#export SECURITY_MODE := pace_signed_unencrypted
+
+
+# Uncomment this, if you want the build to continue despite errors, for as
+# long as it can.
+#
+#export DONT_STOP_BUILD := 1
+
+
+# Pick the version of kernel to use.  At this moment, we are not aware of any
+# implications this may have on other parts of the build (e.g. using 2.6.35
+# may allow us to use squashfs 4.x instead of squashfs 3.x).
+#
+export KERNEL_VER := 2.6.29
+
+# Pace Diagnostics Firmware Virsion is defined here
+#
+export PACE_DIAG_VERSION := 1.0.0.7
+export PACE_DIAG_LOG_VERSION := 1.0

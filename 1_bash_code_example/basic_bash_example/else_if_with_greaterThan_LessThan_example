@@ -1,0 +1,36 @@
+#!/bin/bash
+
+	# start with clearing the screen is better
+	clear
+
+	# giving the user message to let them what to do
+	echo -n -e "Enter a Number:\t"
+	# read user input and store it in num variable
+	read num
+
+	#after inputting, is better to clear the screen again
+	clear
+
+	# declare the if statement
+	if [ "$num" -eq 10 ]
+	# start the if statment
+	then 
+	# the function body of the if statement
+	echo "you chose 10"
+	# using else if as less than
+	elif [ "$num" -lt 10 ]
+	# begin else if
+	then
+	# else if body code
+	echo "10 is bigger than $num"
+	# declaring another else if condition as greater than
+	elif [ "$num" -gt 10 ]
+	# start using it
+	then 
+	# the body of the second else if
+	echo "10 is smaller than $num"
+	# using else
+	else
+	echo "input should be Just number"
+	# end the if statement with "fi"
+	fi 

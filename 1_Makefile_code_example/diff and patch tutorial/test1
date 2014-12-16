@@ -1,0 +1,23 @@
+The most simple way of using diff is getting the 
+
+
+differences between two files, an original file and 
+
+
+an updated file. You could, for example, 
+
+
+write a few words in a normal text file, 
+
+
+
+make some modifications, and then 
+
+
+save the modified content to a second file. 
+
+
+Then, you could compare these 
+
+
+files with diff, like this:

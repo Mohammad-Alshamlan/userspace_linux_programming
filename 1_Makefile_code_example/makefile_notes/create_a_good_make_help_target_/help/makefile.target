@@ -1,0 +1,90 @@
+##########################################################################
+# 	build environment variables
+##########################################################################
+
+KLOCWORK	  -- if set, then enable KLOCWORK analysis
+
+HOST_BUILD	  -- if set, then build with host toolchain rather than 
+		  target toolchain
+
+PACE_DIAG_VERSION -- if set, this is the version that PHD will show
+
+CHIP_TYPE	  -- selecting the target hardware. There are only two 
+		  choices allowed, which are the following:
+		[1] CHIP_TYPE=dev	(which is the default value)
+		[2] CHIP_TYPE=prod
+		
+		Note, you can't have "CHIP_TYPE=prod" without setting
+		SECURITY_MODE build variable
+
+SECURITY_MODE	  -- selecting the signing key and also encryption. Please
+		  note that we have three choices, which are:
+		  [1] SECURITY_MODE=  
+
+##########################################################################
+# 	build target
+##########################################################################
+
+busybox_menuconfig	-- open busybox menuconfig
+
+prod_config		-- prod config for busybox
+
+do_PHD_for_minerva_prod	-- sets up the needed config for Minerva prod
+
+distclean		--
+
+clean			--
+
+test			--
+
+package			--
+
+install			--
+
+all			-- 
+
+##########################################################################
+# 	Example
+##########################################################################
+
+Example 1:
+----------
+suppose you are trying to build a target for prod chipset with customize 
+busybox configurations. First, create Makefile.config template as follows:
+
+	$ cp Makefile.config.sample Makefile.config
+	
+Then, setup Makefile.config to build a target for prod chipset as follows:
+
+	$ make prod_config
+	
+Note, "make prod_config" configures busybox config and Makefile.config, so 
+don't run this if you have some changes in busybox config or Makefile.config 
+because "make prod_config" will overwrite them. 
+
+To customize busybox config, run the following:
+
+	$ make busybox_menuconfig
+
+After the needed changes are saved, then build as follows:
+
+	$ make package
+	
+Example 2:
+----------
+suppose you just want to build the prod factory configurations for Minerva
+without any customizations. First, create Makefile.config template as follows:
+
+	$ cp Makefile.config.sample Makefile.config
+	
+The simply build with the following command:
+
+	$ make do_PHD_for_minerva_prod 
+
+Example 3:
+----------
+the use of build env
+
+	$ cp Makefile.config.sample Makefile.config
+	$ make package PACE_DIAG_VERSION=2.0.0.0rc1 CPU_TYPE=dev
+
