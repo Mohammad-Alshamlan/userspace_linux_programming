@@ -1,6 +1,6 @@
 /*
  * The idea is to copy a binary file such as a picture. 
- * Note, we can't use open(), read(), or write() in binary files
+ * Note, we can't use open(), read(), or write() in binary files -- I found out this claim is false!!
  * 
  * to send the image through socket programming, you need to be aware of the following:
  *	[1] You need to open the file in binary mode ("rb" for reading, "wb" for writing), not the default text mode. On Windows (and any other systems which do line ending translation), the 

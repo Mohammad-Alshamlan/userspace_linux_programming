@@ -28,3 +28,6 @@ ex3_TCP_echo_client
 ex3_TCP_echo_server
 ex4_TCP_echo_client
 ex4_TCP_echo_server
+ex8_simplified_tcp_receive_transfer_file_client
+ex8_simplified_tcp_receive_transfer_file_server
+dest_file.jpeg
