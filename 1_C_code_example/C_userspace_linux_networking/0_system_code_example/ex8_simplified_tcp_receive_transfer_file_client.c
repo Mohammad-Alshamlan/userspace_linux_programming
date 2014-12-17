@@ -17,29 +17,11 @@
 #define MAX_MESSAGE 512
 #endif
 
-#ifndef DEST_FILE
-#define DEST_FILE "dest_file.jpeg"
-#endif
-
 int main(int argc, char *argv[])
 {
 	// check if the server address is inputted!!
 	if(argc < 2){
 		fprintf(stderr, "error: please run the following \n\t(bash) $ %s <hostname> \n", argv[0]);
-		return 1;
-	}
-	// delete the previous image if exist
-	int rc = unlink(DEST_FILE);
-	#if 0
-	if(rc){
-		perror("unlink() failed!!");
-		return 0;
-	}	
-	#endif
-	// open the destination file (or create it), and make sure it is opened correctly
-	int fd_dest = open(DEST_FILE, O_WRONLY | O_CREAT);
-	if(fd_dest == -1){
-		perror("opening fd_src failed!!");
 		return 1;
 	}	
 	// get the server IP from server DNS
@@ -62,13 +44,30 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	// connect()
-	rc = connect(server_fd, (struct sockaddr *) &server_address, sizeof(server_address));
+	int rc = connect(server_fd, (struct sockaddr *) &server_address, sizeof(server_address));
 	if(rc){
 		perror("connect() failed!!");
 		return 0;
 	}
-	// get the file from the source file to destination file
+	// get the filename from the server
 	char message[MAX_MESSAGE];
+	memset(message, 0, sizeof(message));
+	rc = read (server_fd, message, sizeof(message));
+	if(rc == 0){
+		perror("the client can't get the filename from the server -- failed!!");
+		return 1;
+	}
+	// first, let delete any existing file with same filename -- no check is needed!!
+	char filename[MAX_MESSAGE];
+	strcpy(filename, message);
+	unlink(filename);
+	// open the destination file (or create it), and make sure it is opened correctly
+	int fd_dest = open(filename, O_WRONLY | O_CREAT);
+	if(fd_dest == -1){
+		perror("opening fd_src failed!!");
+		return 1;
+	}		
+	// get the file from the source file to destination file
 	memset(message, 0, sizeof(message));
 	size_t read_len = 0, write_len=0; 
 	while((read_len = read(server_fd, message, sizeof(message)) ) > 0){
@@ -89,7 +88,9 @@ int main(int argc, char *argv[])
 			24K -rw-r----- 1 alshamlan alshamlan 9.2K Dec 16 11:56 images.jpg	
 		*/
 	// So, let reset the file premission 
-	rc = chmod(DEST_FILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	rc = chmod(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	// done!!
 	return 0;
 }
+
+
