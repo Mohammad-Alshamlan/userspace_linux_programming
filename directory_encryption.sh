@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# the output destanation 
+DIR=/home/$(whoami)/Desktop/git_encrypted_directory
+
 function is_the_needed_software_installed()
 {
 	# we sill check through bash core dump
@@ -14,14 +17,15 @@ function is_the_needed_software_installed()
 
 function decrypting_directory()
 {
-	mkdir -p note
-	encfs ${PWD}/.note/ ${PWD}/note/
+	mkdir -p ${DIR}
+	encfs ${PWD}/.note/ ${DIR}
 }
 
 function unmount_the_decrypted_directory()
 {
 	# unmout the directory
-	fusermount -u ${PWD}/note
+	fusermount -u ${DIR}
+	rm -f -r ${DIR}
 	
 }
 #
