@@ -42,7 +42,7 @@ void lseek_file (const char* filename)
 	size_t max_read = ((size_t) MAX_WORD_LENGTH < (size_t) len)? (size_t) MAX_WORD_LENGTH -1 : (size_t) len;
 	read (fd, buffer, max_read);
 	buffer[max_read + 1]='\0';
-	// append utill you get a newline
+	// append utill you get a newline, which means we won't take partial word, we will only take a full word
 	int pos=0, i; 
 	while(buffer[pos++]!='\n') 
 		/*nothing*/ ;

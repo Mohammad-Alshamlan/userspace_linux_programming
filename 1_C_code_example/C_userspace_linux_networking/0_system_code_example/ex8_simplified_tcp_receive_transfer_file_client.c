@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 {
 	// check if the server address is inputted!!
 	if(argc < 2){
-		fprintf(stderr, "error: please run the following \n\t(bash) $ %s <hostname> \n", argv[0]);
+		fprintf(stderr, "error: please run the following \n\t(bash) $ %s <hostname> \nExample, use your system loopback ip\n\t(bash) $ %s `hostname`\n", argv[0], argv[0]);
 		return 1;
 	}	
 	// get the server IP from server DNS

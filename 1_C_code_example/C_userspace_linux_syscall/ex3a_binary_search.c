@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 	// 
 	int list[]={2,5,4,7,6,1,3,9,8,10,11,12,13};
 	size_t len;
+	// sort the list numbers in ascending order, which is 1, 2, 3, ... so on 
 	insertion_sort(list, (len = sizeof(list)/sizeof(list[0])) );
 	// binary search needs sorted list
 	int *p= binary_search(atoi(argv[1]), list, len);
